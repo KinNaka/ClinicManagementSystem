@@ -1,5 +1,6 @@
 using ClinicManagementSystem.Web.Data;
 using Microsoft.EntityFrameworkCore;
+using ClinicManagementSystem.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
+
 
 var app = builder.Build();
 

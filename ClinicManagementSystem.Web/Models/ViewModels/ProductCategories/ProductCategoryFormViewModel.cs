@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace ClinicManagementSystem.Web.Models.ViewModels.ProductCategoríe
+namespace ClinicManagementSystem.Web.Models.ViewModels.ProductCategories
 {
-    public class ProductcategoryFormViewModel
+    public class ProductCategoryFormViewModel
     {
         [Required]
         [StringLength(50, MinimumLength = 3)]

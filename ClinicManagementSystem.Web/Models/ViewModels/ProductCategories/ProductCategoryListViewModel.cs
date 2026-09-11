@@ -1,11 +1,11 @@
-﻿namespace ClinicManagementSystem.Web.Models.ViewModels.ProductCategoríe
+﻿namespace ClinicManagementSystem.Web.Models.ViewModels.ProductCategories
 {
     public class ProductCategoryListViewModel
     {
         public long Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string status { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
 
     }
 }

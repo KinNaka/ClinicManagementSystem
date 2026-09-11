@@ -22,7 +22,7 @@ namespace ClinicManagementSystem.Web.Data.Configurations
 
             builder.Property(x => x.Description).HasMaxLength(500);
 
-            builder.Property(x => x.status)
+            builder.Property(x => x.Status)
                 .IsRequired()
                 .HasMaxLength(20);
 

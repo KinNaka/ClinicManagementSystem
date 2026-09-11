@@ -6,7 +6,7 @@
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string status { get; set; } = "Active";
+        public string Status { get; set; } = "Active";
         public DateTime CreateAt { get; set; }
         public DateTime UpdateAt { get; set; }
 

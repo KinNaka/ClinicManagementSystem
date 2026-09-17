@@ -11,7 +11,26 @@ namespace ClinicManagementSystem.Web.Services
         {
             _context = context;
         }
+        public async Task<bool> ToggleStatusAsync(long id)
+        {
+            var category = await _context.ProductCategories
+                .FirstOrDefaultAsync(x => x.Id == id);
 
+            if (category == null)
+            {
+                return false;
+            }
+
+            category.Status = category.Status == "ACTIVE"
+                ? "INACTIVE"
+                : "ACTIVE";
+
+            category.UpdateAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
         public async Task<List<ProductCategoryListViewModel>> GetAllAsync()
         {
             return await _context.ProductCategories
@@ -39,19 +58,33 @@ namespace ClinicManagementSystem.Web.Services
                 })
                 .FirstOrDefaultAsync();
         }
-        public async Task CreateAsync(ProductCategoryFormViewModel model)
+        public async Task<bool> CreateAsync(ProductCategoryFormViewModel model)
         {
+            var code = model.Code.Trim();
+
+            var exists = await _context.ProductCategories
+                .AnyAsync(x => x.Code == code);
+
+            if (exists)
+            {
+                return false;
+            }
+
             var category = new ProductCategory
             {
-                Code = model.Code,
-                Name = model.Name,
-                Description = model.Description,
-                Status = model.Status,
+                Code = code,
+                Name = model.Name.Trim(),
+                Description = model.Description?.Trim(),
+                Status = model.Status.Trim(),
                 CreateAt = DateTime.UtcNow,
                 UpdateAt = DateTime.UtcNow
             };
+
             _context.ProductCategories.Add(category);
+
             await _context.SaveChangesAsync();
+
+            return true;
         }
         public async Task<bool> UpdateAsync(long id, ProductCategoryFormViewModel model)
         {
@@ -69,19 +102,32 @@ namespace ClinicManagementSystem.Web.Services
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> DeleteAsync(long id)
+        public async Task<(bool Success, string? Error)> DeleteAsync(long id)
         {
             var category = await _context.ProductCategories
+                .Include(x => x.Products)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (category == null)
-                return false;
+            {
+                return (false, "Category not found.");
+            }
+
+            if (category.Products.Any())
+            {
+                return (
+                    false,
+                    "Cannot delete category because it is being used by products."
+                );
+            }
 
             _context.ProductCategories.Remove(category);
 
             await _context.SaveChangesAsync();
 
-            return true;
+            return (true, null);
         }
+
+
     }
 }

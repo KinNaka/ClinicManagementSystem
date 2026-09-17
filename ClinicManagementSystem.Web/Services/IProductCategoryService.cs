@@ -6,8 +6,9 @@ namespace ClinicManagementSystem.Web.Services
     {
         Task<List<ProductCategoryListViewModel>> GetAllAsync();
         Task<ProductCategoryFormViewModel?> GetByIdAsync(long id);
-        Task CreateAsync(ProductCategoryFormViewModel model);
+        Task <bool> CreateAsync(ProductCategoryFormViewModel model);
         Task<bool> UpdateAsync(long id, ProductCategoryFormViewModel model);
-        Task<bool> DeleteAsync(long id);
+        Task<(bool Success, string? Error)> DeleteAsync(long id);
+        Task<bool> ToggleStatusAsync(long id);
     }
 }

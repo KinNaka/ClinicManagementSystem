@@ -77,6 +77,28 @@ namespace ClinicManagementSystem.Web.Controllers
         {
             var result = await _service.DeleteAsync(id);
 
+            if (!result.Success)
+            {
+                if (result.Error == "Category not found.")
+                {
+                    return NotFound();
+                }
+
+                TempData["Error"] = result.Error;
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            TempData["Success"] = "Category deleted successfully.";
+
+            return RedirectToAction(nameof(Index));
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleStatus(long id)
+        {
+            var result = await _service.ToggleStatusAsync(id);
+
             if (!result)
             {
                 return NotFound();

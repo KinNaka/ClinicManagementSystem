@@ -31,12 +31,26 @@ namespace ClinicManagementSystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductCategoryFormViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                await _service.CreateAsync(model);
-                return RedirectToAction(nameof(Index));
+                return View(model);
             }
-            return View(model);
+
+            var result = await _service.CreateAsync(model);
+
+            if (!result)
+            {
+                ModelState.AddModelError(
+                    "Code",
+                    "Category code already exists."
+                );
+
+                return View(model);
+            }
+
+            TempData["Success"] = "Category created successfully.";
+
+            return RedirectToAction(nameof(Index));
         }
 
         //GET : /ProductCategories/Edit/{id}

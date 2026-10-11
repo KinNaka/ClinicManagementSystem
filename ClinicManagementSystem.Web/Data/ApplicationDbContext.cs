@@ -66,6 +66,52 @@ public class ApplicationDbContext : DbContext
             .Property(p => p.Status)
             .HasMaxLength(20)
             .IsRequired();
+        // ==============================
+        // Sales Management Configuration
+        // ==============================
+
+        // Sale Code must be unique
+        modelBuilder.Entity<Sale>()
+            .HasIndex(s => s.SaleCode)
+            .IsUnique();
+
+        // Sale -> Patient
+        modelBuilder.Entity<Sale>()
+            .HasOne(s => s.Patient)
+            .WithMany()
+            .HasForeignKey(s => s.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Sale -> SaleDetails
+        modelBuilder.Entity<SaleDetail>()
+            .HasOne(d => d.Sale)
+            .WithMany(s => s.Details)
+            .HasForeignKey(d => d.SaleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // SaleDetail -> Product
+        modelBuilder.Entity<SaleDetail>()
+            .HasOne(d => d.Product)
+            .WithMany()
+            .HasForeignKey(d => d.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Decimal precision
+        modelBuilder.Entity<Sale>()
+            .Property(s => s.TotalAmount)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<SaleDetail>()
+            .Property(d => d.Quantity)
+            .HasPrecision(18, 3);
+
+        modelBuilder.Entity<SaleDetail>()
+            .Property(d => d.UnitPrice)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<SaleDetail>()
+            .Property(d => d.LineTotal)
+            .HasPrecision(18, 2);
     }
     public DbSet<InventoryTransaction> InventoryTransactions
     => Set<InventoryTransaction>();
@@ -73,4 +119,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<InventoryTransactionDetail> InventoryTransactionDetails
         => Set<InventoryTransactionDetail>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Sale> Sales => Set<Sale>();
+
+    public DbSet<SaleDetail> SaleDetails => Set<SaleDetail>();
 }

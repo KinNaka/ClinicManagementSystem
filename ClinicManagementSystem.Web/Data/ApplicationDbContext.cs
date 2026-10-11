@@ -1,11 +1,12 @@
-﻿
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using ClinicManagementSystem.Web.Models.Identity;
 using ClinicManagementSystem.Web.Entities;
 using ClinicManagementSystem.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClinicManagementSystem.Web.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options)

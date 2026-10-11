@@ -1,0 +1,54 @@
+﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết bệnh nhân";
+}
+
+<h2>Chi tiết bệnh nhân</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">Mã bệnh nhân</dt>
+    <dd class="col-sm-9">@Model.PatientCode</dd>
+
+    <dt class="col-sm-3">Họ và tên</dt>
+    <dd class="col-sm-9">@Model.FullName</dd>
+
+    <dt class="col-sm-3">Ngày sinh</dt>
+    <dd class="col-sm-9">
+        @(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")
+    </dd>
+
+    <dt class="col-sm-3">Giới tính</dt>
+    <dd class="col-sm-9">
+        @(Model.Gender switch
+        {
+            "Male" => "Nam",
+            "Female" => "Nữ",
+            "Other" => "Khác",
+            _ => "—"
+        })
+    </dd>
+
+    <dt class="col-sm-3">Số điện thoại</dt>
+    <dd class="col-sm-9">@(Model.PhoneNumber ?? "—")</dd>
+
+    <dt class="col-sm-3">Địa chỉ</dt>
+    <dd class="col-sm-9">@(Model.Address ?? "—")</dd>
+
+    <dt class="col-sm-3">Nghề nghiệp</dt>
+    <dd class="col-sm-9">@(Model.Occupation ?? "—")</dd>
+
+    <dt class="col-sm-3">Ghi chú</dt>
+    <dd class="col-sm-9">@(Model.Notes ?? "—")</dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9">
+        @(Model.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")
+    </dd>
+</dl>
+
+<a asp-action="Edit"
+   asp-route-id="@ViewContext.RouteData.Values["id"]"
+   class="btn btn-primary">Chỉnh sửa</a>
+
+<a asp-action="Index" class="btn btn-secondary">Quay lại</a>

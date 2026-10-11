@@ -48,10 +48,29 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Patient>()
+    .HasIndex(p => p.PatientCode)
+    .IsUnique();
+
+        modelBuilder.Entity<Patient>()
+            .Property(p => p.PatientCode)
+            .HasMaxLength(30)
+            .IsRequired();
+
+        modelBuilder.Entity<Patient>()
+            .Property(p => p.FullName)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        modelBuilder.Entity<Patient>()
+            .Property(p => p.Status)
+            .HasMaxLength(20)
+            .IsRequired();
     }
     public DbSet<InventoryTransaction> InventoryTransactions
     => Set<InventoryTransaction>();
 
     public DbSet<InventoryTransactionDetail> InventoryTransactionDetails
         => Set<InventoryTransactionDetail>();
+    public DbSet<Patient> Patients => Set<Patient>();
 }

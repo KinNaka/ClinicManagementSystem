@@ -1,0 +1,22 @@
+﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
+
+@{
+    ViewData["Title"] = "Thêm bệnh nhân";
+}
+
+<h2>Thêm bệnh nhân</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <partial name="_PatientForm" model="Model" />
+
+    <button type="submit" class="btn btn-primary">Lưu bệnh nhân</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

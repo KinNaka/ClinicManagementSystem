@@ -1,0 +1,63 @@
+﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
+
+<div class="mb-3">
+    <label asp-for="PatientCode" class="form-label">Mã bệnh nhân</label>
+    <input asp-for="PatientCode" class="form-control" readonly />
+    <span asp-validation-for="PatientCode" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="FullName" class="form-label">Họ và tên</label>
+    <input asp-for="FullName" class="form-control" />
+    <span asp-validation-for="FullName" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="DateOfBirth" class="form-label">Ngày sinh</label>
+    <input asp-for="DateOfBirth" type="date" class="form-control" />
+    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Gender" class="form-label">Giới tính</label>
+    <select asp-for="Gender" class="form-select">
+        <option value="">-- Chọn giới tính --</option>
+        <option value="Male">Nam</option>
+        <option value="Female">Nữ</option>
+        <option value="Other">Khác</option>
+    </select>
+    <span asp-validation-for="Gender" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+    <input asp-for="PhoneNumber" class="form-control" />
+    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Address" class="form-label">Địa chỉ</label>
+    <input asp-for="Address" class="form-control" />
+    <span asp-validation-for="Address" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Occupation" class="form-label">Nghề nghiệp</label>
+    <input asp-for="Occupation" class="form-control" />
+    <span asp-validation-for="Occupation" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Notes" class="form-label">Ghi chú</label>
+    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Status" class="form-label">Trạng thái</label>
+    <select asp-for="Status" class="form-select">
+        <option value="Active">Đang hoạt động</option>
+        <option value="Inactive">Ngừng hoạt động</option>
+    </select>
+    <span asp-validation-for="Status" class="text-danger"></span>
+</div>

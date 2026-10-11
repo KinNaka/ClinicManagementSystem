@@ -1,26 +1,26 @@
-﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientDetailsViewModel
 
 @{
     ViewData["Title"] = "Chi tiết bệnh nhân";
 }
 
-<h2>Chi tiết bệnh nhân</h2>
+<h2>Hồ sơ khách hàng / bệnh nhân</h2>
 
 <dl class="row">
     <dt class="col-sm-3">Mã bệnh nhân</dt>
-    <dd class="col-sm-9">@Model.PatientCode</dd>
+    <dd class="col-sm-9">@Model.Patient.PatientCode</dd>
 
     <dt class="col-sm-3">Họ và tên</dt>
-    <dd class="col-sm-9">@Model.FullName</dd>
+    <dd class="col-sm-9">@Model.Patient.FullName</dd>
 
     <dt class="col-sm-3">Ngày sinh</dt>
     <dd class="col-sm-9">
-        @(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")
+        @(Model.Patient.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")
     </dd>
 
     <dt class="col-sm-3">Giới tính</dt>
     <dd class="col-sm-9">
-        @(Model.Gender switch
+        @(Model.Patient.Gender switch
         {
             "Male" => "Nam",
             "Female" => "Nữ",
@@ -30,25 +30,107 @@
     </dd>
 
     <dt class="col-sm-3">Số điện thoại</dt>
-    <dd class="col-sm-9">@(Model.PhoneNumber ?? "—")</dd>
+    <dd class="col-sm-9">@(Model.Patient.PhoneNumber ?? "—")</dd>
 
     <dt class="col-sm-3">Địa chỉ</dt>
-    <dd class="col-sm-9">@(Model.Address ?? "—")</dd>
+    <dd class="col-sm-9">@(Model.Patient.Address ?? "—")</dd>
 
     <dt class="col-sm-3">Nghề nghiệp</dt>
-    <dd class="col-sm-9">@(Model.Occupation ?? "—")</dd>
+    <dd class="col-sm-9">@(Model.Patient.Occupation ?? "—")</dd>
 
     <dt class="col-sm-3">Ghi chú</dt>
-    <dd class="col-sm-9">@(Model.Notes ?? "—")</dd>
+    <dd class="col-sm-9">@(Model.Patient.Notes ?? "—")</dd>
 
     <dt class="col-sm-3">Trạng thái</dt>
     <dd class="col-sm-9">
-        @(Model.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")
+        @(Model.Patient.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")
     </dd>
 </dl>
 
 <a asp-action="Edit"
-   asp-route-id="@ViewContext.RouteData.Values["id"]"
+   asp-route-id="@Model.Id"
    class="btn btn-primary">Chỉnh sửa</a>
 
 <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+@{
+    var history = Model.PurchaseHistory;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    var firstPage = Math.Max(1, history.Page - 2);
+    var lastPage = Math.Min(history.TotalPages, history.Page + 2);
+}
+<section id="purchase-history" class="card mt-4" aria-labelledby="purchase-history-title">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div><h2 id="purchase-history-title" class="history-title">Lịch sử mua hàng</h2><p class="text-muted small mt-1">Hóa đơn mới nhất trước · 10 hóa đơn mỗi trang</p></div>
+        <span class="badge bg-primary">@history.TotalCount.ToString("N0", culture) hóa đơn</span>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">Bao gồm hóa đơn nháp và đã xác nhận. Hóa đơn nháp chưa phải giao dịch hoàn tất.</p>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th scope="col">STT</th><th scope="col">Mã hóa đơn</th><th scope="col">Ngày mua</th><th scope="col" class="text-end">Giá trị hóa đơn</th><th scope="col">Trạng thái</th><th scope="col">Chi tiết</th></tr></thead>
+                <tbody>
+                    @if (history.Sales.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center text-muted">Khách hàng chưa có hóa đơn nào.</td></tr>
+                    }
+                    else
+                    {
+                        @for (var i = 0; i < history.Sales.Count; i++)
+                        {
+                            var sale = history.Sales[i];
+                            <tr>
+                                <td>@(history.Offset + i + 1)</td>
+                                <td><a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="patient-details-link">@sale.SaleCode</a></td>
+                                <td>@sale.SaleDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">@sale.TotalAmount.ToString("N0", culture) ₫</td>
+                                <td>
+                                    @if (sale.Status == "Confirmed") { <span class="badge bg-success">Đã xác nhận</span> }
+                                    else if (sale.Status == "Draft") { <span class="badge bg-warning">Nháp</span> }
+                                    else { <span class="badge bg-secondary">@sale.Status</span> }
+                                </td>
+                                <td><a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="btn btn-sm btn-outline-primary" aria-label="Xem hóa đơn @sale.SaleCode">Xem hóa đơn →</a></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (history.TotalCount > 0)
+        {
+            <div class="history-pagination">
+                <p class="text-muted small">Hiển thị @(history.Offset + 1)–@(history.Offset + history.Sales.Count) / @history.TotalCount.ToString("N0", culture) hóa đơn · Trang @history.Page / @history.TotalPages</p>
+                @if (history.TotalPages > 1)
+                {
+                    <nav aria-label="Phân trang lịch sử mua hàng"><ul class="pagination mb-0">
+                        @if (history.Page > 1)
+                        {
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@(history.Page - 1)" asp-fragment="purchase-history" aria-label="Trang trước">‹</a></li>
+                        }
+                        else { <li class="page-item disabled"><span class="page-link" aria-disabled="true" aria-label="Trang trước">‹</span></li> }
+                        @if (firstPage > 1)
+                        {
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="1" asp-fragment="purchase-history" aria-label="Trang 1">1</a></li>
+                            @if (firstPage > 2) { <li class="page-item disabled"><span class="page-link">…</span></li> }
+                        }
+                        @for (var pageNumber = firstPage; pageNumber <= lastPage; pageNumber++)
+                        {
+                            @if (pageNumber == history.Page) { <li class="page-item active"><span class="page-link" aria-current="page">@pageNumber</span></li> }
+                            else { <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@pageNumber" asp-fragment="purchase-history" aria-label="Trang @pageNumber">@pageNumber</a></li> }
+                        }
+                        @if (lastPage < history.TotalPages)
+                        {
+                            @if (lastPage < history.TotalPages - 1) { <li class="page-item disabled"><span class="page-link">…</span></li> }
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@history.TotalPages" asp-fragment="purchase-history" aria-label="Trang @history.TotalPages">@history.TotalPages</a></li>
+                        }
+                        @if (history.Page < history.TotalPages)
+                        {
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@(history.Page + 1)" asp-fragment="purchase-history" aria-label="Trang tiếp theo">›</a></li>
+                        }
+                        else { <li class="page-item disabled"><span class="page-link" aria-disabled="true" aria-label="Trang tiếp theo">›</span></li> }
+                    </ul></nav>
+                }
+            </div>
+        }
+    </div>
+</section>

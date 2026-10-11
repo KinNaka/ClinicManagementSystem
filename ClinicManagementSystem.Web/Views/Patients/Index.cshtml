@@ -74,8 +74,8 @@
                 @foreach (var patient in Model.Patients)
                 {
                     <tr>
-                        <td>@patient.PatientCode</td>
-                        <td>@patient.FullName</td>
+                        <td><a asp-action="Details" asp-route-id="@patient.Id" class="patient-details-link">@patient.PatientCode</a></td>
+                        <td><a asp-action="Details" asp-route-id="@patient.Id" class="patient-details-link">@patient.FullName</a></td>
                         <td>
                             @(patient.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")
                         </td>

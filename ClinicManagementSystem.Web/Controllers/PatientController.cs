@@ -104,9 +104,9 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(long id)
+        public async Task<IActionResult> Details(long id, int page = 1)
         {
-            var patient = await _patientService.GetByIdAsync(id);
+            var patient = await _patientService.GetDetailsAsync(id, page);
 
             if (patient == null)
                 return NotFound();

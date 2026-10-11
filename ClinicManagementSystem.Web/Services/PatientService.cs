@@ -1,6 +1,7 @@
 ﻿using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Models.Entities;
 using ClinicManagementSystem.Web.Models.ViewModels.Patients;
+using ClinicManagementSystem.Web.Models.ViewModels.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClinicManagementSystem.Web.Services
@@ -69,6 +70,35 @@ namespace ClinicManagementSystem.Web.Services
                     Status = p.Status
                 })
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1)
+        {
+            var patient = await GetByIdAsync(id);
+            if (patient == null) return null;
+
+            // Include drafts with their status; fetch only the requested ten invoices.
+            var query = _context.Sales.AsNoTracking().Where(s => s.PatientId == id);
+            var history = new PatientPurchaseHistoryViewModel(await query.CountAsync(), page);
+            history.Sales = await query
+                .OrderByDescending(s => s.SaleDate)
+                .ThenByDescending(s => s.Id)
+                .Skip(history.Offset)
+                .Take(PatientPurchaseHistoryViewModel.PageSize)
+                .Select(s => new SaleListViewModel
+                {
+                    Id = s.Id,
+                    SaleCode = s.SaleCode,
+                    PatientId = s.PatientId,
+                    PatientCode = patient.PatientCode,
+                    PatientName = patient.FullName,
+                    SaleDate = s.SaleDate,
+                    TotalAmount = s.TotalAmount,
+                    Status = s.Status
+                })
+                .ToListAsync();
+
+            return new PatientDetailsViewModel { Id = id, Patient = patient, PurchaseHistory = history };
         }
 
         public async Task<bool> ExistsCodeAsync(

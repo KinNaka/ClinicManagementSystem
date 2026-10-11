@@ -11,6 +11,8 @@ namespace ClinicManagementSystem.Web.Services
 
         Task<PatientFormViewModel?> GetByIdAsync(long id);
 
+        Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1);
+
         Task<bool> ExistsCodeAsync(
             string patientCode,
             long? excludeId = null);

@@ -1,0 +1,270 @@
+﻿@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa hóa đơn";
+}
+
+<h2 class="mb-4">Chỉnh sửa hóa đơn nháp</h2>
+
+<form asp-controller="Sales" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="saleForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Thông tin bệnh nhân</div>
+        <div class="card-body">
+            <label asp-for="PatientId" class="form-label">Bệnh nhân</label>
+            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+                <option value="0">-- Chọn bệnh nhân --</option>
+            </select>
+            <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Danh sách thuốc / vật tư</span>
+            <button type="button" id="addProduct" class="btn btn-sm btn-primary">+ Thêm sản phẩm</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="productTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width:240px">Sản phẩm</th>
+                            <th style="width:130px">Số lượng</th>
+                            <th style="width:150px">Đơn giá</th>
+                            <th style="width:150px">Thành tiền</th>
+                            <th style="width:80px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="productRows">
+                        @for (int i = 0; i < Model.Details.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <select name="Details[@i].ProductId" class="form-select product-select" required>
+                                        <option value="">-- Chọn sản phẩm --</option>
+                                        @foreach (var p in Model.Products)
+                                        {
+                                            if (p.Value == Model.Details[i].ProductId.ToString())
+                                            {
+                                                <option value="@p.Value" selected>@p.Text</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@p.Value">@p.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input name="Details[@i].Quantity" type="number" min="0.001" step="0.001"
+                                           value="@Model.Details[i].Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                           class="form-control quantity-input" required />
+                                </td>
+                                <td class="text-end unit-price">—</td>
+                                <td class="text-end line-total">—</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-row">Xóa</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="productError" class="text-danger mb-2" role="alert"></div>
+            <div class="text-end fs-5">Tổng tiền: <strong id="grandTotal">0 đ</strong></div>
+            <small class="text-muted">
+                Tổng tiền hiển thị chỉ là tạm tính. Giá chính thức được lấy từ database khi lưu.
+            </small>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Ghi chú</div>
+        <div class="card-body">
+            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hủy chỉnh sửa</a>
+    </div>
+</form>
+
+<template id="rowTemplate">
+    <tr>
+        <td>
+            <select class="form-select product-select" required>
+                <option value="">-- Chọn sản phẩm --</option>
+                @foreach (var p in Model.Products)
+                {
+                    <option value="@p.Value">@p.Text</option>
+                }
+            </select>
+        </td>
+        <td>
+            <input type="number" min="0.001" step="0.001" value="1"
+                   class="form-control quantity-input" required />
+        </td>
+        <td class="text-end unit-price">—</td>
+        <td class="text-end line-total">—</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row">Xóa</button>
+        </td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (() => {
+            const rows = document.getElementById("productRows");
+            const template = document.getElementById("rowTemplate");
+            const form = document.getElementById("saleForm");
+            const error = document.getElementById("productError");
+            const priceUrl = '@Url.Action("GetProductPrice", "Sales")';
+            const formatter = new Intl.NumberFormat("vi-VN", {
+                maximumFractionDigits: 2
+            });
+
+            function renumber() {
+                [...rows.querySelectorAll("tr")].forEach((row, i) => {
+                    row.querySelector(".product-select").name = `Details[${i}].ProductId`;
+                    row.querySelector(".quantity-input").name = `Details[${i}].Quantity`;
+                });
+            }
+
+            function calculate() {
+                let total = 0;
+
+                rows.querySelectorAll("tr").forEach(row => {
+                    const productId = row.querySelector(".product-select").value;
+                    const quantity = Number(row.querySelector(".quantity-input").value);
+                    const loaded = row.dataset.loadedProductId === productId && productId !== "";
+
+                    if (loaded && Number.isFinite(quantity) && quantity > 0) {
+                        const price = Number(row.dataset.price);
+                        const lineTotal = price * quantity;
+                        row.querySelector(".line-total").textContent = formatter.format(lineTotal) + " đ";
+                        total += lineTotal;
+                    } else {
+                        row.querySelector(".line-total").textContent = "—";
+                    }
+                });
+
+                document.getElementById("grandTotal").textContent = formatter.format(total) + " đ";
+            }
+
+            async function updateRow(row) {
+                const select = row.querySelector(".product-select");
+                const productId = select.value;
+                const requestVersion = (Number(row.dataset.requestVersion || 0) + 1);
+                row.dataset.requestVersion = String(requestVersion);
+                row.dataset.loadedProductId = "";
+                row.dataset.price = "";
+                row.querySelector(".unit-price").textContent = "—";
+                calculate();
+
+                if (!productId) return;
+
+                try {
+                    const response = await fetch(`${priceUrl}?productId=${encodeURIComponent(productId)}`);
+                    if (!response.ok) throw new Error("Không lấy được giá bán.");
+
+                    const data = await response.json();
+                    if (!row.isConnected || select.value !== productId ||
+                        Number(row.dataset.requestVersion) !== requestVersion) return;
+
+                    const price = Number(data.sellingPrice);
+                    if (!Number.isFinite(price) || price < 0) throw new Error("Giá bán không hợp lệ.");
+
+                    row.dataset.price = String(price);
+                    row.dataset.loadedProductId = productId;
+                    row.querySelector(".unit-price").textContent = formatter.format(price) + " đ";
+                    calculate();
+                } catch {
+                    if (row.isConnected && select.value === productId &&
+                        Number(row.dataset.requestVersion) === requestVersion) {
+                        error.textContent = "Không thể tải giá bán sản phẩm. Vui lòng chọn lại sản phẩm.";
+                        calculate();
+                    }
+                }
+            }
+
+            document.getElementById("addProduct").addEventListener("click", () => {
+                rows.appendChild(template.content.cloneNode(true));
+                error.textContent = "";
+                renumber();
+                calculate();
+            });
+
+            rows.addEventListener("click", e => {
+                const button = e.target.closest(".remove-row");
+                if (!button) return;
+
+                if (rows.querySelectorAll("tr").length <= 1) {
+                    error.textContent = "Hóa đơn phải có ít nhất một sản phẩm.";
+                    return;
+                }
+
+                button.closest("tr").remove();
+                error.textContent = "";
+                renumber();
+                calculate();
+            });
+
+            rows.addEventListener("change", e => {
+                if (e.target.matches(".product-select")) {
+                    error.textContent = "";
+                    updateRow(e.target.closest("tr"));
+                }
+            });
+
+            rows.addEventListener("input", e => {
+                if (e.target.matches(".quantity-input")) calculate();
+            });
+
+            form.addEventListener("submit", e => {
+                renumber();
+                error.textContent = "";
+
+                const allRows = [...rows.querySelectorAll("tr")];
+                const ids = allRows.map(row => row.querySelector(".product-select").value);
+                if (ids.some(id => !id) || new Set(ids).size !== ids.length) {
+                    e.preventDefault();
+                    error.textContent = "Vui lòng chọn sản phẩm và không chọn trùng.";
+                    return;
+                }
+
+                const quantitiesValid = allRows.every(row => {
+                    const value = Number(row.querySelector(".quantity-input").value);
+                    return Number.isFinite(value) && value >= 0.001 && value <= 999999999;
+                });
+                if (!quantitiesValid) {
+                    e.preventDefault();
+                    error.textContent = "Số lượng phải từ 0.001 đến 999999999.";
+                    return;
+                }
+
+                if (!allRows.every(row => row.dataset.loadedProductId === row.querySelector(".product-select").value)) {
+                    e.preventDefault();
+                    error.textContent = "Vui lòng đợi tải xong giá bán sản phẩm.";
+                }
+            });
+
+            renumber();
+            rows.querySelectorAll("tr").forEach(row => {
+                if (row.querySelector(".product-select").value) updateRow(row);
+            });
+            calculate();
+        })();
+    </script>
+}

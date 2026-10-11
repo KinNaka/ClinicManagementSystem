@@ -1,0 +1,41 @@
+﻿@model List<ClinicManagementSystem.Web.Entities.InventoryTransaction>
+
+@{
+    ViewData["Title"] = "Lịch sử kho";
+}
+
+<h2>Lịch sử giao dịch kho</h2>
+
+<a asp-action="Index" class="btn btn-secondary mb-3">Quay lại kho</a>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Loại giao dịch</th>
+                <th>Ngày giờ</th>
+                <th>Lý do</th>
+                <th>Số mặt hàng</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var transaction in Model)
+        {
+            <tr>
+                <td>@transaction.TransactionCode</td>
+                <td>
+                    @(transaction.TransactionType == "StockIn"
+                        ? "Nhập kho"
+                        : transaction.TransactionType == "StockOut"
+                            ? "Xuất kho"
+                            : "Điều chỉnh")
+                </td>
+                <td>@transaction.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@transaction.Reason</td>
+                <td>@transaction.Details.Count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

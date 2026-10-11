@@ -1,0 +1,76 @@
+﻿@model List<ClinicManagementSystem.Web.ViewModels.Inventory.InventoryIndexViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý kho";
+}
+
+<h2>Quản lý kho thuốc và vật tư</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input type="text"
+               name="searchTerm"
+               value="@ViewBag.SearchTerm"
+               class="form-control"
+               placeholder="Tìm theo mã hoặc tên sản phẩm..." />
+    </div>
+
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
+    </div>
+</form>
+
+<div class="mb-3">
+    <a asp-action="StockIn" class="btn btn-success">Nhập kho</a>
+    <a asp-action="StockOut" class="btn btn-warning">Xuất kho</a>
+    <a asp-action="Transactions" class="btn btn-outline-primary">
+        Lịch sử giao dịch
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Mã hàng</th>
+                <th>Tên sản phẩm</th>
+                <th>Đơn vị</th>
+                <th class="text-end">Tồn kho</th>
+                <th class="text-end">Tồn tối thiểu</th>
+                <th class="text-end">Giá vốn</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ProductCode</td>
+                <td>@item.ProductName</td>
+                <td>@item.Unit</td>
+                <td class="text-end">@item.CurrentStock</td>
+                <td class="text-end">@item.MinimumStock</td>
+                <td class="text-end">@item.CostPrice.ToString("N0")</td>
+                <td>
+                    @if (item.IsLowStock)
+                    {
+                        <span class="badge bg-danger">Sắp hết hàng</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Đủ hàng</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

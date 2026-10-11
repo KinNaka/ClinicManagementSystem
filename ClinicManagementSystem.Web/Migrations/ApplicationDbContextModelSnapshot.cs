@@ -22,6 +22,85 @@ namespace ClinicManagementSystem.Web.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ClinicManagementSystem.Web.Entities.InventoryTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TransactionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TransactionCode")
+                        .IsUnique();
+
+                    b.ToTable("InventoryTransactions");
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Entities.InventoryTransactionDetail", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("InventoryTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryTransactionId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("InventoryTransactionDetails");
+                });
+
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Product", b =>
                 {
                     b.Property<long>("Id")
@@ -118,17 +197,36 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<DateTime>("UpdateAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("status")
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.ToTable("ProductCategories", (string)null);
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Entities.InventoryTransactionDetail", b =>
+                {
+                    b.HasOne("ClinicManagementSystem.Web.Entities.InventoryTransaction", "InventoryTransaction")
+                        .WithMany("Details")
+                        .HasForeignKey("InventoryTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryTransaction");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Product", b =>
@@ -140,6 +238,11 @@ namespace ClinicManagementSystem.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Entities.InventoryTransaction", b =>
+                {
+                    b.Navigation("Details");
                 });
 
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.ProductCategory", b =>

@@ -56,7 +56,7 @@ namespace ClinicManagementSystem.Web.Controllers
             if (!result.Success)
             {
                 ModelState.AddModelError(
-                    nameof(model.PatientCode),
+                    string.Empty,
                     result.Error ?? "Không thể tạo hồ sơ.");
 
                 return View(model);

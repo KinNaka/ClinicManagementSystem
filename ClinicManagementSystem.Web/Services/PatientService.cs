@@ -122,6 +122,23 @@ namespace ClinicManagementSystem.Web.Services
             PatientFormViewModel model)
         {
             var code = model.PatientCode.Trim().ToUpperInvariant();
+            var phoneNumber = NormalizeOptional(model.PhoneNumber);
+
+            if (phoneNumber != null)
+            {
+                var existingPatient = await _context.Patients
+                    .AsNoTracking()
+                    .Where(p => p.PhoneNumber != null && p.PhoneNumber.Trim() == phoneNumber)
+                    .OrderBy(p => p.Id)
+                    .Select(p => new { p.FullName })
+                    .FirstOrDefaultAsync();
+
+                if (existingPatient != null)
+                {
+                    return (false,
+                        $"Số điện thoại đã có trên hệ thống với tên khách hàng là: {existingPatient.FullName}.");
+                }
+            }
 
             if (await ExistsCodeAsync(code))
             {
@@ -139,7 +156,7 @@ namespace ClinicManagementSystem.Web.Services
                 FullName = model.FullName.Trim(),
                 DateOfBirth = model.DateOfBirth,
                 Gender = NormalizeOptional(model.Gender),
-                PhoneNumber = NormalizeOptional(model.PhoneNumber),
+                PhoneNumber = phoneNumber,
                 Address = NormalizeOptional(model.Address),
                 Occupation = NormalizeOptional(model.Occupation),
                 Notes = NormalizeOptional(model.Notes),

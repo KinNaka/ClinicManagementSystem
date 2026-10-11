@@ -150,6 +150,7 @@ namespace ClinicManagementSystem.Web.Controllers
                 nameof(Details), new { id });
         }
 
+
         private void ValidateSale(SaleFormViewModel model)
         {
             if (model.PatientId <= 0)
@@ -184,6 +185,21 @@ namespace ClinicManagementSystem.Web.Controllers
                     nameof(model.Details),
                     "Không được thêm trùng sản phẩm.");
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProductPrice(long productId)
+        {
+            var price = await _saleService
+                .GetProductPriceAsync(productId);
+
+            if (price == null)
+                return NotFound();
+
+            return Json(new
+            {
+                sellingPrice = price.Value
+            });
         }
     }
 }

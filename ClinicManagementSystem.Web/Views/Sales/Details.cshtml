@@ -1,0 +1,239 @@
+﻿
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết hóa đơn";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <h2>Chi tiết hóa đơn</h2>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            Quay lại
+        </a>
+
+        @if (Model.Status == "Draft")
+        {
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">
+                Sửa hóa đơn
+            </a>
+        }
+
+        <button type="button"
+                onclick="window.print()"
+                class="btn btn-outline-dark">
+            In hóa đơn
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string success)
+{
+    <div class="alert alert-success no-print">
+        @success
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string error)
+{
+    <div class="alert alert-danger no-print">
+        @error
+    </div>
+}
+
+<div class="card" id="invoice">
+    <div class="card-body p-4">
+
+        <div class="text-center mb-4">
+            <h3 class="fw-bold">HÓA ĐƠN BÁN HÀNG</h3>
+            <div class="text-muted">
+                Clinic Management System V1
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong>Mã hóa đơn:</strong>
+                    @Model.SaleCode
+                </p>
+
+                <p class="mb-2">
+                    <strong>Ngày lập:</strong>
+                    @Model.SaleDate.ToString("dd/MM/yyyy HH:mm")
+                </p>
+
+                <p class="mb-2">
+                    <strong>Trạng thái:</strong>
+
+                    @if (Model.Status == "Confirmed")
+                    {
+                        <span class="badge bg-success">
+                            Đã xác nhận
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">
+                            Hóa đơn nháp
+                        </span>
+                    }
+                </p>
+            </div>
+
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong>Mã bệnh nhân:</strong>
+                    @Model.PatientCode
+                </p>
+
+                <p class="mb-2">
+                    <strong>Họ và tên:</strong>
+                    @Model.PatientName
+                </p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px">STT</th>
+                        <th>Mã SP</th>
+                        <th>Tên thuốc / vật tư</th>
+                        <th>ĐVT</th>
+                        <th class="text-end">SL</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @{
+                        var index = 1;
+                    }
+
+                    @foreach (var detail in Model.Details)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@detail.ProductCode</td>
+                            <td>@detail.ProductName</td>
+                            <td>@detail.Unit</td>
+                            <td class="text-end">
+                                @detail.Quantity.ToString("N3")
+                            </td>
+                            <td class="text-end">
+                                @detail.UnitPrice.ToString("N0")
+                            </td>
+                            <td class="text-end">
+                                @detail.LineTotal.ToString("N0")
+                            </td>
+                        </tr>
+
+                        index++;
+                    }
+                </tbody>
+
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="6"
+                            class="text-end fw-bold">
+                            TỔNG CỘNG
+                        </td>
+                        <td class="text-end fw-bold">
+                            @Model.TotalAmount.ToString("N0") đ
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="mt-3">
+                <strong>Ghi chú:</strong>
+                <p class="mb-0">@Model.Notes</p>
+            </div>
+        }
+
+        @if (Model.Status == "Draft")
+        {
+            <div class="alert alert-warning mt-4">
+                Đây là hóa đơn nháp. Sản phẩm chưa được xuất kho.
+            </div>
+        }
+        else if (Model.Status == "Confirmed")
+        {
+            <div class="alert alert-success mt-4">
+                Hóa đơn đã xác nhận và ghi nhận xuất kho.
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Status == "Draft")
+{
+    <div class="mt-4 d-flex justify-content-end no-print">
+        <form asp-controller="Sales"
+              asp-action="Confirm"
+              asp-route-id="@Model.Id"
+              method="post"
+              onsubmit="return confirm('Xác nhận hóa đơn này và trừ tồn kho?');">
+
+            @Html.AntiForgeryToken()
+
+            <button type="submit" class="btn btn-success btn-lg">
+                Xác nhận hóa đơn &amp; Xuất kho
+            </button>
+        </form>
+    </div>
+}
+
+<style>
+    @@media print {
+        @@page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .no-print,
+        header,
+        footer,
+        nav {
+            display: none !important;
+        }
+
+        #invoice {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        #invoice .card-body {
+            padding: 0 !important;
+        }
+
+        #invoice .table-responsive {
+            overflow: visible !important;
+        }
+
+        #invoice table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #invoice th,
+        #invoice td {
+            border: 1px solid #333 !important;
+            color: black !important;
+        }
+    }
+</style>

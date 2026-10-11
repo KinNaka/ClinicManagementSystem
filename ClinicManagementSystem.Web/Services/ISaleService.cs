@@ -21,5 +21,6 @@ namespace ClinicManagementSystem.Web.Services
             long id, SaleFormViewModel model);
 
         Task ConfirmAsync(long id);
+        Task<decimal?> GetProductPriceAsync(long productId);
     }
 }

@@ -384,5 +384,15 @@ namespace ClinicManagementSystem.Web.Services
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
         }
+
+        public async Task<decimal?> GetProductPriceAsync(long productId)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Id == productId && p.Status == "Active")
+                .Select(p => (decimal?)p.SellingPrice)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

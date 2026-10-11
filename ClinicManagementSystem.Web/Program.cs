@@ -19,7 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // =====================================
 // 2. ASP.NET CORE IDENTITY
 // =====================================
-
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

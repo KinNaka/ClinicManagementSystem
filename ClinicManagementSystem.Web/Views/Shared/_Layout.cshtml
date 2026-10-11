@@ -1,90 +1,64 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isDashboard = controller == "Dashboard";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var sections = new[] {
+        (Controller: "Dashboard", Label: "Tổng quan", Icon: "◫"),
+        (Controller: "Patients", Label: "Bệnh nhân", Icon: "♧"),
+        (Controller: "Products", Label: "Sản phẩm", Icon: "▦"),
+        (Controller: "ProductCategories", Label: "Danh mục sản phẩm", Icon: "≡"),
+        (Controller: "Inventory", Label: "Kho hàng", Icon: "▣"),
+        (Controller: "Sales", Label: "Hóa đơn", Icon: "▤"),
+        (Controller: "UserManagement", Label: "Tài khoản", Icon: "⚙")
+    };
+    var sectionName = sections.FirstOrDefault(x => x.Controller == controller).Label ?? "Phòng khám";
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ClinicManagementSystem.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] · Clinic Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ClinicManagementSystem.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/clinic.css" asp-append-version="true" />
 </head>
-<body>
-
-    @if (User.Identity?.IsAuthenticated == true)
+<body class="@(signedIn ? "clinic-app" : "auth-page")">
+    <a href="#main-content" class="skip-link">Đến nội dung chính</a>
+    @if (signedIn)
     {
-        <div class="d-flex align-items-center gap-3">
-            <span class="text-muted">
-                Xin chào, @User.Identity.Name
-            </span>
-
-            <form asp-controller="Account"
-                  asp-action="Logout"
-                  method="post"
-                  class="m-0">
-
-                @Html.AntiForgeryToken()
-
-                <button type="submit"
-                        class="btn btn-outline-danger btn-sm">
-                    Đăng xuất
-                </button>
-            </form>
+        <div class="dashboard-shell">
+            <aside class="sidebar">
+                <a class="brand" asp-controller="Dashboard" asp-action="Index"><span class="brand-symbol" aria-hidden="true">＋</span><span>Clinic<span class="brand-subtitle">MANAGEMENT SYSTEM</span></span></a>
+                <p class="nav-caption">QUẢN LÝ PHÒNG KHÁM</p>
+                <nav class="main-nav" aria-label="Điều hướng chính">
+                    @foreach (var navItem in sections)
+                    {
+                        if (navItem.Controller == "UserManagement" && !User.IsInRole("Admin")) { continue; }
+                        <a class="@(controller == navItem.Controller ? "active" : "")" aria-current="@(controller == navItem.Controller ? "page" : null)" asp-controller="@navItem.Controller" asp-action="Index"><span aria-hidden="true">@navItem.Icon</span>@navItem.Label</a>
+                    }
+                </nav>
+                <div class="sidebar-bottom"><span class="status-dot" aria-hidden="true"></span> Không gian quản lý phòng khám</div>
+            </aside>
+            <div class="workspace">
+                <header class="topbar">
+                    <div class="breadcrumb">Phòng khám <span aria-hidden="true">/</span> <b>@sectionName</b></div>
+                    <div class="user-menu"><span class="avatar" aria-hidden="true">@(User.IsInRole("Admin") ? "AD" : "NV")</span><span class="user-details"><b>@User.Identity?.Name</b><small>@(User.IsInRole("Admin") ? "Quản trị viên" : "Nhân viên")</small></span><form asp-controller="Account" asp-action="Logout" method="post"><button class="logout" type="submit">Đăng xuất</button></form></div>
+                </header>
+                <main id="main-content" class="dashboard-main @(isDashboard ? "" : "management-page")">
+                    @if (!isDashboard) { <p class="eyebrow page-eyebrow">@sectionName</p> }
+                    @RenderBody()
+                </main>
+                <footer class="dashboard-footer">Clinic Management <span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></footer>
+            </div>
         </div>
     }
     else
     {
-        <a asp-controller="Account"
-           asp-action="Login"
-           class="btn btn-outline-primary btn-sm">
-            Đăng nhập
-        </a>
+        <header class="auth-header"><a class="brand" asp-controller="Dashboard" asp-action="Index"><span class="brand-symbol" aria-hidden="true">＋</span><span>Clinic<span class="brand-subtitle">MANAGEMENT SYSTEM</span></span></a><span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></header>
+        <main id="main-content" class="auth-main">@RenderBody()</main>
+        <footer class="auth-footer">Clinic Management · Không gian quản lý phòng khám</footer>
     }
-
-    <a class="nav-link"
-   asp-controller="Inventory"
-   asp-action="Index">
-    Quản lý kho
-</a>
-    <li class="nav-item">
-        <a class="nav-link"
-           asp-controller="Patients"
-           asp-action="Index">
-            Khách hàng / Bệnh nhân
-        </a>
-    </li>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ClinicManagementSystem.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - ClinicManagementSystem.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

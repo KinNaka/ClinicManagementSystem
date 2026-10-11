@@ -1,4 +1,4 @@
-﻿
+
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleIndexViewModel
 
 @{
@@ -27,7 +27,7 @@
 
 <form asp-controller="Sales"
       asp-action="Index"
-      method="get"
+      method="get" data-live-filter data-results-id="filter-results"
       class="row g-2 mb-3">
 
     <div class="col-md-5">
@@ -57,13 +57,14 @@
             Tìm kiếm
         </button>
 
-        <a asp-action="Index"
+        <a asp-action="Index" data-filter-reset
            class="btn btn-outline-secondary">
             Xóa lọc
         </a>
     </div>
 </form>
 
+<div id="filter-results" data-filter-results>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-light">
@@ -145,4 +146,5 @@
             }
         </tbody>
     </table>
+</div>
 </div>

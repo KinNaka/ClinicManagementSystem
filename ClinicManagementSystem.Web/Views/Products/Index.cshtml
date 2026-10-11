@@ -1,4 +1,4 @@
-﻿
+
 @model List<ClinicManagementSystem.Web.Models.ViewModels.Products.ProductListViewModel>
 
 @{
@@ -43,7 +43,7 @@
 <div class="card shadow-sm">
     <div class="card-body">
 
-        <form asp-action="Index" method="get" class="row g-2 mb-4">
+        <form asp-action="Index" method="get" data-live-filter data-results-id="filter-results" class="row g-2 mb-4">
             <div class="col-md-5">
                 <input type="text"
                        name="searchTerm"
@@ -82,10 +82,11 @@
 
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Search</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+                <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Reset</a>
             </div>
         </form>
 
+        <div id="filter-results" data-filter-results>
         @if (Model == null || !Model.Any())
         {
             <div class="text-center py-5">
@@ -195,5 +196,6 @@
                 </table>
             </div>
         }
+        </div>
     </div>
 </div>

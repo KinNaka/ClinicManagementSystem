@@ -25,6 +25,8 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
     public class SaleDetailDisplayViewModel
     {
+        public string? Notes { get; set; }
+
         public string ProductCode { get; set; } = string.Empty;
 
         public string ProductName { get; set; } = string.Empty;

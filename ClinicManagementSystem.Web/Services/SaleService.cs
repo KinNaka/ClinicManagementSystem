@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Entities;
 using ClinicManagementSystem.Web.Models.Entities;
@@ -83,6 +83,7 @@ namespace ClinicManagementSystem.Web.Services
                         new SaleDetailDisplayViewModel
                         {
                             ProductCode = d.Product.ProductCode,
+                            Notes = d.Notes,
                             ProductName = d.Product.Name,
                             Unit = d.Product.Unit,
                             Quantity = d.Quantity,
@@ -130,9 +131,10 @@ namespace ClinicManagementSystem.Web.Services
                     "Hóa đơn phải có ít nhất một sản phẩm.");
 
             if (model.Details.Any(d =>
-                d.ProductId <= 0 || d.Quantity <= 0))
+                d.ProductId <= 0 || d.Quantity < 1 || d.Quantity > 999999999 ||
+                d.Quantity != decimal.Truncate(d.Quantity)))
                 throw new InvalidOperationException(
-                    "Sản phẩm hoặc số lượng không hợp lệ.");
+                    "Sản phẩm không hợp lệ hoặc số lượng không phải số nguyên từ 1 đến 999999999.");
 
             var productIds = model.Details
                 .Select(d => d.ProductId)
@@ -179,6 +181,7 @@ namespace ClinicManagementSystem.Web.Services
                 details.Add(new SaleDetail
                 {
                     ProductId = product.Id,
+                    Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
                     Quantity = item.Quantity,
                     UnitPrice = product.SellingPrice,
                     LineTotal = lineTotal
@@ -252,6 +255,7 @@ namespace ClinicManagementSystem.Web.Services
                         new SaleDetailFormViewModel
                         {
                             ProductId = d.ProductId,
+                            Notes = d.Notes,
                             ProductName = d.Product.Name,
                             Unit = d.Product.Unit,
                             Quantity = d.Quantity,

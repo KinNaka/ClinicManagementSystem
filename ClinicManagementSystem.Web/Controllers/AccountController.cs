@@ -25,7 +25,7 @@ namespace ClinicManagementSystem.Web.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Dashboard");
 
             ViewData["ReturnUrl"] = returnUrl;
             return View(new LoginViewModel());
@@ -68,7 +68,7 @@ namespace ClinicManagementSystem.Web.Controllers
                     return LocalRedirect(returnUrl);
                 }
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             if (result.IsLockedOut)

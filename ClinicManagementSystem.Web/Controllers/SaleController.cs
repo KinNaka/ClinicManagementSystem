@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Models.ViewModels.Sales;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -170,11 +170,12 @@ namespace ClinicManagementSystem.Web.Controllers
             }
 
             if (model.Details.Any(d =>
-                d.ProductId <= 0 || d.Quantity <= 0))
+                d.ProductId <= 0 || d.Quantity < 1 || d.Quantity > 999999999 ||
+                d.Quantity != decimal.Truncate(d.Quantity)))
             {
                 ModelState.AddModelError(
                     nameof(model.Details),
-                    "Vui lòng chọn sản phẩm và nhập số lượng hợp lệ.");
+                    "Vui lòng chọn sản phẩm và nhập số lượng nguyên từ 1 đến 999999999.");
             }
 
             if (model.Details

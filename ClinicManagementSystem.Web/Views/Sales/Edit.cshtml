@@ -1,4 +1,4 @@
-﻿@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel
 
 @{
     ViewData["Title"] = "Chỉnh sửa hóa đơn";
@@ -16,7 +16,7 @@
         <div class="card-header fw-bold">Thông tin bệnh nhân</div>
         <div class="card-body">
             <label asp-for="PatientId" class="form-label">Bệnh nhân</label>
-            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select" data-search-picker="Bệnh nhân">
                 <option value="0">-- Chọn bệnh nhân --</option>
             </select>
             <span asp-validation-for="PatientId" class="text-danger"></span>
@@ -45,7 +45,7 @@
                         {
                             <tr>
                                 <td>
-                                    <select name="Details[@i].ProductId" class="form-select product-select" required>
+                                    <select name="Details[@i].ProductId" class="form-select product-select" data-search-picker="Sản phẩm" required>
                                         <option value="">-- Chọn sản phẩm --</option>
                                         @foreach (var p in Model.Products)
                                         {
@@ -59,11 +59,16 @@
                                             }
                                         }
                                     </select>
+                                    <textarea name="Details[@i].Notes" class="form-control line-notes mt-2" rows="2" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…">@Model.Details[i].Notes</textarea>
                                 </td>
                                 <td>
-                                    <input name="Details[@i].Quantity" type="number" min="0.001" step="0.001"
+                                    <div class="quantity-stepper" role="group" aria-label="Điều chỉnh số lượng">
+                                        <button type="button" class="quantity-step" data-quantity-step="-1" aria-label="Giảm số lượng">−</button>
+                                        <input name="Details[@i].Quantity" type="number" min="1" max="999999999" step="1" inputmode="numeric" aria-label="Số lượng sản phẩm"
                                            value="@Model.Details[i].Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                            class="form-control quantity-input" required />
+                                        <button type="button" class="quantity-step" data-quantity-step="1" aria-label="Tăng số lượng">+</button>
+                                    </div>
                                 </td>
                                 <td class="text-end unit-price">—</td>
                                 <td class="text-end line-total">—</td>
@@ -101,17 +106,22 @@
 <template id="rowTemplate">
     <tr>
         <td>
-            <select class="form-select product-select" required>
+            <select class="form-select product-select" data-search-picker="Sản phẩm" required>
                 <option value="">-- Chọn sản phẩm --</option>
                 @foreach (var p in Model.Products)
                 {
                     <option value="@p.Value">@p.Text</option>
                 }
             </select>
+            <textarea class="form-control line-notes mt-2" rows="2" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…"></textarea>
         </td>
         <td>
-            <input type="number" min="0.001" step="0.001" value="1"
+            <div class="quantity-stepper" role="group" aria-label="Điều chỉnh số lượng">
+                <button type="button" class="quantity-step" data-quantity-step="-1" aria-label="Giảm số lượng">−</button>
+                <input type="number" min="1" max="999999999" step="1" inputmode="numeric" aria-label="Số lượng sản phẩm" value="1"
                    class="form-control quantity-input" required />
+                <button type="button" class="quantity-step" data-quantity-step="1" aria-label="Tăng số lượng">+</button>
+            </div>
         </td>
         <td class="text-end unit-price">—</td>
         <td class="text-end line-total">—</td>
@@ -123,6 +133,8 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/search-picker.js" asp-append-version="true"></script>
+    <script src="~/js/quantity-stepper.js" asp-append-version="true"></script>
 
     <script>
         (() => {
@@ -136,9 +148,11 @@
             });
 
             function renumber() {
+                window.ClinicQuantity.init(rows);
                 [...rows.querySelectorAll("tr")].forEach((row, i) => {
                     row.querySelector(".product-select").name = `Details[${i}].ProductId`;
                     row.querySelector(".quantity-input").name = `Details[${i}].Quantity`;
+                    row.querySelector(".line-notes").name = `Details[${i}].Notes`;
                 });
             }
 
@@ -150,7 +164,7 @@
                     const quantity = Number(row.querySelector(".quantity-input").value);
                     const loaded = row.dataset.loadedProductId === productId && productId !== "";
 
-                    if (loaded && Number.isFinite(quantity) && quantity > 0) {
+                    if (loaded && Number.isInteger(quantity) && quantity >= 1 && quantity <= 999999999) {
                         const price = Number(row.dataset.price);
                         const lineTotal = price * quantity;
                         row.querySelector(".line-total").textContent = formatter.format(lineTotal) + " đ";
@@ -201,6 +215,7 @@
 
             document.getElementById("addProduct").addEventListener("click", () => {
                 rows.appendChild(template.content.cloneNode(true));
+                window.ClinicSearchPicker.init(rows);
                 error.textContent = "";
                 renumber();
                 calculate();
@@ -246,11 +261,11 @@
 
                 const quantitiesValid = allRows.every(row => {
                     const value = Number(row.querySelector(".quantity-input").value);
-                    return Number.isFinite(value) && value >= 0.001 && value <= 999999999;
+                    return Number.isInteger(value) && value >= 1 && value <= 999999999;
                 });
                 if (!quantitiesValid) {
                     e.preventDefault();
-                    error.textContent = "Số lượng phải từ 0.001 đến 999999999.";
+                    error.textContent = "Số lượng phải là số nguyên từ 1 đến 999999999.";
                     return;
                 }
 
@@ -260,6 +275,7 @@
                 }
             });
 
+            window.ClinicSearchPicker.init(form);
             renumber();
             rows.querySelectorAll("tr").forEach(row => {
                 if (row.querySelector(".product-select").value) updateRow(row);

@@ -1,4 +1,4 @@
-﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientIndexViewModel
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientIndexViewModel
 
 @{
     ViewData["Title"] = "Quản lý bệnh nhân";
@@ -21,7 +21,7 @@
     <div class="alert alert-danger">@error</div>
 }
 
-<form asp-action="Index" method="get" class="row g-2 mb-3">
+<form asp-action="Index" method="get" data-live-filter data-results-id="filter-results" class="row g-2 mb-3">
     <div class="col-md-6">
         <input name="searchTerm" value="@Model.SearchTerm"
                class="form-control"
@@ -42,10 +42,11 @@
 
     <div class="col-md-3 d-flex gap-2">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+        <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Xóa lọc</a>
     </div>
 </form>
 
+<div id="filter-results" data-filter-results>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-light">
@@ -130,3 +131,4 @@
 </div>
 
 <p class="text-muted">Tổng số kết quả: @Model.Patients.Count</p>
+</div>

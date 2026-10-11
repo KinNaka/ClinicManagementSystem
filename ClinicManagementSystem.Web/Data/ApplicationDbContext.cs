@@ -98,6 +98,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Decimal precision
+        modelBuilder.Entity<SaleDetail>()
+            .Property(d => d.Notes)
+            .HasMaxLength(500);
+
         modelBuilder.Entity<Sale>()
             .Property(s => s.TotalAmount)
             .HasPrecision(18, 2);

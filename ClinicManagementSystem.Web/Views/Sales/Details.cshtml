@@ -1,4 +1,4 @@
-﻿
+
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
 
 @{
@@ -122,10 +122,15 @@
                         <tr>
                             <td>@index</td>
                             <td>@detail.ProductCode</td>
-                            <td>@detail.ProductName</td>
+                            <td>@detail.ProductName
+                                @if (!string.IsNullOrWhiteSpace(detail.Notes))
+                                {
+                                    <div class="invoice-line-note">@detail.Notes</div>
+                                }
+                            </td>
                             <td>@detail.Unit</td>
                             <td class="text-end">
-                                @detail.Quantity.ToString("N3")
+                                @detail.Quantity.ToString(detail.Quantity == decimal.Truncate(detail.Quantity) ? "N0" : "N3")
                             </td>
                             <td class="text-end">
                                 @detail.UnitPrice.ToString("N0")

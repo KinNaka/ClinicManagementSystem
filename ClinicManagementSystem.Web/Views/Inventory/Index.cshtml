@@ -1,4 +1,4 @@
-﻿@model List<ClinicManagementSystem.Web.ViewModels.Inventory.InventoryIndexViewModel>
+@model List<ClinicManagementSystem.Web.ViewModels.Inventory.InventoryIndexViewModel>
 
 @{
     ViewData["Title"] = "Quản lý kho";
@@ -13,7 +13,7 @@
     </div>
 }
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
+<form method="get" data-live-filter data-results-id="filter-results" asp-action="Index" class="row g-2 mb-3">
     <div class="col-md-5">
         <input type="text"
                name="searchTerm"
@@ -24,7 +24,7 @@
 
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
+        <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Đặt lại</a>
     </div>
 </form>
 
@@ -36,6 +36,7 @@
     </a>
 </div>
 
+<div id="filter-results" data-filter-results>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-light">
@@ -73,4 +74,5 @@
         }
         </tbody>
     </table>
+</div>
 </div>

@@ -15,6 +15,8 @@ namespace ClinicManagementSystem.Web.Models.Entities
 
         public decimal LineTotal { get; set; }
 
+        public string? Notes { get; set; }
+
         public Sale Sale { get; set; } = null!;
 
         public Product Product { get; set; } = null!;

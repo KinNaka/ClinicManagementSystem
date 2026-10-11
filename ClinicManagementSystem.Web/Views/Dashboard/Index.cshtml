@@ -1,0 +1,228 @@
+﻿
+@model ClinicManagementSystem.Web.Models.ViewModels.Dashboard.DashboardViewModel
+
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var chartLabels = Model.RevenueLast7Days
+        .Select(x => x.Date.ToString("dd/MM"))
+        .ToList();
+
+    var chartValues = Model.RevenueLast7Days
+        .Select(x => x.Revenue)
+        .ToList();
+
+    var labelsJson = JsonSerializer.Serialize(chartLabels);
+    var valuesJson = JsonSerializer.Serialize(chartValues);
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Dashboard</h2>
+            <p class="text-muted mb-0">
+                Tổng quan hoạt động phòng khám
+            </p>
+        </div>
+
+        <span class="badge bg-primary fs-6">
+            Clinic Management System V1
+        </span>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Tổng bệnh nhân
+                    </p>
+                    <h3 class="fw-bold">
+                        @Model.TotalPatients.ToString("N0")
+                    </h3>
+                    <a asp-controller="Patients"
+                       asp-action="Index"
+                       class="text-decoration-none small">
+                        Xem bệnh nhân →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Tổng sản phẩm
+                    </p>
+                    <h3 class="fw-bold">
+                        @Model.TotalProducts.ToString("N0")
+                    </h3>
+                    <a asp-controller="Products"
+                       asp-action="Index"
+                       class="text-decoration-none small">
+                        Xem sản phẩm →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Sản phẩm tồn kho thấp
+                    </p>
+                    <h3 class="fw-bold text-danger">
+                        @Model.LowStockProducts.ToString("N0")
+                    </h3>
+                    <span class="text-muted small">
+                        Tồn kho ≤ mức tối thiểu
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Giá trị hóa đơn hôm nay
+                    </p>
+                    <h3 class="fw-bold text-success">
+                        @Model.TodayRevenue.ToString("N0") đ
+                    </h3>
+                    <span class="text-muted small">
+                        @Model.TodaySalesCount hóa đơn đã xác nhận
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    Giá trị hóa đơn 7 ngày gần nhất
+                </div>
+
+                <div class="card-body">
+                    <div style="height:320px; position:relative;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    Truy cập nhanh
+                </div>
+
+                <div class="card-body d-grid gap-2">
+                    <a asp-controller="Patients"
+                       asp-action="Index"
+                       class="btn btn-outline-primary">
+                        Quản lý bệnh nhân
+                    </a>
+
+                    <a asp-controller="Products"
+                       asp-action="Index"
+                       class="btn btn-outline-primary">
+                        Quản lý sản phẩm
+                    </a>
+
+                    <a asp-controller="Sales"
+                       asp-action="Index"
+                       class="btn btn-outline-primary">
+                        Quản lý hóa đơn
+                    </a>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="UserManagement"
+                           asp-action="Index"
+                           class="btn btn-outline-secondary">
+                            Quản lý tài khoản
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mt-3 text-muted small">
+        Số liệu doanh thu phản ánh giá trị hóa đơn đã xác nhận,
+        chưa phải tiền thực thu.
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <script>
+        (() => {
+            const canvas = document.getElementById("revenueChart");
+
+            if (!canvas || typeof Chart === "undefined") {
+                return;
+            }
+
+            const labels = @Html.Raw(labelsJson);
+            const values = @Html.Raw(valuesJson);
+
+            new Chart(canvas, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Giá trị hóa đơn (VNĐ)",
+                        data: values,
+                        borderColor: "#0d6efd",
+                        backgroundColor: "rgba(13,110,253,0.12)",
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: context =>
+                                    new Intl.NumberFormat("vi-VN")
+                                        .format(context.parsed.y) + " đ"
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value =>
+                                    new Intl.NumberFormat("vi-VN")
+                                        .format(value)
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

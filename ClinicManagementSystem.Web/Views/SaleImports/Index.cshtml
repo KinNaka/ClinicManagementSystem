@@ -1,0 +1,61 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleImportViewModel
+@{
+    ViewData["Title"] = "Nhập hóa đơn KiotViet";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+<h2>Nhập hóa đơn lịch sử KiotViet</h2>
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+<div class="alert alert-info">
+    <p class="mb-1">Chọn file <strong>danh sách chi tiết hóa đơn</strong>. Các dòng cùng mã hóa đơn sẽ được gộp; liên kết khách hàng và hàng hóa bằng mã KiotViet.</p>
+    <p class="mb-1">Lưu mã, ngày mua, tên/đơn vị hàng tại thời điểm bán, số lượng, giá bán, thành tiền, giảm giá hóa đơn và thu khác. Hóa đơn có nhãn <strong>Lịch sử KiotViet</strong>, không sửa hoặc xác nhận xuất kho.</p>
+    <p class="mb-1">Không trừ tồn kho hiện tại, không cộng lại Tổng bán KiotViet đã nhập và không đưa vào doanh thu mới. Mã hóa đơn đã tồn tại sẽ được bỏ qua, không ghi đè.</p>
+    <p class="mb-0">Nên nhập khách hàng và danh mục hàng trước. Hồ sơ KH được tạo bổ sung từ hóa đơn chỉ dùng để liên kết lịch sử, chưa có tổng bán lũy kế; tổng bán khách hàng vẫn cần nguồn danh sách KH KiotViet.</p>
+</div>
+<form asp-action="Preview" method="post" enctype="multipart/form-data" class="mb-4">
+    <label for="invoice-files" class="form-label">File hóa đơn KiotViet (.xlsx)</label>
+    <input id="invoice-files" type="file" name="files" accept=".xlsx" multiple required class="form-control mb-2" />
+    <div class="form-check"><input asp-for="CreateMissingRecords" class="form-check-input" /><label asp-for="CreateMissingRecords" class="form-check-label">Tạo bổ sung mã KH/mã hàng còn thiếu từ hóa đơn. Hàng bổ sung sẽ ngừng kinh doanh và có tồn kho 0.</label></div>
+    <div class="form-check mb-2"><input asp-for="UseWalkInCustomer" class="form-check-input" /><label asp-for="UseWalkInCustomer" class="form-check-label">Gắn hóa đơn không có mã KH vào “Khách lẻ KiotViet”</label></div>
+    <p class="text-muted small">1–4 file, tối đa 20 MB/file, 60 MB/đợt và 20.000 hóa đơn/đợt. Xem trước chưa lưu dữ liệu. Đổi lựa chọn bằng cách chọn lại file và xem trước lại.</p>
+    <button type="submit" class="btn btn-primary">Xem trước và đối chiếu</button>
+    <a asp-controller="Sales" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</form>
+@if (Model.Token != null)
+{
+    <h3>Kết quả đối chiếu</h3>
+    <p>@string.Join(" · ", Model.Files)</p>
+    <p><strong>@Model.Invoices.Count.ToString("N0", culture)</strong> hóa đơn · <strong>@Model.NewCount.ToString("N0", culture)</strong> hóa đơn mới hợp lệ · <strong>@Model.ExistingCount.ToString("N0", culture)</strong> mã đã tồn tại · <strong>@Model.ErrorCount.ToString("N0", culture)</strong> hóa đơn lỗi</p>
+    <p>Tổng giá trị hóa đơn mới: <strong>@Model.Total.ToString("N2", culture) ₫</strong> (không cộng vào tổng bán lũy kế).</p>
+    <p>Thiếu @Model.MissingPatientCodes.Count mã KH · Thiếu @Model.MissingProductCodes.Count mã hàng · @Model.WalkInCount hóa đơn không có mã KH</p>
+    @if (!Model.CanImport) { <div class="alert alert-warning">Cần xử lý lỗi hoặc mã chưa liên kết. Có thể bật lựa chọn tạo bổ sung/khách lẻ rồi chọn lại file để xem trước lại.</div> }
+    @if (Model.MissingPatientCodes.Count > 0)
+    {
+        <details class="mb-2"><summary>Mã KH còn thiếu — @(Model.CreateMissingRecords ? "sẽ tạo bổ sung" : "cần nhập trước")</summary><p>@string.Join(", ", Model.MissingPatientCodes)</p></details>
+    }
+    @if (Model.MissingProductCodes.Count > 0)
+    {
+        <details class="mb-3"><summary>Mã hàng còn thiếu — @(Model.CreateMissingRecords ? "sẽ tạo với tồn 0, ngừng kinh doanh" : "cần nhập trước")</summary><p>@string.Join(", ", Model.MissingProductCodes)</p></details>
+    }
+    @if (Model.ErrorCount > 0)
+    {
+        <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>File / dòng</th><th>Mã hóa đơn</th><th>Lỗi</th></tr></thead><tbody>
+        @foreach (var invoice in Model.Invoices.Where(i => i.Errors.Count > 0))
+        { <tr><td>@invoice.FileName / @invoice.RowNumber</td><td>@invoice.Sale.SaleCode</td><td>@string.Join(" ", invoice.Errors)</td></tr> }
+        </tbody></table></div>
+    }
+    <p class="text-muted small">100 hóa đơn đầu. Tất cả hóa đơn trong các file được kiểm tra trước khi nhập.</p>
+    <div class="table-responsive"><table class="table table-bordered align-middle">
+        <thead><tr><th>Mã hóa đơn</th><th>Ngày mua</th><th>Mã KH / họ tên</th><th>Số dòng hàng</th><th>Tổng tiền</th><th>Kết quả</th></tr></thead><tbody>
+        @foreach (var invoice in Model.Invoices.Take(100))
+        {
+            <tr><td>@invoice.Sale.SaleCode</td><td>@invoice.Sale.SaleDate.ToString("dd/MM/yyyy HH:mm")</td><td>@(invoice.PatientCode.Length == 0 ? "Khách lẻ" : invoice.PatientCode)<br />@invoice.PatientName</td><td>@invoice.Sale.Details.Count</td><td>@invoice.Sale.TotalAmount.ToString("N2", culture) ₫</td><td>@(invoice.Errors.Count > 0 ? "Có lỗi" : invoice.Exists ? "Bỏ qua" : "Sẽ nhập")
+                @foreach (var warning in invoice.Warnings) { <div class="small text-muted">@warning</div> }
+            </td></tr>
+        }
+        </tbody></table></div>
+    <form asp-action="Confirm" method="post">
+        <input type="hidden" name="token" value="@Model.Token" />
+        <button type="submit" class="btn btn-primary" disabled="@(!Model.CanImport)">Nhập @Model.NewCount.ToString("N0", culture) hóa đơn lịch sử</button>
+        <span class="text-muted small ms-2">Bản xem trước có hiệu lực 30 phút. Đợt nhập sẽ lưu toàn bộ hoặc không lưu nếu có lỗi.</span>
+    </form>
+}

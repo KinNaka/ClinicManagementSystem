@@ -1,0 +1,52 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductImportViewModel
+@{
+    ViewData["Title"] = "Nhập hàng hóa từ KiotViet";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+<h2>Nhập hàng hóa từ KiotViet</h2>
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+<div class="alert alert-info">
+    <p class="mb-1">Giữ nguyên mã hàng. Nhập tên, nhóm hàng, hàm lượng, đơn vị tính, giá bán, giá vốn và tồn kho ban đầu. Nhóm chưa có sẽ được tạo tự động theo tên trong file.</p>
+    <p class="mb-1">Mã hàng đã tồn tại sẽ được bỏ qua; không ghi đè giá, tồn kho hay cấu hình combo. Giá tiền tối đa 2 chữ số thập phân; tồn kho tối đa 3 chữ số thập phân.</p>
+    <p class="mb-1">Dịch vụ không quản lý kho. Combo được nhập với trạng thái ngừng kinh doanh, tồn kho 0: chọn thành phần và kích hoạt trong màn hình sửa hàng trước khi bán.</p>
+    <p class="mb-0">Mã vạch, mã thuốc, hoạt chất, quy cách đóng gói, vị trí và tồn kho gốc được giữ trong phần thông tin KiotViet. Dạng bào chế, nhà sản xuất và tồn tối thiểu chưa có trong file sẽ để trống hoặc 0.</p>
+</div>
+<form asp-action="Preview" method="post" enctype="multipart/form-data" class="mb-4">
+    <label for="product-file" class="form-label">Danh sách hàng hóa KiotViet (.xlsx)</label>
+    <input id="product-file" type="file" name="file" accept=".xlsx" required class="form-control mb-2" />
+    <div class="form-check"><input asp-for="ImportStock" class="form-check-input" /><label asp-for="ImportStock" class="form-check-label">Nhập tồn kho ban đầu cho hàng thường/thuốc</label></div>
+    <div class="form-check mb-2"><input asp-for="ResetNegativeStock" class="form-check-input" /><label asp-for="ResetNegativeStock" class="form-check-label">Đưa tồn kho âm về 0, giữ số gốc trong thông tin KiotViet</label></div>
+    <p class="text-muted small">Tối đa 10 MB / 20.000 hàng. Xem trước chưa ghi dữ liệu. Muốn đổi lựa chọn, chọn lại file và xem trước lại.</p>
+    <button type="submit" class="btn btn-primary">Xem trước file</button>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</form>
+@if (Model.Token != null)
+{
+    <h3>Kết quả: @Model.FileName</h3>
+    <p><strong>@Model.Rows.Count</strong> dòng · <strong>@Model.NewCount</strong> hàng mới · <strong>@Model.ExistingCount</strong> mã đã tồn tại · <strong>@Model.ErrorCount</strong> dòng lỗi · <strong>@Model.NewCategoryCount</strong> nhóm mới</p>
+    <p>Nhập tồn kho: <strong>@(Model.ImportStock ? "Có" : "Không")</strong> · Tồn kho âm: <strong>@(Model.ResetNegativeStock ? "Đưa về 0" : "Giữ số gốc")</strong></p>
+    <p>Combo: @Model.Rows.Count(r => r.Product.IsCombo) · Dịch vụ: @Model.Rows.Count(r => r.Product.IsService) · Dòng có lưu ý: @Model.Rows.Count(r => r.Warnings.Count > 0)</p>
+    @if (Model.ErrorCount > 0) { <div class="alert alert-danger">Chưa thể nhập. Sửa các dòng lỗi trong file và xem trước lại.</div> }
+    <div class="table-responsive"><table class="table table-bordered align-middle">
+        <thead><tr><th>Dòng</th><th>Mã hàng</th><th>Tên hàng</th><th>Loại / nhóm</th><th>ĐVT</th><th>Giá bán</th><th>Giá vốn</th><th>Tồn sẽ nhập</th><th>Kết quả</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model.Rows)
+        {
+            <tr>
+                <td>@row.RowNumber</td><td>@row.Product.ProductCode</td><td>@row.Product.Name</td><td>@row.TypeName<br />@row.CategoryName</td><td>@(row.Product.Unit ?? "—")</td>
+                <td class="text-end text-nowrap">@row.Product.SellingPrice.ToString("N2", culture)</td><td class="text-end text-nowrap">@row.Product.CostPrice.ToString("N2", culture)</td><td>@row.Product.CurrentStock.ToString("0.###", culture)</td>
+                <td>
+                    @(row.Errors.Count > 0 ? "Có lỗi" : row.Exists ? "Bỏ qua: đã tồn tại" : "Sẽ nhập")
+                    @foreach (var error in row.Errors) { <div class="text-danger small">@error</div> }
+                    @foreach (var warning in row.Warnings) { <div class="text-muted small">@warning</div> }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table></div>
+    <form asp-action="Confirm" method="post">
+        <input type="hidden" name="token" value="@Model.Token" />
+        <button type="submit" class="btn btn-primary" disabled="@(Model.ErrorCount > 0 || Model.NewCount == 0)">Nhập @Model.NewCount hàng hóa</button>
+        <span class="text-muted small ms-2">Bản xem trước có hiệu lực 20 phút.</span>
+    </form>
+}

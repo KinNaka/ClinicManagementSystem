@@ -101,6 +101,28 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.ToTable("InventoryTransactionDetails");
                 });
 
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.ComboComponent", b =>
+                {
+                    b.Property<long>("ComboProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ComponentProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("ComboProductId", "ComponentProductId");
+
+                    b.HasIndex("ComponentProductId");
+
+                    b.ToTable("ComboComponent", t =>
+                        {
+                            t.HasCheckConstraint("CK_ComboComponent_Quantity", "[Quantity] > 0");
+                        });
+                });
+
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Patient", b =>
                 {
                     b.Property<long>("Id")
@@ -128,6 +150,13 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime?>("LegacyImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("LegacyTotalSales")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -145,6 +174,13 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("ProvinceCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProvinceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -152,6 +188,13 @@ namespace ClinicManagementSystem.Web.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("WardCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("WardName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -180,12 +223,22 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("CurrentStock")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(19, 3)
+                        .HasColumnType("decimal(19,3)");
 
                     b.Property<string>("DosageForm")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsCombo")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsService")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("KiotVietInfo")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(200)
@@ -281,6 +334,25 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("ImportedDiscount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ImportedFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<decimal>("ImportedGoodsTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ImportedSurcharge")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -295,6 +367,14 @@ namespace ClinicManagementSystem.Web.Migrations
 
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("SourcePatientCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("SourcePatientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -326,6 +406,10 @@ namespace ClinicManagementSystem.Web.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("KiotVietInfo")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<decimal>("LineTotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -343,6 +427,18 @@ namespace ClinicManagementSystem.Web.Migrations
 
                     b.Property<long>("SaleId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("SourceProductCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SourceProductName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SourceUnit")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
@@ -584,6 +680,25 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.ComboComponent", b =>
+                {
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Product", "ComboProduct")
+                        .WithMany("Components")
+                        .HasForeignKey("ComboProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Product", "ComponentProduct")
+                        .WithMany()
+                        .HasForeignKey("ComponentProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ComboProduct");
+
+                    b.Navigation("ComponentProduct");
+                });
+
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Product", b =>
                 {
                     b.HasOne("ClinicManagementSystem.Web.Models.Entities.ProductCategory", "Category")
@@ -679,6 +794,11 @@ namespace ClinicManagementSystem.Web.Migrations
             modelBuilder.Entity("ClinicManagementSystem.Web.Entities.InventoryTransaction", b =>
                 {
                     b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Product", b =>
+                {
+                    b.Navigation("Components");
                 });
 
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.ProductCategory", b =>

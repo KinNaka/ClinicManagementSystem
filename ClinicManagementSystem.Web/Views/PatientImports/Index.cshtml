@@ -1,0 +1,74 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientImportViewModel
+@{
+    ViewData["Title"] = "Nhập khách hàng từ KiotViet";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+<h2>Nhập khách hàng từ KiotViet</h2>
+<p>Giữ nguyên mã khách hàng và nhập tổng bán cũ. Khách tạo mới sử dụng mã LT000001, LT000002…</p>
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+<div class="alert alert-info">
+    <p class="mb-1">Nhập mã KH, họ tên, điện thoại, ngày sinh, giới tính, địa chỉ, ghi chú, trạng thái và cột <strong>Tổng bán</strong>.</p>
+    <p class="mb-1">Tổng bán hiển thị = tổng bán KiotViet + hóa đơn đã xác nhận trong hệ thống này. File này không nhập lịch sử hóa đơn, công nợ, điểm hoặc thông tin xuất hóa đơn.</p>
+    <p class="mb-0">Mã đã tồn tại sẽ được bỏ qua: hồ sơ và tổng bán cũ không bị ghi đè hoặc cộng lại. Địa chỉ không khớp danh mục mới sẽ giữ nguyên dạng văn bản.</p>
+    <p class="mt-1 mb-0">Điện thoại có số phụ/ghi chú sẽ lấy số chính khi nhận diện được và giữ nội dung gốc trong ghi chú. Ngày sinh ở tương lai được để trống, giữ giá trị gốc trong ghi chú để kiểm tra.</p>
+</div>
+<form asp-action="Preview" method="post" enctype="multipart/form-data" class="mb-4">
+    <label for="customer-file" class="form-label">File danh sách khách hàng KiotViet (.xlsx)</label>
+    <input id="customer-file" type="file" name="file" accept=".xlsx" required class="form-control mb-2" />
+    <p class="text-muted small">Tối đa 10 MB / 20.000 khách hàng. Xem trước chưa lưu dữ liệu.</p>
+    <button type="submit" class="btn btn-primary">Xem trước file</button>
+    <a asp-controller="Patients" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</form>
+@if (Model.Token != null)
+{
+    <h3>Kết quả kiểm tra: @Model.FileName</h3>
+    <p><strong>@Model.Rows.Count.ToString("N0", culture)</strong> dòng · <strong>@Model.NewCount.ToString("N0", culture)</strong> khách mới · <strong>@Model.ExistingCount.ToString("N0", culture)</strong> mã đã tồn tại · <strong>@Model.ErrorCount.ToString("N0", culture)</strong> dòng lỗi</p>
+    <p>Tổng bán cũ sẽ nhập: <strong>@Model.TotalLegacySales.ToString("N0", culture) ₫</strong></p>
+    @if (Model.ErrorCount > 0)
+    {
+        <div class="alert alert-danger">Chưa thể nhập vì file còn lỗi. Sửa các dòng bên dưới và tải lại file.</div>
+        <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Dòng Excel</th><th>Mã KH</th><th>Lỗi</th></tr></thead><tbody>
+        @foreach (var row in Model.Rows.Where(r => r.Errors.Count > 0))
+        {
+            <tr><td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@string.Join(" ", row.Errors)</td></tr>
+        }
+        </tbody></table></div>
+    }
+    <p class="text-muted small">Hiển thị 50 dòng đầu. Có @Model.Rows.Count(r => r.Warnings.Count > 0).ToString("N0", culture) dòng cần lưu ý về dữ liệu.</p>
+    <div class="table-responsive"><table class="table table-bordered align-middle">
+        <thead><tr><th>Dòng</th><th>Mã KH</th><th>Họ tên</th><th>Điện thoại</th><th>Địa chỉ</th><th class="text-end">Tổng bán cũ</th><th>Kết quả</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model.Rows.Take(50))
+        {
+            <tr>
+                <td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@row.Patient.FullName</td><td>@row.Patient.PhoneNumber</td>
+                <td>@string.Join(", ", new[] { row.Patient.Address, row.Patient.WardName, row.Patient.ProvinceName }.Where(s => !string.IsNullOrWhiteSpace(s)))</td>
+                <td class="text-end text-nowrap">@row.Patient.LegacyTotalSales.ToString("N0", culture) ₫</td>
+                <td>@(row.Errors.Count > 0 ? "Có lỗi" : row.Exists ? "Bỏ qua: mã đã tồn tại" : "Sẽ nhập")
+                    @foreach (var warning in row.Warnings) { <div class="text-muted small">@warning</div> }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table></div>
+    @if (Model.Rows.Any(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ"))))
+    {
+        <details class="mb-3">
+            <summary>Xem các dòng cần kiểm tra điện thoại, ngày sinh hoặc giới tính</summary>
+            <div class="table-responsive mt-2"><table class="table table-bordered">
+                <thead><tr><th>Dòng Excel</th><th>Mã KH</th><th>Điện thoại sẽ lưu</th><th>Ghi chú sẽ lưu</th><th>Lưu ý</th></tr></thead>
+                <tbody>
+                @foreach (var row in Model.Rows.Where(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ"))))
+                {
+                    <tr><td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@(row.Patient.PhoneNumber ?? "—")</td><td style="white-space:pre-wrap">@row.Patient.Notes</td><td>@string.Join(" ", row.Warnings.Where(w => !w.StartsWith("Địa chỉ cũ")))</td></tr>
+                }
+                </tbody>
+            </table></div>
+        </details>
+    }
+    <form asp-action="Confirm" method="post">
+        <input type="hidden" name="token" value="@Model.Token" />
+        <button type="submit" class="btn btn-primary" disabled="@(Model.ErrorCount > 0 || Model.NewCount == 0)">Nhập @Model.NewCount.ToString("N0", culture) khách hàng</button>
+        <span class="text-muted small ms-2">Bản xem trước có hiệu lực 20 phút.</span>
+    </form>
+}

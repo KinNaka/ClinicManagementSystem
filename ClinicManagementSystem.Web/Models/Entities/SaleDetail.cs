@@ -16,6 +16,10 @@ namespace ClinicManagementSystem.Web.Models.Entities
         public decimal LineTotal { get; set; }
 
         public string? Notes { get; set; }
+        public string? SourceProductCode { get; set; }
+        public string? SourceProductName { get; set; }
+        public string? SourceUnit { get; set; }
+        public string? KiotVietInfo { get; set; }
 
         public Sale Sale { get; set; } = null!;
 

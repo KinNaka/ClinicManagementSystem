@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Data;
+using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Models.Entities;
 using ClinicManagementSystem.Web.Models.ViewModels.Patients;
 using ClinicManagementSystem.Web.Models.ViewModels.Sales;
@@ -47,6 +47,9 @@ namespace ClinicManagementSystem.Web.Services
                     DateOfBirth = p.DateOfBirth,
                     Gender = p.Gender,
                     PhoneNumber = p.PhoneNumber,
+                    TotalSales = p.LegacyTotalSales + (_context.Sales
+                        .Where(s => s.PatientId == p.Id && s.Status == "Confirmed")
+                        .Sum(s => (decimal?)s.TotalAmount) ?? 0m),
                     Status = p.Status
                 })
                 .ToListAsync();
@@ -65,6 +68,10 @@ namespace ClinicManagementSystem.Web.Services
                     Gender = p.Gender,
                     PhoneNumber = p.PhoneNumber,
                     Address = p.Address,
+                    ProvinceCode = p.ProvinceCode,
+                    WardCode = p.WardCode,
+                    ProvinceName = p.ProvinceName,
+                    WardName = p.WardName,
                     Occupation = p.Occupation,
                     Notes = p.Notes,
                     Status = p.Status
@@ -98,7 +105,14 @@ namespace ClinicManagementSystem.Web.Services
                 })
                 .ToListAsync();
 
-            return new PatientDetailsViewModel { Id = id, Patient = patient, PurchaseHistory = history };
+            var legacyTotalSales = await _context.Patients.AsNoTracking()
+                .Where(p => p.Id == id).Select(p => p.LegacyTotalSales).SingleAsync();
+            var currentTotalSales = await query.Where(s => s.Status == "Confirmed")
+                .SumAsync(s => (decimal?)s.TotalAmount) ?? 0m;
+            return new PatientDetailsViewModel {
+                Id = id, Patient = patient, PurchaseHistory = history,
+                LegacyTotalSales = legacyTotalSales, CurrentTotalSales = currentTotalSales
+            };
         }
 
         public async Task<bool> ExistsCodeAsync(
@@ -141,6 +155,10 @@ namespace ClinicManagementSystem.Web.Services
                 Gender = NormalizeOptional(model.Gender),
                 PhoneNumber = NormalizeOptional(model.PhoneNumber),
                 Address = NormalizeOptional(model.Address),
+                ProvinceCode = model.ProvinceCode,
+                WardCode = model.WardCode,
+                ProvinceName = model.ProvinceName,
+                WardName = model.WardName,
                 Occupation = NormalizeOptional(model.Occupation),
                 Notes = NormalizeOptional(model.Notes),
                 Status = model.Status,
@@ -174,7 +192,7 @@ namespace ClinicManagementSystem.Web.Services
                 return (false, "Không tìm thấy bệnh nhân.");
             }
 
-            var code = model.PatientCode.Trim().ToUpperInvariant();
+            var code = model.PatientCode.Trim();
 
             if (await ExistsCodeAsync(code, id))
             {
@@ -192,6 +210,10 @@ namespace ClinicManagementSystem.Web.Services
             patient.Gender = NormalizeOptional(model.Gender);
             patient.PhoneNumber = NormalizeOptional(model.PhoneNumber);
             patient.Address = NormalizeOptional(model.Address);
+            patient.ProvinceCode = model.ProvinceCode;
+            patient.WardCode = model.WardCode;
+            patient.ProvinceName = model.ProvinceName;
+            patient.WardName = model.WardName;
             patient.Occupation = NormalizeOptional(model.Occupation);
             patient.Notes = NormalizeOptional(model.Notes);
             patient.Status = model.Status;
@@ -239,21 +261,11 @@ namespace ClinicManagementSystem.Web.Services
         }
         public async Task<string> GeneratePatientCodeAsync()
         {
-            var lastCode = await _context.Patients
-                .Where(p => p.PatientCode.StartsWith("BN"))
-                .OrderByDescending(p => p.PatientCode)
+            var codes = await _context.Patients.AsNoTracking()
+                .Where(p => p.PatientCode.StartsWith("LT"))
                 .Select(p => p.PatientCode)
-                .FirstOrDefaultAsync();
-
-            if (string.IsNullOrEmpty(lastCode))
-                return "BN000001";
-
-            var numberPart = lastCode.Substring(2);
-
-            if (int.TryParse(numberPart, out int number))
-                return $"LT{number + 1:D6}";
-
-            return "BN000001";
+                .ToListAsync();
+            return PatientCodeGenerator.Next(codes);
         }
     }
 }

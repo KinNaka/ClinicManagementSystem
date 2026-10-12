@@ -6,6 +6,11 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Products;
 public class ProductFormViewModel
 {
     public long Id { get; set; }
+    public bool IsCombo { get; set; }
+    public bool IsService { get; set; }
+    public string? KiotVietInfo { get; set; }
+    public List<ComboComponentFormViewModel> Components { get; set; } = new();
+    public List<SelectListItem> ComponentOptions { get; set; } = new();
 
     [Required(ErrorMessage = "Product code is required.")]
     [StringLength(50)]
@@ -54,4 +59,12 @@ public class ProductFormViewModel
     public string Status { get; set; } = "ACTIVE";
 
     public List<SelectListItem> Categories { get; set; } = new();
+}
+
+public class ComboComponentFormViewModel
+{
+    [Range(1, long.MaxValue)]
+    public long ComponentProductId { get; set; }
+    [Range(typeof(decimal), "0.01", "999999999")]
+    public decimal Quantity { get; set; } = 1;
 }

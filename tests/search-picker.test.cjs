@@ -101,3 +101,20 @@ test('no match cannot commit arbitrary text and Escape closes results', () => {
     input.handlers.keydown({key:'Escape',preventDefault() {}});
     assert.equal(input.attrs['aria-expanded'], 'false');
 });
+
+test('address picker refresh replaces options, restores selection and respects disabled/optional state', () => {
+    const f = setup(); const select = f.make();
+    select.dataset.optional = 'true'; select.disabled = true;
+    select.handlers['picker:refresh']();
+    assert.equal(select.input.disabled, true);
+    assert.equal(select.input.required, false);
+    assert.equal(select.input.validationMessage, '');
+    select.disabled = false; select.dataset.optional = 'false';
+    select.options = [{value:'',text:'Chọn'}, {value:'4',text:'Phường Ba Đình'}]; select.value = '4';
+    select.handlers['picker:refresh']();
+    assert.equal(select.input.value, 'Phường Ba Đình');
+    assert.equal(select.input.disabled, false);
+    select.input.value = 'ba dinh'; select.input.handlers.input(); f.tick();
+    assert.equal(f.context.popup.querySelectorAll().length, 1);
+    assert.equal(f.context.popup.querySelectorAll()[0].textContent, 'Phường Ba Đình');
+});

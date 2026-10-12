@@ -7,6 +7,9 @@ public class PatientDetailsViewModel
     public long Id { get; set; }
     public PatientFormViewModel Patient { get; set; } = new();
     public PatientPurchaseHistoryViewModel PurchaseHistory { get; set; } = new(0, 1);
+    public decimal LegacyTotalSales { get; set; }
+    public decimal CurrentTotalSales { get; set; }
+    public decimal TotalSales => LegacyTotalSales + CurrentTotalSales;
 }
 
 public class PatientPurchaseHistoryViewModel

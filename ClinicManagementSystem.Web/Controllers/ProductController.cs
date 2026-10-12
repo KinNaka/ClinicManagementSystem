@@ -1,4 +1,6 @@
-﻿
+using ClinicManagementSystem.Web.Data;
+using Microsoft.EntityFrameworkCore;
+
 using ClinicManagementSystem.Web.Models.ViewModels.Products;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -8,13 +10,15 @@ namespace ClinicManagementSystem.Web.Controllers;
 
 public class ProductsController : Controller
 {
+    private readonly ApplicationDbContext _context;
     private readonly IProductService _productService;
     private readonly IProductCategoryService _categoryService;
 
     public ProductsController(
         IProductService productService,
-        IProductCategoryService categoryService)
+        IProductCategoryService categoryService, ApplicationDbContext context)
     {
+        _context = context;
         _productService = productService;
         _categoryService = categoryService;
     }
@@ -54,7 +58,9 @@ public class ProductsController : Controller
             return View(model);
         }
 
-        var result = await _productService.CreateAsync(model);
+        bool result;
+        try { result = await _productService.CreateAsync(model); }
+        catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); await LoadCategoriesAsync(model); return View(model); }
 
         if (!result)
         {
@@ -93,7 +99,9 @@ public class ProductsController : Controller
             return View(model);
         }
 
-        var result = await _productService.UpdateAsync(id, model);
+        bool result;
+        try { result = await _productService.UpdateAsync(id, model); }
+        catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); await LoadCategoriesAsync(model); return View(model); }
 
         if (!result)
         {
@@ -129,10 +137,11 @@ public class ProductsController : Controller
 
     private async Task LoadCategoriesAsync(ProductFormViewModel model)
     {
+        model.ComponentOptions = await _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService && p.Id != model.Id && (p.Status == "Active" || p.Status == "ACTIVE" || model.Components.Select(c => c.ComponentProductId).Contains(p.Id))).OrderBy(p => p.Name).Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.ProductCode + " - " + p.Name + " (" + p.Unit + ")" }).ToListAsync();
         var categories = await _categoryService.GetAllAsync();
 
         model.Categories = categories
-            .Where(c => c.Status == "ACTIVE")
+            .Where(c => c.Status == "ACTIVE" || c.Status == "Active")
             .Select(c => new SelectListItem
             {
                 Value = c.Id.ToString(),

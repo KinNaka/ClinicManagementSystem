@@ -1,0 +1,41 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductFormViewModel
+<div data-combo-form class="card my-3">
+    <div class="card-body">
+        <div class="form-check mb-2">
+            <input asp-for="IsService" class="form-check-input" />
+            <label asp-for="IsService" class="form-check-label">Hàng này là dịch vụ (không trừ tồn kho)</label>
+        </div>
+        <div class="form-check mb-2">
+            <input asp-for="IsCombo" class="form-check-input" />
+            <label asp-for="IsCombo" class="form-check-label">Hàng này là combo</label>
+        </div>
+        <div data-combo-components hidden="@(!Model.IsCombo)">
+            <p class="text-muted">Số lượng bên dưới là số đơn vị thành phần cho 1 combo. Ví dụ: Combo dại → hàng dại, số lượng 5. Tồn kho combo phụ thuộc thành phần.</p>
+            <div class="table-responsive"><table class="table">
+                <thead><tr><th>Hàng thành phần</th><th>Số lượng / combo</th><th></th></tr></thead>
+                <tbody data-component-rows>
+                @for (var i = 0; i < Model.Components.Count; i++)
+                {
+                    <tr>
+                        <td><select asp-for="Components[i].ComponentProductId" asp-items="Model.ComponentOptions" data-search-picker="Hàng thành phần" data-placeholder="Tìm mã hoặc tên hàng…" class="form-select"><option value="">Chọn hàng</option></select></td>
+                        <td><input asp-for="Components[i].Quantity" aria-label="Số lượng thành phần cho một combo" type="number" min="0.01" max="999999999" step="0.01" class="form-control" /></td>
+                        <td><button type="button" data-remove-component class="btn btn-outline-danger">Xóa</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+            <button type="button" data-add-component class="btn btn-outline-primary">+ Thêm thành phần</button>
+        </div>
+    </div>
+    <template data-component-template>
+        <tr>
+            <td><select data-field="ComponentProductId" asp-items="Model.ComponentOptions" data-search-picker="Hàng thành phần" data-placeholder="Tìm mã hoặc tên hàng…" class="form-select"><option value="">Chọn hàng</option></select></td>
+            <td><input data-field="Quantity" aria-label="Số lượng thành phần cho một combo" type="number" value="1" min="0.01" max="999999999" step="0.01" class="form-control" required /></td>
+            <td><button type="button" data-remove-component class="btn btn-outline-danger">Xóa</button></td>
+        </tr>
+    </template>
+</div>
+@if (!string.IsNullOrWhiteSpace(Model.KiotVietInfo))
+{
+    <details class="mb-3"><summary>Thông tin gốc từ KiotViet</summary><div class="p-3 border rounded" style="white-space:pre-wrap">@Model.KiotVietInfo</div></details>
+}

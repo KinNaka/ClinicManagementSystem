@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Models.Entities;
+using ClinicManagementSystem.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -41,7 +41,8 @@ namespace ClinicManagementSystem.Web.Data.Configurations
 
             builder.Property(x => x.MinimumStock).HasPrecision(18, 2);
 
-            builder.Property(x => x.CurrentStock).HasPrecision(18, 2);
+            builder.Property(x => x.CurrentStock).HasPrecision(19, 3);
+            builder.Property(x => x.KiotVietInfo).HasMaxLength(4000);
 
             builder.Property(x => x.Status)
                 .IsRequired()

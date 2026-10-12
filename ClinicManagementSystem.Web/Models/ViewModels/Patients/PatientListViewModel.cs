@@ -1,4 +1,4 @@
-﻿namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
+namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
 {
     public class PatientListViewModel
     {
@@ -13,6 +13,8 @@
         public string? Gender { get; set; }
 
         public string? PhoneNumber { get; set; }
+
+        public decimal TotalSales { get; set; }
 
         public string Status { get; set; } = string.Empty;
     }

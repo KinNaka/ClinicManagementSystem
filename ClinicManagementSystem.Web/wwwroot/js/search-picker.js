@@ -103,9 +103,9 @@
             const input = document.createElement("input");
             input.type = "text";
             input.className = "form-control search-picker-input";
-            input.placeholder = select.dataset.searchPicker === "Bệnh nhân" ? "Tìm mã hoặc tên bệnh nhân…" : "Tìm mã hoặc tên sản phẩm…";
+            input.placeholder = select.dataset.placeholder || (select.dataset.searchPicker === "Bệnh nhân" ? "Tìm mã hoặc tên bệnh nhân…" : "Tìm mã hoặc tên sản phẩm…");
             input.autocomplete = "off";
-            input.required = true;
+            input.required = select.dataset.optional !== "true"; input.disabled = select.disabled;
             input.setAttribute("role", "combobox");
             input.setAttribute("aria-autocomplete", "list");
             input.setAttribute("aria-expanded", "false");
@@ -114,16 +114,24 @@
             const picker = { id: ++sequence, input, select, options: [...select.options].filter(option => option.value && option.value !== "0" && !option.disabled).map(option => ({ value: option.value, text: option.text })), found: [], index: -1, composing: false };
             const selected = picker.options.find(option => option.value === select.value);
             input.value = selected?.text ?? "";
-            input.setCustomValidity(selected ? "" : "Vui lòng tìm kiếm và chọn một kết quả.");
+            input.setCustomValidity(selected || !input.required ? "" : "Vui lòng tìm kiếm và chọn một kết quả.");
             if (select.id) { input.id = select.id; select.id += "-value"; }
             select.required = false;
             select.hidden = true;
             select.before(input);
+            select.addEventListener("picker:refresh", () => {
+                if (active === picker) close();
+                picker.options = [...select.options].filter(o => o.value && !o.disabled).map(o => ({ value: o.value, text: o.text }));
+                input.value = picker.options.find(o => o.value === select.value)?.text ?? "";
+                input.disabled = select.disabled;
+                input.required = select.dataset.optional !== "true";
+                input.setCustomValidity(input.required && !select.value ? "Vui lòng chọn một kết quả tìm kiếm." : "");
+            });
             input.addEventListener("focus", () => open(picker));
             input.addEventListener("input", () => {
                 // Typing invalidates the previous ID, even if its label is retyped.
                 select.value = "";
-                input.setCustomValidity("Vui lòng chọn một kết quả tìm kiếm.");
+                input.setCustomValidity(input.value || input.required ? "Vui lòng chọn một kết quả tìm kiếm." : "");
                 select.dispatchEvent(new Event("change", { bubbles: true }));
                 if (active !== picker) close();
                 active = picker;

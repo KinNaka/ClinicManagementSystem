@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Models.ViewModels.Patients;
+using ClinicManagementSystem.Web.Models.ViewModels.Patients;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,10 +7,12 @@ namespace ClinicManagementSystem.Web.Controllers
     public class PatientsController : Controller
     {
         private readonly IPatientService _patientService;
+        private readonly VietnamAddressService _addresses;
 
-        public PatientsController(IPatientService patientService)
+        public PatientsController(IPatientService patientService, VietnamAddressService addresses)
         {
             _patientService = patientService;
+            _addresses = addresses;
         }
 
         [HttpGet]
@@ -55,6 +57,11 @@ namespace ClinicManagementSystem.Web.Controllers
 
             if (!result.Success)
             {
+                if (await _patientService.ExistsCodeAsync(model.PatientCode))
+                {
+                    model.PatientCode = await _patientService.GeneratePatientCodeAsync();
+                    ModelState.Remove(nameof(model.PatientCode));
+                }
                 ModelState.AddModelError(
                     nameof(model.PatientCode),
                     result.Error ?? "Không thể tạo hồ sơ.");
@@ -136,8 +143,26 @@ namespace ClinicManagementSystem.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public IActionResult AddressProvinces() => Json(_addresses.Provinces.Select(p => new { code = p.Code, name = p.Name }));
+
+        [HttpGet]
+        public IActionResult AddressWards(int provinceCode) => Json(_addresses.FindProvince(provinceCode)?.Wards ?? new());
+
         private void ValidatePatient(PatientFormViewModel model)
         {
+            model.ProvinceName = null;
+            model.WardName = null;
+            var province = _addresses.FindProvince(model.ProvinceCode);
+            if (model.ProvinceCode.HasValue && province == null)
+                ModelState.AddModelError(nameof(model.ProvinceCode), "Vui lòng chọn tỉnh/thành phố hợp lệ.");
+            var ward = province?.Wards.FirstOrDefault(w => w.Code == model.WardCode);
+            if (model.WardCode.HasValue && ward == null)
+                ModelState.AddModelError(nameof(model.WardCode), "Xã/phường không thuộc tỉnh/thành phố đã chọn.");
+            if (province != null && ward == null)
+                ModelState.AddModelError(nameof(model.WardCode), "Vui lòng chọn xã/phường.");
+            model.ProvinceName = province?.Name;
+            model.WardName = ward?.Name;
             if (model.DateOfBirth.HasValue &&
                 model.DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today))
             {

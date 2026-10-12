@@ -18,6 +18,10 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public string? Notes { get; set; }
 
         public decimal TotalAmount { get; set; }
+        public decimal ImportedGoodsTotal { get; set; }
+        public decimal ImportedDiscount { get; set; }
+        public decimal ImportedSurcharge { get; set; }
+        public string? ImportedFileName { get; set; }
 
         public List<SaleDetailDisplayViewModel> Details
         { get; set; } = new();

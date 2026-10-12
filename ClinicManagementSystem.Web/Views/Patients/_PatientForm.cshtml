@@ -1,4 +1,4 @@
-﻿@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
 
 <div class="mb-3">
     <label asp-for="PatientCode" class="form-label">Mã bệnh nhân</label>
@@ -37,8 +37,24 @@
 
 <div class="mb-3">
     <label asp-for="Address" class="form-label">Địa chỉ</label>
-    <input asp-for="Address" class="form-control" />
+    <input asp-for="Address" class="form-control" placeholder="Số nhà, đường, thôn/ấp…" />
     <span asp-validation-for="Address" class="text-danger"></span>
+</div>
+
+<div data-vietnam-address data-provinces-url="@Url.Action("AddressProvinces", "Patients")" data-wards-url="@Url.Action("AddressWards", "Patients")" data-province="@Model.ProvinceCode" data-ward="@Model.WardCode">
+    <div class="mb-3">
+        <label asp-for="ProvinceCode" class="form-label">Tỉnh/thành phố</label>
+        <select asp-for="ProvinceCode" class="form-select" data-search-picker="Tỉnh/thành phố" data-placeholder="Tìm tỉnh/thành phố…" data-optional="true" disabled><option value="">-- Chọn tỉnh/thành phố --</option></select>
+        <span asp-validation-for="ProvinceCode" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="WardCode" class="form-label">Xã/phường</label>
+        <select asp-for="WardCode" class="form-select" data-search-picker="Xã/phường" data-placeholder="Chọn tỉnh/thành phố trước…" data-optional="true" disabled><option value="">-- Chọn xã/phường --</option></select>
+        <span asp-validation-for="WardCode" class="text-danger"></span>
+    </div>
+    <p class="text-muted small">Danh mục hành chính sau sáp nhập 07/2025. Có thể tìm kiếm không dấu.</p>
+    <p data-address-status role="status" class="text-danger"></p>
+    <button type="button" data-address-retry class="btn btn-outline-secondary mb-3" hidden>Thử tải lại danh mục</button>
 </div>
 
 <div class="mb-3">

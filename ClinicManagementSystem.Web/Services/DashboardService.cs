@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Models.ViewModels.Dashboard;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +45,7 @@ namespace ClinicManagementSystem.Web.Services
                     .AsNoTracking()
                     .CountAsync(p =>
                         p.Status == "Active" &&
-                        p.CurrentStock <= p.MinimumStock),
+                        !p.IsCombo && !p.IsService && p.CurrentStock <= p.MinimumStock),
 
                 TodaySalesCount = await _context.Sales
                     .AsNoTracking()

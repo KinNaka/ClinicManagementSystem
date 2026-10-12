@@ -76,6 +76,7 @@
                             Đã xác nhận
                         </span>
                     }
+                    else if (Model.Status == "Imported") { <span class="badge bg-info text-dark">Lịch sử KiotViet</span> }
                     else
                     {
                         <span class="badge bg-warning text-dark">
@@ -145,6 +146,7 @@
                 </tbody>
 
                 <tfoot>
+                @if (Model.Status == "Imported") { <tr><td colspan="6" class="text-end">Tổng tiền hàng</td><td class="text-end">@Model.ImportedGoodsTotal.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Giảm giá hóa đơn</td><td class="text-end">@Model.ImportedDiscount.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Thu khác</td><td class="text-end">@Model.ImportedSurcharge.ToString("N2") đ</td></tr> }
                     <tr class="table-light">
                         <td colspan="6"
                             class="text-end fw-bold">
@@ -172,6 +174,7 @@
                 Đây là hóa đơn nháp. Sản phẩm chưa được xuất kho.
             </div>
         }
+        else if (Model.Status == "Imported") { <div class="alert alert-info mt-4">Hóa đơn lịch sử từ KiotViet (@Model.ImportedFileName). Không trừ tồn kho hiện tại, không cộng lại tổng bán cũ.</div> }
         else if (Model.Status == "Confirmed")
         {
             <div class="alert alert-success mt-4">

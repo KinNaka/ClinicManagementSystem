@@ -7,14 +7,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
+var databaseConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Chưa cấu hình DefaultConnection.");
+if (builder.Environment.IsDevelopment())
+    databaseConnection = await DevelopmentLocalDbConnection.ResolveAsync(databaseConnection);
 
 // =====================================
 // 1. DATABASE CONFIGURATION
 // =====================================
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(databaseConnection));
 
 // =====================================
 // 2. ASP.NET CORE IDENTITY
@@ -81,6 +84,14 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddSingleton<VietnamAddressService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<KiotVietCustomerReader>();
+builder.Services.AddScoped<PatientImportService>();
+builder.Services.AddScoped<KiotVietProductReader>();
+builder.Services.AddScoped<ProductImportService>();
+builder.Services.AddScoped<KiotVietSaleReader>();
+builder.Services.AddScoped<SaleImportService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<ISaleService, SaleService>();
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>

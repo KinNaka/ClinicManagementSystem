@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClinicManagementSystem.Web.Models.Entities
 {
@@ -25,11 +25,22 @@ namespace ClinicManagementSystem.Web.Models.Entities
         [MaxLength(300)]
         public string? Address { get; set; }
 
+        public int? ProvinceCode { get; set; }
+        public int? WardCode { get; set; }
+        [StringLength(100)]
+        public string? ProvinceName { get; set; }
+        [StringLength(100)]
+        public string? WardName { get; set; }
+
         [MaxLength(100)]
         public string? Occupation { get; set; }
 
         [MaxLength(500)]
         public string? Notes { get; set; }
+
+        public decimal LegacyTotalSales { get; set; }
+
+        public DateTime? LegacyImportedAt { get; set; }
 
         [Required]
         [MaxLength(20)]

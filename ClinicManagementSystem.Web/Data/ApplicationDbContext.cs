@@ -19,6 +19,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ComboComponent>().HasKey(c => new { c.ComboProductId, c.ComponentProductId });
+        modelBuilder.Entity<ComboComponent>().Property(c => c.Quantity).HasPrecision(18, 2);
+        modelBuilder.Entity<ComboComponent>().ToTable(t => t.HasCheckConstraint("CK_ComboComponent_Quantity", "[Quantity] > 0"));
+        modelBuilder.Entity<ComboComponent>().HasOne(c => c.ComboProduct).WithMany(p => p.Components)
+            .HasForeignKey(c => c.ComboProductId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ComboComponent>().HasOne(c => c.ComponentProduct).WithMany()
+            .HasForeignKey(c => c.ComponentProductId).OnDelete(DeleteBehavior.Restrict);
         
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         modelBuilder.Entity<InventoryTransaction>()
@@ -52,6 +59,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<Patient>()
     .HasIndex(p => p.PatientCode)
     .IsUnique();
+
+        modelBuilder.Entity<Patient>()
+            .Property(p => p.LegacyTotalSales)
+            .HasPrecision(18, 2);
 
         modelBuilder.Entity<Patient>()
             .Property(p => p.PatientCode)
@@ -105,6 +116,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<Sale>()
             .Property(s => s.TotalAmount)
             .HasPrecision(18, 2);
+        modelBuilder.Entity<Sale>().Property(s => s.ImportedGoodsTotal).HasPrecision(18, 2);
+        modelBuilder.Entity<Sale>().Property(s => s.ImportedDiscount).HasPrecision(18, 2);
+        modelBuilder.Entity<Sale>().Property(s => s.ImportedSurcharge).HasPrecision(18, 2);
+        modelBuilder.Entity<SaleDetail>().Property(d => d.SourceProductCode).HasMaxLength(50);
+        modelBuilder.Entity<SaleDetail>().Property(d => d.SourceProductName).HasMaxLength(200);
+        modelBuilder.Entity<SaleDetail>().Property(d => d.SourceUnit).HasMaxLength(50);
+        modelBuilder.Entity<SaleDetail>().Property(d => d.KiotVietInfo).HasMaxLength(4000);
 
         modelBuilder.Entity<SaleDetail>()
             .Property(d => d.Quantity)

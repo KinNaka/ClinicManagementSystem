@@ -18,7 +18,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<SaleIndexViewModel> GetAllAsync(
-            string? searchTerm, string? statusFilter)
+            string? searchTerm, string? statusFilter, int page = 1)
         {
             var query = _context.Sales
                 .AsNoTracking()
@@ -31,7 +31,7 @@ namespace ClinicManagementSystem.Web.Services
                 query = query.Where(s =>
                     s.SaleCode.Contains(keyword) ||
                     s.Patient.PatientCode.Contains(keyword) ||
-                    s.Patient.FullName.Contains(keyword));
+                    s.Patient.FullName.Contains(keyword) || (s.SourcePatientName != null && s.SourcePatientName.Contains(keyword)));
             }
 
             if (!string.IsNullOrWhiteSpace(statusFilter))
@@ -40,15 +40,20 @@ namespace ClinicManagementSystem.Web.Services
                     s.Status == statusFilter);
             }
 
+            var totalCount = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalCount / (double)SaleIndexViewModel.PageSize)));
             var sales = await query
                 .OrderByDescending(s => s.SaleDate)
+                .ThenByDescending(s => s.Id)
+                .Skip((page - 1) * SaleIndexViewModel.PageSize)
+                .Take(SaleIndexViewModel.PageSize)
                 .Select(s => new SaleListViewModel
                 {
                     Id = s.Id,
                     SaleCode = s.SaleCode,
                     PatientId = s.PatientId,
-                    PatientCode = s.Patient.PatientCode,
-                    PatientName = s.Patient.FullName,
+                    PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
+                    PatientName = s.SourcePatientName ?? s.Patient.FullName,
                     SaleDate = s.SaleDate,
                     TotalAmount = s.TotalAmount,
                     Status = s.Status
@@ -59,6 +64,7 @@ namespace ClinicManagementSystem.Web.Services
             {
                 SearchTerm = searchTerm,
                 StatusFilter = statusFilter,
+                Page = page, TotalCount = totalCount,
                 Sales = sales
             };
         }
@@ -73,19 +79,20 @@ namespace ClinicManagementSystem.Web.Services
                 {
                     Id = s.Id,
                     SaleCode = s.SaleCode,
-                    PatientCode = s.Patient.PatientCode,
-                    PatientName = s.Patient.FullName,
+                    PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
+                    PatientName = s.SourcePatientName ?? s.Patient.FullName,
                     SaleDate = s.SaleDate,
                     Status = s.Status,
                     Notes = s.Notes,
                     TotalAmount = s.TotalAmount,
+                    ImportedGoodsTotal = s.ImportedGoodsTotal, ImportedDiscount = s.ImportedDiscount, ImportedSurcharge = s.ImportedSurcharge, ImportedFileName = s.ImportedFileName,
                     Details = s.Details.Select(d =>
                         new SaleDetailDisplayViewModel
                         {
-                            ProductCode = d.Product.ProductCode,
+                            ProductCode = d.SourceProductCode ?? d.Product.ProductCode,
                             Notes = d.Notes,
-                            ProductName = d.Product.Name,
-                            Unit = d.Product.Unit,
+                            ProductName = d.SourceProductName ?? d.Product.Name,
+                            Unit = d.SourceUnit ?? d.Product.Unit,
                             Quantity = d.Quantity,
                             UnitPrice = d.UnitPrice,
                             LineTotal = d.LineTotal
@@ -99,7 +106,7 @@ namespace ClinicManagementSystem.Web.Services
         {
             model.Patients = await _context.Patients
                 .AsNoTracking()
-                .Where(p => p.Status == "Active")
+                .Where(p => (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.FullName)
                 .Select(p => new SelectListItem
                 {
@@ -110,7 +117,7 @@ namespace ClinicManagementSystem.Web.Services
 
             model.Products = await _context.Products
                 .AsNoTracking()
-                .Where(p => p.Status == "Active")
+                .Where(p => (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.Name)
                 .Select(p => new SelectListItem
                 {
@@ -148,7 +155,7 @@ namespace ClinicManagementSystem.Web.Services
             var products = await _context.Products
                 .AsNoTracking()
                 .Where(p => productIds.Contains(p.Id) &&
-                            p.Status == "Active")
+                            (p.Status == "Active" || p.Status == "ACTIVE"))
                 .ToDictionaryAsync(p => p.Id);
 
             if (products.Count != productIds.Count)
@@ -195,7 +202,7 @@ namespace ClinicManagementSystem.Web.Services
         {
             var exists = await _context.Patients
                 .AnyAsync(p => p.Id == patientId &&
-                               p.Status == "Active");
+                               (p.Status == "Active" || p.Status == "ACTIVE"));
 
             if (!exists)
                 throw new InvalidOperationException(
@@ -256,8 +263,8 @@ namespace ClinicManagementSystem.Web.Services
                         {
                             ProductId = d.ProductId,
                             Notes = d.Notes,
-                            ProductName = d.Product.Name,
-                            Unit = d.Product.Unit,
+                            ProductName = d.SourceProductName ?? d.Product.Name,
+                            Unit = d.SourceUnit ?? d.Product.Unit,
                             Quantity = d.Quantity,
                             UnitPrice = d.UnitPrice,
                             LineTotal = d.LineTotal
@@ -307,7 +314,7 @@ namespace ClinicManagementSystem.Web.Services
         public async Task ConfirmAsync(long id)
         {
             await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+                await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             var sale = await _context.Sales
                 .AsNoTracking()
@@ -346,20 +353,43 @@ namespace ClinicManagementSystem.Web.Services
                 CreatedAt = now
             };
 
+            var soldIds = sale.Details.Select(d => d.ProductId).Distinct().ToList();
+            var soldProducts = await _context.Products.AsNoTracking().Include(p => p.Components)
+                .Where(p => soldIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+            var required = new Dictionary<long, decimal>();
             foreach (var detail in sale.Details)
             {
                 if (detail.Quantity <= 0)
                     throw new InvalidOperationException(
                         "Số lượng hóa đơn không hợp lệ.");
+                if (!soldProducts.TryGetValue(detail.ProductId, out var sold) || sold.Status is not ("Active" or "ACTIVE"))
+                    throw new InvalidOperationException("Hàng bán không tồn tại hoặc đã ngừng hoạt động.");
+                if (sold.IsService) continue;
+                if (sold.IsCombo && sold.Components.Count == 0)
+                    throw new InvalidOperationException($"Combo {sold.Name} chưa có thành phần.");
+                if (sold.IsCombo)
+                {
+                    foreach (var component in sold.Components)
+                    {
+                        if (component.Quantity <= 0) throw new InvalidOperationException("Cấu hình thành phần combo không hợp lệ.");
+                        required[component.ComponentProductId] = required.GetValueOrDefault(component.ComponentProductId) + detail.Quantity * component.Quantity;
+                    }
+                }
+                else required[detail.ProductId] = required.GetValueOrDefault(detail.ProductId) + detail.Quantity;
+            }
+
+            foreach (var item in required.OrderBy(r => r.Key))
+            {
 
                 // Trừ kho có điều kiện ngay trong SQL Server.
                 var affected = await _context.Products
                     .Where(p =>
-                        p.Id == detail.ProductId &&
-                        p.CurrentStock >= detail.Quantity)
+                        p.Id == item.Key && !p.IsCombo && !p.IsService &&
+                        (p.Status == "Active" || p.Status == "ACTIVE") &&
+                        p.CurrentStock >= item.Value)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(p => p.CurrentStock,
-                            p => p.CurrentStock - detail.Quantity)
+                            p => p.CurrentStock - item.Value)
                         .SetProperty(p => p.UpdatedAt, now));
 
                 if (affected != 1)
@@ -368,22 +398,21 @@ namespace ClinicManagementSystem.Web.Services
 
                 var costPrice = await _context.Products
                     .AsNoTracking()
-                    .Where(p => p.Id == detail.ProductId)
+                    .Where(p => p.Id == item.Key)
                     .Select(p => p.CostPrice)
                     .SingleAsync();
 
                 inventoryTransaction.Details.Add(
                     new InventoryTransactionDetail
                     {
-                        ProductId = detail.ProductId,
-                        Quantity = detail.Quantity,
+                        ProductId = item.Key,
+                        Quantity = item.Value,
                         UnitPrice = costPrice,
                         Note = "Bán hàng: " + sale.SaleCode
                     });
             }
 
-            _context.InventoryTransactions.Add(
-                inventoryTransaction);
+            if (inventoryTransaction.Details.Count > 0) _context.InventoryTransactions.Add(inventoryTransaction);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -393,7 +422,7 @@ namespace ClinicManagementSystem.Web.Services
         {
             return await _context.Products
                 .AsNoTracking()
-                .Where(p => p.Id == productId && p.Status == "Active")
+                .Where(p => p.Id == productId && (p.Status == "Active" || p.Status == "ACTIVE"))
                 .Select(p => (decimal?)p.SellingPrice)
                 .FirstOrDefaultAsync();
         }

@@ -13,9 +13,12 @@
         </p>
     </div>
 
+    <div class="d-flex gap-2">
+    <a asp-controller="ProductImports" asp-action="Index" class="btn btn-outline-primary">Nhập từ KiotViet</a>
     <a asp-action="Create" class="btn btn-primary">
         + Add Product
     </a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
@@ -123,7 +126,7 @@
                                 <td>@product.ProductCode</td>
 
                                 <td>
-                                    <strong>@product.Name</strong>
+                                    <strong>@product.Name</strong> @if (product.IsCombo) { <span class="badge bg-info">Combo</span> } @if (product.IsService) { <span class="badge bg-secondary">Dịch vụ</span> }
                                 </td>
 
                                 <td>@product.CategoryName</td>

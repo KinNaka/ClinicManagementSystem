@@ -6,6 +6,12 @@
 
 <h2>Hồ sơ khách hàng / bệnh nhân</h2>
 
+<div class="alert alert-info">
+    <strong>Tổng bán: @Model.TotalSales.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) ₫</strong>
+    <div class="small">KiotViet: @Model.LegacyTotalSales.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) ₫ · Hệ thống mới: @Model.CurrentTotalSales.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) ₫</div>
+    <div class="small">Tổng bán cũ không bao gồm chi tiết hóa đơn trong lịch sử bên dưới.</div>
+</div>
+
 <dl class="row">
     <dt class="col-sm-3">Mã bệnh nhân</dt>
     <dd class="col-sm-9">@Model.Patient.PatientCode</dd>
@@ -33,7 +39,7 @@
     <dd class="col-sm-9">@(Model.Patient.PhoneNumber ?? "—")</dd>
 
     <dt class="col-sm-3">Địa chỉ</dt>
-    <dd class="col-sm-9">@(Model.Patient.Address ?? "—")</dd>
+    <dd class="col-sm-9">@(string.Join(", ", new[] { Model.Patient.Address, Model.Patient.WardName, Model.Patient.ProvinceName }.Where(s => !string.IsNullOrWhiteSpace(s))) is var address && address.Length > 0 ? address : "—")</dd>
 
     <dt class="col-sm-3">Nghề nghiệp</dt>
     <dd class="col-sm-9">@(Model.Patient.Occupation ?? "—")</dd>
@@ -65,7 +71,7 @@
         <span class="badge bg-primary">@history.TotalCount.ToString("N0", culture) hóa đơn</span>
     </div>
     <div class="card-body">
-        <p class="text-muted small mb-3">Bao gồm hóa đơn nháp và đã xác nhận. Hóa đơn nháp chưa phải giao dịch hoàn tất.</p>
+        <p class="text-muted small mb-3">Bao gồm hóa đơn nháp, đã xác nhận và lịch sử KiotViet. Hóa đơn nháp chưa phải giao dịch hoàn tất.</p>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead><tr><th scope="col">STT</th><th scope="col">Mã hóa đơn</th><th scope="col">Ngày mua</th><th scope="col" class="text-end">Giá trị hóa đơn</th><th scope="col">Trạng thái</th><th scope="col">Chi tiết</th></tr></thead>
@@ -86,6 +92,7 @@
                                 <td class="text-end">@sale.TotalAmount.ToString("N0", culture) ₫</td>
                                 <td>
                                     @if (sale.Status == "Confirmed") { <span class="badge bg-success">Đã xác nhận</span> }
+                                    else if (sale.Status == "Imported") { <span class="badge bg-info text-dark">Lịch sử KiotViet</span> }
                                     else if (sale.Status == "Draft") { <span class="badge bg-warning">Nháp</span> }
                                     else { <span class="badge bg-secondary">@sale.Status</span> }
                                 </td>

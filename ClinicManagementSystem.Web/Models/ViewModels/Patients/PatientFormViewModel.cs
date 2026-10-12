@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
 {
@@ -27,6 +27,13 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
 
         [StringLength(300)]
         public string? Address { get; set; }
+
+        public int? ProvinceCode { get; set; }
+        public int? WardCode { get; set; }
+        [StringLength(100)]
+        public string? ProvinceName { get; set; }
+        [StringLength(100)]
+        public string? WardName { get; set; }
 
         [StringLength(100)]
         public string? Occupation { get; set; }

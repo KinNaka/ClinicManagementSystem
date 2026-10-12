@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Entities;
 using ClinicManagementSystem.Web.ViewModels.Inventory;
@@ -19,7 +19,7 @@ namespace ClinicManagementSystem.Web.Services
         {
             var query = _context.Products
                 .AsNoTracking()
-                .AsQueryable();
+                .Where(p => !p.IsCombo && !p.IsService);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -67,7 +67,7 @@ namespace ClinicManagementSystem.Web.Services
                     .ToList();
 
                 var products = await _context.Products
-                    .Where(p => productIds.Contains(p.Id))
+                    .Where(p => productIds.Contains(p.Id) && !p.IsCombo && !p.IsService)
                     .ToListAsync();
 
                 if (products.Count != productIds.Count)
@@ -141,7 +141,7 @@ namespace ClinicManagementSystem.Web.Services
                 var productIds = requested.Keys.ToList();
 
                 var products = await _context.Products
-                    .Where(p => productIds.Contains(p.Id))
+                    .Where(p => productIds.Contains(p.Id) && !p.IsCombo && !p.IsService)
                     .ToListAsync();
 
                 if (products.Count != productIds.Count)

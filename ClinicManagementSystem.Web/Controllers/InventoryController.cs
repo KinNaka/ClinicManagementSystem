@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Web.Data;
@@ -141,7 +141,7 @@ namespace ClinicManagementSystem.Web.Controllers
 
             var products = await _context.Products
                 .AsNoTracking()
-                .Where(p => p.Status == "Active")
+                .Where(p => !p.IsCombo && !p.IsService && (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.Name)
                 .Select(p => new
                 {

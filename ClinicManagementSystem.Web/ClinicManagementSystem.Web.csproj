@@ -25,4 +25,4 @@
     </PackageReference>
   </ItemGroup>
 
-</Project>
+<ItemGroup><Content Update="Data\vietnam-addresses.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup></Project>

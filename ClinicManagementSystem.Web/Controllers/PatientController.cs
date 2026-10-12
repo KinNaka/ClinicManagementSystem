@@ -63,7 +63,7 @@ namespace ClinicManagementSystem.Web.Controllers
                     ModelState.Remove(nameof(model.PatientCode));
                 }
                 ModelState.AddModelError(
-                    nameof(model.PatientCode),
+                    string.Empty,
                     result.Error ?? "Không thể tạo hồ sơ.");
 
                 return View(model);

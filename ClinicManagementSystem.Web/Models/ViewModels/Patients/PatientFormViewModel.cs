@@ -15,7 +15,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
         [StringLength(200, ErrorMessage = "Họ tên tối đa 200 ký tự.")]
         public string FullName { get; set; } = string.Empty;
 
-        [DataType(DataType.Date)]
+        [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType = typeof(ClinicManagementSystem.Web.Models.Binding.DayMonthYearDateBinder))]
         public DateOnly? DateOfBirth { get; set; }
 
         [StringLength(20)]

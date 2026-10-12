@@ -15,11 +15,13 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<List<InventoryIndexViewModel>>
-            GetStockAsync(string? searchTerm)
+            GetStockAsync(string? searchTerm, bool lowStockOnly = false)
         {
             var query = _context.Products
                 .AsNoTracking()
                 .Where(p => !p.IsCombo && !p.IsService);
+
+            if (lowStockOnly) query = query.Where(p => p.CurrentStock <= p.MinimumStock);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -207,6 +209,45 @@ namespace ClinicManagementSystem.Web.Services
                     .ThenInclude(d => d.Product)
                 .OrderByDescending(t => t.TransactionDate)
                 .ToListAsync();
+        }
+
+        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync()
+        {
+            return new() { Details = await _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService)
+                .OrderBy(p => p.Name).Select(p => new ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockCountRow {
+                    ProductId = p.Id, ProductCode = p.ProductCode, ProductName = p.Name, Unit = p.Unit, ExpectedStock = p.CurrentStock
+                }).ToListAsync() };
+        }
+
+        public async Task<int> AdjustStockAsync(ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel model, string? actor)
+        {
+            var rows = model.Details.Where(d => d.CountedStock.HasValue).ToList();
+            if (rows.Count == 0) throw new InvalidOperationException("Nhập tồn thực tế cho ít nhất một sản phẩm. Để trống các sản phẩm chưa kiểm.");
+            if (string.IsNullOrWhiteSpace(model.Reason) || model.Reason.Length > 500 || rows.Any(d => d.ProductId <= 0 || d.CountedStock < 0 || d.CountedStock > 999999999 || d.CountedStock != decimal.Round(d.CountedStock!.Value, 3) || d.Note?.Length > 180) || rows.Select(d => d.ProductId).Distinct().Count() != rows.Count)
+                throw new InvalidOperationException("Dữ liệu kiểm kho không hợp lệ; số lượng tối đa 3 chữ số thập phân và không trùng sản phẩm.");
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var ids = rows.Select(d => d.ProductId).ToList();
+            var products = await _context.Products.AsNoTracking().Where(p => ids.Contains(p.Id) && !p.IsCombo && !p.IsService).ToDictionaryAsync(p => p.Id);
+            if (products.Count != rows.Count) throw new InvalidOperationException("Sản phẩm không còn tồn tại hoặc không quản lý tồn kho.");
+            var record = new InventoryTransaction { TransactionCode = "ADJ-" + Guid.NewGuid().ToString("N").ToUpperInvariant(),
+                TransactionType = "Adjustment", TransactionDate = DateTime.Now, CreatedAt = DateTime.Now,
+                Reason = model.Reason, CreatedBy = actor == null ? null : actor[..Math.Min(actor.Length, 100)] };
+            foreach (var row in rows.OrderBy(d => d.ProductId))
+            {
+                var product = products[row.ProductId];
+                if (product.CurrentStock != row.ExpectedStock) throw new InvalidOperationException("Tồn kho đã thay đổi trong lúc kiểm. Số liệu đã được làm mới; hãy kiểm tra lại chênh lệch trước khi lưu.");
+                var actual = row.CountedStock!.Value;
+                var difference = actual - product.CurrentStock;
+                if (difference == 0) continue;
+                var affected = await _context.Products.Where(p => p.Id == row.ProductId && p.CurrentStock == row.ExpectedStock && !p.IsCombo && !p.IsService)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.CurrentStock, actual).SetProperty(p => p.UpdatedAt, DateTime.Now));
+                if (affected != 1) throw new InvalidOperationException("Tồn kho đã thay đổi; vui lòng kiểm tra lại trước khi cân kho.");
+                record.Details.Add(new InventoryTransactionDetail { ProductId = row.ProductId, Quantity = difference, UnitPrice = product.CostPrice,
+                    Note = $"Tồn trước: {product.CurrentStock}; thực tế: {actual}; lệch: {difference}. {row.Note}" });
+            }
+            if (record.Details.Count > 0) { _context.InventoryTransactions.Add(record); await _context.SaveChangesAsync(); }
+            await transaction.CommitAsync();
+            return record.Details.Count;
         }
 
         private async Task<string> GenerateCodeAsync(string prefix)

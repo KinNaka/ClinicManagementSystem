@@ -87,6 +87,35 @@ namespace ClinicManagementSystem.Web.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "Admin"), HttpGet]
+        public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+        [Authorize(Roles = "Admin"), HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || !user.IsActive) return Challenge();
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError("", error.Code switch {
+                        "PasswordMismatch" => "Mật khẩu hiện tại không đúng.",
+                        "PasswordTooShort" => "Mật khẩu mới chưa đủ độ dài yêu cầu.",
+                        "PasswordRequiresDigit" => "Mật khẩu mới phải có chữ số.",
+                        "PasswordRequiresLower" => "Mật khẩu mới phải có chữ thường.",
+                        "PasswordRequiresUpper" => "Mật khẩu mới phải có chữ hoa.",
+                        "PasswordRequiresNonAlphanumeric" => "Mật khẩu mới phải có ký tự đặc biệt.",
+                        _ => "Không thể đổi mật khẩu. Vui lòng kiểm tra dữ liệu và thử lại."
+                    });
+                return View(model);
+            }
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["SuccessMessage"] = "Đã đổi mật khẩu thành công.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]

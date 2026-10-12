@@ -1,5 +1,10 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
-@{ Layout = null; }
+@{
+    Layout = null;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal value) => value.ToString("N0", culture);
+    var goods = Model.Status == "Imported" ? Model.ImportedGoodsTotal : Model.Details.Sum(d => d.LineTotal);
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -28,6 +33,8 @@
         .item { padding: 8px 0; border-bottom: 1px dotted #777; break-inside: avoid; }
         .item[hidden] { display: none !important; }
         .item p { margin: 3px 0; }
+        .amounts { width: 98%; margin-top: 20px; border-collapse: collapse; font-weight: bold; }
+        .amounts td { padding: 3px; text-align: right; white-space: nowrap; }
         .thanks { margin: 20px 0 0; text-align: center; font-style: italic; }
         @@media print {
             html, body { margin: 0; padding: 0; background: white; }
@@ -56,11 +63,11 @@
         </tbody></table>
         <p id="selection-count" aria-live="polite">Đã chọn 0 sản phẩm.</p>
         <p id="error" class="error" role="alert"></p>
-        <p class="help">Chọn ít nhất một dòng sản phẩm. Bản in chỉ gồm các dòng đã chọn và ghi chú tương ứng. Chọn máy POS, đúng khổ giấy, tỷ lệ 100%, lề “Không” và tắt đầu trang/chân trang.</p>
+        <p class="help">Chọn ít nhất một dòng sản phẩm. Bản in giữ tổng tiền của toàn bộ hóa đơn và in thêm sản phẩm đã chọn cùng ghi chú tương ứng. Chọn máy POS, đúng khổ giấy, tỷ lệ 100%, lề “Không” và tắt đầu trang/chân trang.</p>
     </div>
     <main id="receipt">
         <span id="print-time"></span>
-        <h1>THÔNG TIN SẢN PHẨM</h1>
+        <h1>@(Model.Status == "Draft" ? "HÓA ĐƠN TẠM TÍNH" : "HÓA ĐƠN BÁN HÀNG")</h1>
         <div class="center">Số HĐ: @Model.SaleCode</div>
         <div class="center">Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")</div>
         @if (Model.Status == "Draft") { <div class="center"><strong>BẢN NHÁP</strong></div> }
@@ -74,6 +81,15 @@
                 @if (!string.IsNullOrWhiteSpace(item.Notes)) { <p class="notes">Ghi chú: @item.Notes</p> }
             </section>
         }
+        <table class="amounts" aria-label="Tổng tiền toàn bộ hóa đơn"><tfoot>
+            <tr><td>Tiền thuốc:</td><td>@Money(goods)</td></tr>
+            @if (Model.ImportedDiscount != 0)
+            {
+                <tr><td>Giảm giá:</td><td>@Money(Model.ImportedDiscount)</td></tr>
+            }
+            <tr><td>Tiền thu khác:</td><td>@Money(Model.ImportedSurcharge)</td></tr>
+            <tr><td>Thành tiền:</td><td>@Money(Model.TotalAmount)</td></tr>
+        </tfoot></table>
         <p class="thanks">Cảm ơn và hẹn gặp lại!</p>
     </main>
     <script>

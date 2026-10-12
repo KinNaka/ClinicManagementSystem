@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ClinicManagementSystem.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using ClinicManagementSystem.Web.Models.ViewModels.ProductCategories;
 namespace ClinicManagementSystem.Web.Controllers
 {
@@ -20,6 +21,7 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         //GET : /ProductCategories/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View(new ProductCategoryFormViewModel());
@@ -29,6 +31,7 @@ namespace ClinicManagementSystem.Web.Controllers
         //POST : /ProductCategories/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(ProductCategoryFormViewModel model)
         {
             if (!ModelState.IsValid)
@@ -42,18 +45,19 @@ namespace ClinicManagementSystem.Web.Controllers
             {
                 ModelState.AddModelError(
                     "Code",
-                    "Category code already exists."
+                    "Mã danh mục đã tồn tại."
                 );
 
                 return View(model);
             }
 
-            TempData["Success"] = "Category created successfully.";
+            TempData["Success"] = "Đã thêm danh mục sản phẩm.";
 
             return RedirectToAction(nameof(Index));
         }
 
         //GET : /ProductCategories/Edit/{id}
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(long id)
         {
             var model  = await _service.GetByIdAsync(id);
@@ -66,6 +70,7 @@ namespace ClinicManagementSystem.Web.Controllers
         //POST : /ProductCategories/Edit/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(
         long id,
         ProductCategoryFormViewModel model)
@@ -87,13 +92,14 @@ namespace ClinicManagementSystem.Web.Controllers
         //POST : /ProductCategories/Delete/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(long id)
         {
             var result = await _service.DeleteAsync(id);
 
             if (!result.Success)
             {
-                if (result.Error == "Category not found.")
+                if (result.Error == "Không tìm thấy danh mục sản phẩm.")
                 {
                     return NotFound();
                 }
@@ -103,12 +109,13 @@ namespace ClinicManagementSystem.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            TempData["Success"] = "Category deleted successfully.";
+            TempData["Success"] = "Đã xóa danh mục sản phẩm.";
 
             return RedirectToAction(nameof(Index));
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ToggleStatus(long id)
         {
             var result = await _service.ToggleStatusAsync(id);

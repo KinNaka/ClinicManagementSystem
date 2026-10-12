@@ -50,7 +50,7 @@ public sealed class SaleImportService(ApplicationDbContext db, KiotVietSaleReade
         model.MissingPatientCodes = fresh.Select(i => i.PatientCode).Where(c => c.Length > 0 && !patientCodes.Contains(c)).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToList();
         model.MissingProductCodes = fresh.SelectMany(i => i.Sale.Details).Select(d => d.SourceProductCode!).Where(c => !productCodes.Contains(c)).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToList();
     }
-    public async Task<(bool Success, int Imported, int Skipped, string? Error)> ImportAsync(string token, string owner)
+    public async Task<(bool Success, int Imported, int Skipped, string? Error)> ImportAsync(string token, string owner, bool canCreateProducts = true)
     {
         if (!cache.TryGetValue<Pending>("sale-import:" + token, out var pending) || pending == null || pending.Owner != owner)
             return (false, 0, 0, "Bản xem trước đã hết hạn. Vui lòng tải lại file.");
@@ -61,6 +61,8 @@ public sealed class SaleImportService(ApplicationDbContext db, KiotVietSaleReade
             var model = pending.Model;
             await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             await ResolveAsync(model);
+            if (!canCreateProducts && model.MissingProductCodes.Count > 0)
+                return (false, 0, 0, "Chỉ Admin được tạo bổ sung sản phẩm còn thiếu. Vui lòng nhờ Admin nhập danh mục hàng trước.");
             if (model.ErrorCount > 0 || (!model.CreateMissingRecords && (model.MissingPatientCodes.Count > 0 || model.MissingProductCodes.Count > 0)) || (!model.UseWalkInCustomer && model.WalkInCount > 0))
                 return (false, 0, 0, "Còn lỗi hoặc mã KH/mã hàng chưa liên kết. Vui lòng tải lại file và kiểm tra lựa chọn.");
             var patients = (await db.Patients.ToListAsync()).ToDictionary(p => p.PatientCode, StringComparer.OrdinalIgnoreCase);

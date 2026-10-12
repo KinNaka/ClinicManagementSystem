@@ -5,6 +5,7 @@ using ClinicManagementSystem.Web.Models.ViewModels.Products;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ClinicManagementSystem.Web.Controllers;
 
@@ -40,6 +41,7 @@ public class ProductsController : Controller
 
         return View(products);
     }
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
         var model = new ProductFormViewModel();
@@ -50,6 +52,7 @@ public class ProductsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(ProductFormViewModel model)
     {
         if (!ModelState.IsValid)
@@ -66,16 +69,17 @@ public class ProductsController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.ProductCode),
-                "Product code already exists or the selected category is invalid.");
+                "Mã sản phẩm đã tồn tại hoặc danh mục đã chọn không hợp lệ.");
 
             await LoadCategoriesAsync(model);
             return View(model);
         }
 
-        TempData["Success"] = "Product created successfully.";
+        TempData["Success"] = "Đã thêm sản phẩm.";
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(long id)
     {
         var model = await _productService.GetByIdAsync(id);
@@ -89,6 +93,7 @@ public class ProductsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(
         long id,
         ProductFormViewModel model)
@@ -107,29 +112,30 @@ public class ProductsController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.ProductCode),
-                "Product could not be updated. Check the product code and category.");
+                "Không thể cập nhật sản phẩm. Vui lòng kiểm tra mã sản phẩm và danh mục.");
 
             await LoadCategoriesAsync(model);
             return View(model);
         }
 
-        TempData["Success"] = "Product updated successfully.";
+        TempData["Success"] = "Đã cập nhật sản phẩm.";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(long id)
     {
         var result = await _productService.DeleteAsync(id);
 
         if (!result)
         {
-            TempData["Error"] = "Product could not be deleted.";
+            TempData["Error"] = "Không thể xóa sản phẩm.";
         }
         else
         {
-            TempData["Success"] = "Product deleted successfully.";
+            TempData["Success"] = "Đã xóa sản phẩm.";
         }
 
         return RedirectToAction(nameof(Index));
@@ -152,6 +158,7 @@ public class ProductsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ToggleStatus(long id)
     {
         var product = await _productService.GetByIdAsync(id);

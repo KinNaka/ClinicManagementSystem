@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Data;
+using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Models.Entities;
 using ClinicManagementSystem.Web.Models.ViewModels.ProductCategories;
 using Microsoft.EntityFrameworkCore;
@@ -110,14 +110,14 @@ namespace ClinicManagementSystem.Web.Services
 
             if (category == null)
             {
-                return (false, "Category not found.");
+                return (false, "Không tìm thấy danh mục sản phẩm.");
             }
 
             if (category.Products.Any())
             {
                 return (
                     false,
-                    "Cannot delete category because it is being used by products."
+                    "Không thể xóa danh mục đang được sử dụng bởi sản phẩm."
                 );
             }
 

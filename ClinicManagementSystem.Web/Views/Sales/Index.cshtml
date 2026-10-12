@@ -142,6 +142,13 @@
                                         Sửa
                                     </a>
                                 }
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form asp-action="Delete" asp-route-id="@sale.Id" method="post"
+                                          onsubmit="return confirm('Xóa hóa đơn này? Hóa đơn đã xác nhận sẽ được trừ khỏi doanh thu và hoàn kho theo phiếu xuất gốc. Hóa đơn nháp/lịch sử KiotViet không hoàn kho.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>

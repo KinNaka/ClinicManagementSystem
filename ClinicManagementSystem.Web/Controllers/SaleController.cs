@@ -2,6 +2,7 @@
 using ClinicManagementSystem.Web.Models.ViewModels.Sales;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ClinicManagementSystem.Web.Controllers
 {
@@ -176,6 +177,20 @@ namespace ClinicManagementSystem.Web.Controllers
                 nameof(Details), new { id });
         }
 
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            try
+            {
+                var deleted = await _saleService.DeleteAsync(id, User.Identity?.Name);
+                TempData[deleted ? "SuccessMessage" : "ErrorMessage"] = deleted
+                    ? "Đã xóa hóa đơn. Hóa đơn đã xác nhận được loại khỏi doanh thu và hoàn kho theo phiếu xuất gốc."
+                    : "Hóa đơn không còn tồn tại.";
+            }
+            catch (InvalidOperationException ex) { TempData["ErrorMessage"] = ex.Message; }
+            return RedirectToAction(nameof(Index));
+        }
 
         private void ValidateSale(SaleFormViewModel model)
         {

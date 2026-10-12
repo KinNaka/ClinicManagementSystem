@@ -22,6 +22,12 @@
                placeholder="Tìm theo mã hoặc tên sản phẩm..." />
     </div>
 
+    <div class="col-md-3">
+        <select name="lowStockOnly" class="form-select" aria-label="Lọc tồn kho">
+            <option value="false" selected="@(!(bool)(ViewBag.LowStockOnly ?? false))">Tất cả hàng hóa</option>
+            <option value="true" selected="@((bool)(ViewBag.LowStockOnly ?? false))">Sắp hết hàng (tồn ≤ tối thiểu)</option>
+        </select>
+    </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
         <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Đặt lại</a>
@@ -29,6 +35,7 @@
 </form>
 
 <div class="mb-3">
+    @if (User.IsInRole("Admin")) { <a asp-action="StockCount" class="btn btn-primary">Kiểm kho / Cân kho</a> }
     <a asp-action="StockIn" class="btn btn-success">Nhập kho</a>
     <a asp-action="StockOut" class="btn btn-warning">Xuất kho</a>
     <a asp-action="Transactions" class="btn btn-outline-primary">

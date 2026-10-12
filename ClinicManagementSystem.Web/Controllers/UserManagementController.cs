@@ -178,6 +178,23 @@ public class UserManagementController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+        var roles = await _userManager.GetRolesAsync(user);
+        if (user.Id == _userManager.GetUserId(User) || !roles.Contains("Staff") || roles.Contains("Admin"))
+        {
+            TempData["ErrorMessage"] = "Chỉ được xóa tài khoản Staff khác; không thể xóa tài khoản đang đăng nhập hoặc Admin.";
+            return RedirectToAction(nameof(Index));
+        }
+        var result = await _userManager.DeleteAsync(user);
+        TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Succeeded
+            ? "Đã xóa tài khoản Staff." : "Không thể xóa tài khoản. Vui lòng tải lại danh sách và thử lại.";
+        return RedirectToAction(nameof(Index));
+    }
+
     private async Task<bool> HasAnotherActiveAdminAsync(string excludedId)
     {
         var admins = await _userManager.GetUsersInRoleAsync("Admin");

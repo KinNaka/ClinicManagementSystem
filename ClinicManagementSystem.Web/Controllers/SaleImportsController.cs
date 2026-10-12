@@ -39,7 +39,7 @@ public sealed class SaleImportsController(SaleImportService imports) : Controlle
         var owner = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (owner == null) return Challenge();
         if (string.IsNullOrWhiteSpace(token) || token.Length != 32) return BadRequest();
-        var result = await imports.ImportAsync(token, owner);
+        var result = await imports.ImportAsync(token, owner, User.IsInRole("Admin"));
         if (!result.Success) { ModelState.AddModelError("", result.Error!); return View("Index", new SaleImportViewModel()); }
         TempData["SuccessMessage"] = $"Đã nhập {result.Imported:N0} hóa đơn lịch sử KiotViet; bỏ qua {result.Skipped:N0} mã đã tồn tại. Không trừ kho hoặc cộng lại tổng bán cũ.";
         return RedirectToAction("Index", "Sales");

@@ -4,12 +4,24 @@ using ClinicManagementSystem.Web.Models.ViewModels.Dashboard;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 static class DashboardRoleTests
 {
     public static async Task RunAsync()
     {
+        foreach (var type in new[] { typeof(ProductsController), typeof(ProductCategoriesController) })
+            foreach (var action in type.GetMethods().Where(m => m.Name is "Create" or "Edit" or "Delete" or "ToggleStatus"))
+                if (!action.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Any(a => a.Roles == "Admin"))
+                    throw new Exception("Product/category creation endpoint missing Admin restriction.");
+        if (!typeof(SalesController).GetMethod("Delete")!.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Any(a => a.Roles == "Admin"))
+            throw new Exception("Invoice deletion missing Admin restriction.");
+        if (!typeof(ProductImportsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Any(a => a.Roles == "Admin"))
+            throw new Exception("Product import missing Admin restriction.");
         var service = new Spy();
+        foreach (var action in typeof(InventoryController).GetMethods().Where(m => m.Name == "StockCount"))
+            if (!action.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Any(a => a.Roles == "Admin"))
+                throw new Exception("Stock adjustment missing Admin restriction.");
         DashboardController Controller(string role) => new(service) { ControllerContext = new ControllerContext {
             HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Role, role) }, "Test")) }
         } };

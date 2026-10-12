@@ -1,12 +1,12 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductFormViewModel
 
 @{
-    ViewData["Title"] = "Create Product";
+    ViewData["Title"] = "Thêm sản phẩm";
 }
 
 <div class="container mt-4">
-    <h2>Create Product</h2>
-    <p class="text-muted">Add a medicine or medical supply.</p>
+    <h2>Thêm sản phẩm</h2>
+    <p class="text-muted">Thêm thuốc hoặc vật tư y tế.</p>
     <hr />
 
     <form asp-action="Create" method="post">
@@ -33,14 +33,14 @@
                 <select asp-for="CategoryId"
                         asp-items="Model.Categories"
                         class="form-select">
-                    <option value="">-- Select Category --</option>
+                    <option value="">-- Chọn danh mục --</option>
                 </select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
 
             <div class="col-md-6 mb-3">
                 <label asp-for="Unit" class="form-label"></label>
-                <input asp-for="Unit" class="form-control" placeholder="Box, bottle, tablet..." />
+                <input asp-for="Unit" class="form-control" placeholder="Hộp, chai, viên..." />
                 <span asp-validation-for="Unit" class="text-danger"></span>
             </div>
 
@@ -52,7 +52,7 @@
 
             <div class="col-md-6 mb-3">
                 <label asp-for="DosageForm" class="form-label"></label>
-                <input asp-for="DosageForm" class="form-control" placeholder="Tablet, capsule, solution..." />
+                <input asp-for="DosageForm" class="form-control" placeholder="Viên nén, viên nang, dung dịch..." />
                 <span asp-validation-for="DosageForm" class="text-danger"></span>
             </div>
 
@@ -89,8 +89,8 @@
             <div class="col-md-6 mb-3">
                 <label asp-for="Status" class="form-label"></label>
                 <select asp-for="Status" class="form-select">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ACTIVE">Đang hoạt động</option>
+                    <option value="INACTIVE">Ngừng hoạt động</option>
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
@@ -98,8 +98,8 @@
 
         <partial name="_ComboForm" model="Model" />
         <div class="mt-3">
-            <button type="submit" class="btn btn-primary">Create Product</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
         </div>
     </form>
 </div>

@@ -18,7 +18,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · Clinic Management</title>
+    <link rel="icon" type="image/jpeg" href="https://i.imgur.com/f8RJ0JA.jpg" />
+    <title>@ViewData["Title"] · Phòng Khám Lâm Thảo</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/clinic.css" asp-append-version="true" />
@@ -29,7 +30,7 @@
     {
         <div class="dashboard-shell">
             <aside class="sidebar">
-                <a class="brand" asp-controller="Dashboard" asp-action="Index"><span class="brand-symbol" aria-hidden="true">＋</span><span>Clinic<span class="brand-subtitle">MANAGEMENT SYSTEM</span></span></a>
+                <a class="brand" asp-controller="Dashboard" asp-action="Index"><img class="brand-logo" src="https://i.imgur.com/f8RJ0JA.jpg" alt="Logo phòng khám Lâm Thảo" width="48" height="48" /><span class="brand-name">Phòng Khám<span class="brand-subtitle">Lâm Thảo</span></span></a>
                 <p class="nav-caption">QUẢN LÝ PHÒNG KHÁM</p>
                 <nav class="main-nav" aria-label="Điều hướng chính">
                     @foreach (var navItem in sections)
@@ -49,15 +50,15 @@
                     @if (!isDashboard) { <p class="eyebrow page-eyebrow">@sectionName</p> }
                     @RenderBody()
                 </main>
-                <footer class="dashboard-footer">Clinic Management <span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></footer>
+                <footer class="dashboard-footer">Phòng Khám Lâm Thảo <span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></footer>
             </div>
         </div>
     }
     else
     {
-        <header class="auth-header"><a class="brand" asp-controller="Dashboard" asp-action="Index"><span class="brand-symbol" aria-hidden="true">＋</span><span>Clinic<span class="brand-subtitle">MANAGEMENT SYSTEM</span></span></a><span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></header>
+        <header class="auth-header"><a class="brand" asp-controller="Dashboard" asp-action="Index"><img class="brand-logo" src="https://i.imgur.com/f8RJ0JA.jpg" alt="Logo phòng khám Lâm Thảo" width="48" height="48" /><span class="brand-name">Phòng Khám<span class="brand-subtitle">Lâm Thảo</span></span></a><span>Chăm sóc tốt hơn, quản lý dễ hơn.</span></header>
         <main id="main-content" class="auth-main">@RenderBody()</main>
-        <footer class="auth-footer">Clinic Management · Không gian quản lý phòng khám</footer>
+        <footer class="auth-footer">Phòng Khám Lâm Thảo · Không gian quản lý phòng khám</footer>
     }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

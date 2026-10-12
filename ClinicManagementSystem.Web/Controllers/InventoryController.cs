@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Web.Data;
 using ClinicManagementSystem.Web.Services;
 using ClinicManagementSystem.Web.ViewModels.Inventory;
+using ClinicManagementSystem.Web.Models.ViewModels.Inventory;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ClinicManagementSystem.Web.Controllers
 {
@@ -20,9 +22,10 @@ namespace ClinicManagementSystem.Web.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(string? searchTerm)
+        public async Task<IActionResult> Index(string? searchTerm, bool lowStockOnly = false)
         {
-            var items = await _inventoryService.GetStockAsync(searchTerm);
+            var items = await _inventoryService.GetStockAsync(searchTerm, lowStockOnly);
+            ViewBag.LowStockOnly = lowStockOnly;
 
             ViewBag.SearchTerm = searchTerm;
 
@@ -132,6 +135,33 @@ namespace ClinicManagementSystem.Web.Controllers
                 await _inventoryService.GetTransactionsAsync();
 
             return View(transactions);
+        }
+
+        [HttpGet, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> StockCount() => View(await _inventoryService.GetStockCountAsync());
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin"), RequestFormLimits(ValueCountLimit = 30000)]
+        public async Task<IActionResult> StockCount(StockAdjustmentViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var count = await _inventoryService.AdjustStockAsync(model, User.Identity?.Name);
+                    TempData["Success"] = count == 0 ? "Tồn thực tế khớp hệ thống, không cần điều chỉnh." : $"Đã cân tồn kho cho {count} sản phẩm và lưu phiếu điều chỉnh.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
+            }
+            var current = await _inventoryService.GetStockCountAsync();
+            var entered = model.Details.GroupBy(d => d.ProductId).ToDictionary(g => g.Key, g => g.First());
+            current.Reason = model.Reason;
+            foreach (var row in current.Details)
+                if (entered.TryGetValue(row.ProductId, out var original)) { row.CountedStock = original.CountedStock; row.Note = original.Note; }
+            // Render current stock and retained counts together for review after a conflict.
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(e => e.Length > 0).ToList();
+            ModelState.Clear(); foreach (var error in errors) ModelState.AddModelError("", error);
+            return View(current);
         }
 
         private async Task LoadProductsAsync(

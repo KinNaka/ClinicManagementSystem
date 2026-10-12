@@ -4,9 +4,11 @@ using System.Xml;
 using ClinicManagementSystem.Web.Models.ViewModels.Products;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ClinicManagementSystem.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public sealed class ProductImportsController(ProductImportService imports) : Controller
 {
     [HttpGet]

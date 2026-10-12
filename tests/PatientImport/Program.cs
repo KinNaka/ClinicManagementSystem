@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
+await BirthDateTests.RunAsync();
 var reader = new KiotVietCustomerReader(new VietnamAddressService(new TestEnvironment(root)));
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 MemoryStream Workbook(string[][] rows, bool date1904 = false)
@@ -78,6 +79,9 @@ Console.WriteLine("Passed: code preservation, phone zeroes, old sales, address m
 if (args.FirstOrDefault() == "--combo") await ComboTests.RunAsync();
 if (args.FirstOrDefault() == "--copy") await SaleCopyTests.RunAsync();
 if (args.FirstOrDefault() == "--roles") await DashboardRoleTests.RunAsync();
+if (args.FirstOrDefault() == "--delete-sales") await SaleDeletionTests.RunAsync();
+if (args.FirstOrDefault() == "--stock-count") await StockCountTests.RunAsync();
+if (args.FirstOrDefault() == "--accounts") await AccountSecurityTests.RunAsync();
 if (args.FirstOrDefault() == "--products") await ProductImportTests.RunAsync(args[1]);
 if (args.FirstOrDefault() == "--sales")
 {
@@ -99,7 +103,7 @@ if (args.FirstOrDefault() == "--sales")
         Check(saleReader.Read(file, "test.xlsx").Single().Errors.Count > 0, "Zero quantity accepted.");
     await SaleImportTests.RunAsync(args.Skip(1).ToArray());
 }
-if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales" or "--copy" or "--roles"))
+if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales" or "--copy" or "--roles" or "--delete-sales" or "--stock-count" or "--accounts"))
 {
     using var file = File.OpenRead(args[0]);
     var rows = reader.Read(file);

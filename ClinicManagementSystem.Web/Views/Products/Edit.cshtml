@@ -1,12 +1,12 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductFormViewModel
 
 @{
-    ViewData["Title"] = "Edit Product";
+    ViewData["Title"] = "Sửa sản phẩm";
 }
 
 <div class="container mt-4">
-    <h2>Edit Product</h2>
-    <p class="text-muted">Update medicine or medical supply information.</p>
+    <h2>Sửa sản phẩm</h2>
+    <p class="text-muted">Cập nhật thông tin thuốc hoặc vật tư y tế.</p>
     <hr />
 
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
@@ -35,7 +35,7 @@
                 <select asp-for="CategoryId"
                         asp-items="Model.Categories"
                         class="form-select">
-                    <option value="">-- Select Category --</option>
+                    <option value="">-- Chọn danh mục --</option>
                 </select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
@@ -91,8 +91,8 @@
             <div class="col-md-6 mb-3">
                 <label asp-for="Status" class="form-label"></label>
                 <select asp-for="Status" class="form-select">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ACTIVE">Đang hoạt động</option>
+                    <option value="INACTIVE">Ngừng hoạt động</option>
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
@@ -100,8 +100,8 @@
 
         <partial name="_ComboForm" model="Model" />
         <div class="mt-3">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
         </div>
     </form>
 </div>

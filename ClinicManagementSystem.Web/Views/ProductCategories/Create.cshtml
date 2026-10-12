@@ -1,12 +1,12 @@
-﻿@model ClinicManagementSystem.Web.Models.ViewModels.ProductCategories.ProductCategoryFormViewModel
+@model ClinicManagementSystem.Web.Models.ViewModels.ProductCategories.ProductCategoryFormViewModel
 
 @{
-    ViewData["Title"] = "Create Product Category";
+    ViewData["Title"] = "Thêm danh mục sản phẩm";
 }
 
 <div class="container mt-4">
 
-    <h2>Create Product Category</h2>
+    <h2>Thêm danh mục sản phẩm</h2>
 
     <hr />
 
@@ -43,7 +43,7 @@
         <div class="mb-3">
             <label asp-for="Description"
                    class="form-label">
-                Description
+                Mô tả
             </label>
 
             <textarea asp-for="Description"
@@ -59,14 +59,14 @@
         <div class="mb-3">
             <label asp-for="Status"
                    class="form-label">
-                Status
+                Trạng thái
             </label>
 
             <select asp-for="Status"
                     class="form-select">
 
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="INACTIVE">Ngừng hoạt động</option>
 
             </select>
 
@@ -77,12 +77,12 @@
 
         <button type="submit"
                 class="btn btn-primary">
-            Create
+            Thêm mới
         </button>
 
         <a asp-action="Index"
            class="btn btn-secondary">
-            Cancel
+            Hủy
         </a>
 
     </form>

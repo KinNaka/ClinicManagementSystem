@@ -486,6 +486,56 @@ namespace ClinicManagementSystem.Web.Services
             await transaction.CommitAsync();
         }
 
+        public async Task<bool> DeleteAsync(long id, string? actor = null)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var sale = await _context.Sales.Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == id);
+            if (sale == null) return false;
+            if (sale.Status is not ("Draft" or "Confirmed" or "Imported"))
+                throw new InvalidOperationException("Trạng thái hóa đơn không cho phép xóa.");
+            var now = DateTime.Now;
+            // Lock this invoice before restoring stock; repeated deletion cannot restore twice.
+            var locked = await _context.Sales.Where(s => s.Id == id && s.Status == sale.Status)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.Status, "Deleting"));
+            if (locked != 1) throw new InvalidOperationException("Hóa đơn đã được xử lý. Vui lòng tải lại trang.");
+            if (sale.Status == "Confirmed")
+            {
+                var stockOuts = await _context.InventoryTransactions.AsNoTracking().Include(t => t.Details)
+                    .Where(t => t.TransactionType == "StockOut" && t.ReferenceNumber == sale.SaleCode && t.Reason == "Xuất kho bán hàng")
+                    .ToListAsync();
+                if (stockOuts.Count > 1 || (stockOuts.Count == 0 && sale.Details.Any(d => !d.Product.IsService)))
+                    throw new InvalidOperationException("Không xác định được phiếu xuất kho gốc. Chưa xóa hóa đơn hoặc thay đổi tồn kho.");
+                var outgoing = stockOuts.SelectMany(t => t.Details).ToList();
+                if (outgoing.Any(d => d.Quantity <= 0)) throw new InvalidOperationException("Phiếu xuất kho gốc có số lượng không hợp lệ.");
+                if (outgoing.Count > 0)
+                {
+                    var reversal = new InventoryTransaction {
+                        TransactionCode = "IN-" + Guid.NewGuid().ToString("N").ToUpperInvariant(),
+                        TransactionType = "StockIn", TransactionDate = now, CreatedAt = now,
+                        ReferenceNumber = sale.SaleCode, Reason = "Hoàn kho do xóa hóa đơn",
+                        CreatedBy = actor == null ? null : actor[..Math.Min(actor.Length, 100)]
+                    };
+                    foreach (var group in outgoing.GroupBy(d => d.ProductId).OrderBy(g => g.Key))
+                    {
+                        var quantity = group.Sum(d => d.Quantity);
+                        var affected = await _context.Products.Where(p => p.Id == group.Key).ExecuteUpdateAsync(setters => setters
+                            .SetProperty(p => p.CurrentStock, p => p.CurrentStock + quantity).SetProperty(p => p.UpdatedAt, now));
+                        if (affected != 1) throw new InvalidOperationException("Không tìm thấy hàng hóa cần hoàn kho. Chưa xóa hóa đơn.");
+                        foreach (var detail in group)
+                            reversal.Details.Add(new InventoryTransactionDetail { ProductId = detail.ProductId, Quantity = detail.Quantity,
+                                UnitPrice = detail.UnitPrice, Note = "Hoàn phiếu xuất khi xóa: " + sale.SaleCode });
+                    }
+                    _context.InventoryTransactions.Add(reversal);
+                }
+            }
+            // Revenue/customer totals are sums of remaining Confirmed invoices.
+            _context.SaleDetails.RemoveRange(sale.Details);
+            _context.Sales.Remove(sale);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return true;
+        }
+
         public async Task<decimal?> GetProductPriceAsync(long productId)
         {
             return await _context.Products

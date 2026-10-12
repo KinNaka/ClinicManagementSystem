@@ -16,6 +16,7 @@
                 <th>Loại giao dịch</th>
                 <th>Ngày giờ</th>
                 <th>Lý do</th>
+                <th>Người thực hiện</th>
                 <th>Số mặt hàng</th>
             </tr>
         </thead>
@@ -33,7 +34,15 @@
                 </td>
                 <td>@transaction.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@transaction.Reason</td>
-                <td>@transaction.Details.Count</td>
+                <td>@transaction.CreatedBy</td>
+                <td><details><summary>@transaction.Details.Count mặt hàng</summary>
+                    <table class="table table-sm mt-2"><thead><tr><th>Hàng hóa</th><th>Số lượng / chênh lệch</th><th>Ghi chú</th></tr></thead><tbody>
+                    @foreach (var detail in transaction.Details)
+                    {
+                        <tr><td>@detail.Product.ProductCode — @detail.Product.Name</td><td>@detail.Quantity.ToString("0.###")</td><td>@detail.Note</td></tr>
+                    }
+                    </tbody></table>
+                </details></td>
             </tr>
         }
         </tbody>

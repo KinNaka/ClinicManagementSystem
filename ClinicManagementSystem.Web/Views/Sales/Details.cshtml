@@ -8,7 +8,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3 no-print">
     <h2>Chi tiết hóa đơn</h2>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <a asp-action="Create" asp-route-copyFromId="@Model.Id" class="btn btn-primary">Sao chép</a>
         <a asp-action="Index"
            class="btn btn-outline-secondary">
@@ -29,6 +29,13 @@
         </a>
         <a asp-action="PrintPrescription" asp-route-id="@Model.Id" class="btn btn-outline-dark">In toa thuốc</a>
         <a asp-action="PrintSelectedProducts" asp-route-id="@Model.Id" class="btn btn-outline-dark">In sản phẩm tùy chọn</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Xóa hóa đơn này? Hóa đơn đã xác nhận sẽ được trừ khỏi doanh thu và hoàn kho theo phiếu xuất gốc. Hóa đơn nháp/lịch sử KiotViet không hoàn kho.');">
+                <button type="submit" class="btn btn-outline-danger">Xóa hóa đơn</button>
+            </form>
+        }
     </div>
 </div>
 
@@ -52,7 +59,7 @@
         <div class="text-center mb-4">
             <h3 class="fw-bold">HÓA ĐƠN BÁN HÀNG</h3>
             <div class="text-muted">
-                Clinic Management System V1
+                Phòng Khám Lâm Thảo
             </div>
         </div>
 

@@ -22,6 +22,7 @@ namespace ClinicManagementSystem.Web.Services
             long id, SaleFormViewModel model);
 
         Task ConfirmAsync(long id);
+        Task<bool> DeleteAsync(long id, string? actor = null);
         Task<decimal?> GetProductPriceAsync(long productId);
     }
 }

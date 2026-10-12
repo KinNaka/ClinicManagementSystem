@@ -1,0 +1,118 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
+@{
+    Layout = null;
+    var date = DateOnly.FromDateTime(Model.SaleDate);
+    int? age = Model.PatientDateOfBirth is DateOnly birth && birth <= date
+        ? date.Year - birth.Year - (birth.AddYears(date.Year - birth.Year) > date ? 1 : 0) : null;
+    var gender = Model.PatientGender switch { "Male" => "Nam", "Female" => "Nữ", _ => Model.PatientGender };
+    var medicines = Model.Details.Where(d => !d.IsService).ToList();
+    var address = string.Join(", ", new[] { Model.PatientAddress, Model.PatientWardName, Model.PatientProvinceName }.Where(s => !string.IsNullOrWhiteSpace(s)));
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toa thuốc @Model.SaleCode</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #edf0f3; color: #000; }
+        .toolbar { max-width: 800px; margin: 16px auto; padding: 16px; background: white; font: 14px Arial, sans-serif; }
+        .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        button, select, .back { font: inherit; padding: 8px 12px; }
+        button { border: 0; border-radius: 4px; background: #1459bd; color: white; cursor: pointer; }
+        .back { color: #1459bd; }
+        .toolbar p { margin-bottom: 0; line-height: 1.5; }
+        .printBox { width: 148mm; min-height: 210mm; margin: 0 auto 24px; padding: 8mm; background: white; font: 12px "Times New Roman", Times, serif; line-height: 1.4; }
+        .printBox.a4 { width: 210mm; min-height: 297mm; }
+        table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+        td { padding: 1px; vertical-align: top; overflow-wrap: anywhere; }
+        tr, .medicine { break-inside: avoid; page-break-inside: avoid; }
+        .header { font-weight: bold; }
+        .logo { width: 80px; height: 64px; object-fit: contain; }
+        .number { text-align: center; width: 32%; }
+        h1 { font-size: 16px; text-align: center; margin: 8px 0; }
+        .medicines { margin: 14px 0; }
+        .medicines td { padding: 2px; }
+        .drug { border-bottom: .5px dotted gray; font-weight: bold; }
+        .order { width: 7%; text-align: center; }
+        .quantity { width: 28%; text-align: center; }
+        .signature { text-align: center; width: 50%; }
+        .doctor { margin-top: 55px; }
+        .editable { width: 100%; border: 0; border-bottom: 1px dotted #aaa; background: transparent; color: #000; font: inherit; padding: 0; }
+        textarea.editable { resize: vertical; min-height: 32px; white-space: pre-wrap; overflow: hidden; }
+        .draft { text-align: center; font-weight: bold; }
+        @@media print {
+            body { background: white; }
+            .toolbar { display: none; }
+            .printBox, .printBox.a4 { width: auto; min-height: 0; margin: 0; padding: 0; }
+            .editable { border: 0; }
+            textarea.editable { resize: none; }
+        }
+    </style>
+    <style id="prescription-paper">@@page { size: A5 portrait; margin: 8mm; }</style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="controls">
+            <label for="paper">Khổ giấy</label><select id="paper"><option value="A5">A5</option><option value="A4">A4</option></select>
+            <button type="button" id="print">In toa thuốc</button>
+            <a class="back" asp-action="Details" asp-route-id="@Model.Id">Quay lại hóa đơn</a>
+        </div>
+        <p>Có thể nhập mã bảo hiểm, chẩn đoán, lời dặn và bác sĩ ngay trên mẫu trước khi in. Nội dung nhập tại đây chỉ dùng cho bản in, không lưu vào hồ sơ. Dịch vụ không xuất hiện trong danh sách thuốc. Tắt đầu trang/chân trang trong hộp thoại in.</p>
+    </div>
+    <main class="printBox" id="prescription">
+        <table class="header"><tbody>
+            <tr>
+                <td rowspan="3" style="width:85px"><img class="logo" src="https://i.imgur.com/f8RJ0JA.jpg" alt="" onerror="this.style.visibility='hidden'" /></td>
+                <td>PHÒNG KHÁM Y DƯỢC LÂM THẢO</td>
+                <td class="number" rowspan="2">Số phiếu<br />@Model.SaleCode</td>
+            </tr>
+            <tr><td>Phòng khám Số 01</td></tr>
+            <tr><td>Điện thoại: 0338 83 83 82</td><td class="number">Mã BN: @Model.PatientCode</td></tr>
+        </tbody></table>
+        <h1>ĐƠN THUỐC</h1>
+        @if (Model.Status == "Draft") { <p class="draft">BẢN NHÁP</p> }
+        <table><tbody>
+            <tr><td style="width:60%">Họ tên: @Model.PatientName</td><td>Tuổi: @(age?.ToString() ?? ".....")</td><td>Nam/Nữ: @(string.IsNullOrWhiteSpace(gender) ? "......" : gender)</td></tr>
+            <tr><td colspan="3">Mã số thẻ bảo hiểm: <input class="editable" style="width:65%" aria-label="Mã số thẻ bảo hiểm" /></td></tr>
+            <tr><td colspan="3">Địa chỉ: @address</td></tr>
+            <tr><td colspan="3">Chẩn đoán: <input class="editable" style="width:80%" aria-label="Chẩn đoán" /></td></tr>
+            <tr><td colspan="3">Thuốc điều trị:</td></tr>
+        </tbody></table>
+        <table class="medicines">
+            @for (var i = 0; i < medicines.Count; i++)
+            {
+                var item = medicines[i];
+                <tbody class="medicine">
+                    <tr class="drug"><td class="order">@(i + 1))</td><td>@item.ProductName</td><td class="quantity"><em>Số lượng: </em>@item.Quantity.ToString("0.###") @item.Unit</td></tr>
+                    <tr><td class="order">Ghi chú:</td><td colspan="2" style="white-space:pre-wrap">@item.Notes</td></tr>
+                </tbody>
+            }
+        </table>
+        <table><tbody><tr>
+            <td style="width:50%">Lời dặn:<textarea class="editable" aria-label="Lời dặn">@Model.Notes</textarea></td>
+            <td class="signature">Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")<br />BÁC SĨ ĐIỀU TRỊ
+                <div class="doctor"><input class="editable" style="text-align:center" aria-label="Bác sĩ kê đơn" /></div>
+            </td>
+        </tr></tbody></table>
+    </main>
+    <script>
+        (() => {
+            const paper = document.getElementById('paper');
+            paper.addEventListener('change', () => {
+                const size = paper.value === 'A4' ? 'A4' : 'A5';
+                document.getElementById('prescription').classList.toggle('a4', size === 'A4');
+                document.getElementById('prescription-paper').textContent = `@@page { size: ${size} portrait; margin: 8mm; }`;
+            });
+            function fitNotes() {
+                document.querySelectorAll('textarea').forEach(input => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
+            }
+            document.addEventListener('input', fitNotes);
+            window.addEventListener('beforeprint', fitNotes);
+            document.getElementById('print').addEventListener('click', () => { fitNotes(); window.print(); });
+            fitNotes();
+        })();
+    </script>
+</body>
+</html>

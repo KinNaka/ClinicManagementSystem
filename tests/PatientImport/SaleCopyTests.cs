@@ -49,6 +49,15 @@ static class SaleCopyTests
             var changedId = await service.CreateAsync(changed); db.ChangeTracker.Clear();
             Check((await db.Sales.SingleAsync(s => s.Id == changedId)).TotalAmount == 13.11m, "Changed quantity did not use original price.");
             await service.ConfirmAsync(id); db.ChangeTracker.Clear();
+            var revenueService = new DashboardService(db);
+            var revenue = await revenueService.GetStaffRevenueAsync();
+            db.Sales.AddRange(
+                new Sale { SaleCode = "PAST-WEEK", PatientId = patient.Id, Status = "Confirmed", SaleDate = revenue.WeekStart.AddSeconds(-1), TotalAmount = 999 },
+                new Sale { SaleCode = "FUTURE", PatientId = patient.Id, Status = "Confirmed", SaleDate = revenue.Today.AddDays(1), TotalAmount = 999 },
+                new Sale { SaleCode = "IMPORTED-TODAY", PatientId = patient.Id, Status = "Imported", SaleDate = revenue.Today, TotalAmount = 999 });
+            await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+            revenue = await revenueService.GetStaffRevenueAsync();
+            Check(revenue.TodayRevenue == 11.44m && revenue.WeekRevenue == 11.44m && revenue.WeekStart.DayOfWeek == DayOfWeek.Monday, "Staff revenue included past week, future, drafts or legacy invoices.");
             Check((await db.Products.SingleAsync()).CurrentStock == 8.667m && await db.InventoryTransactionDetails.SumAsync(d => d.Quantity) == 1.333m, "Confirmation did not deduct exactly once.");
             Check((await db.Sales.SingleAsync(s => s.Id == source.Id)).Status == "Imported" && (await db.Sales.SingleAsync(s => s.Id == source.Id)).TotalAmount == 11.44m, "Source invoice modified.");
             var inactive = await db.Products.SingleAsync(); inactive.Status = "INACTIVE"; await db.SaveChangesAsync(); db.ChangeTracker.Clear();

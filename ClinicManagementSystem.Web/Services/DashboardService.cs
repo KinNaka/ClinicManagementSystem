@@ -95,5 +95,23 @@ namespace ClinicManagementSystem.Web.Services
 
             return model;
         }
+
+        public async Task<StaffRevenueViewModel> GetStaffRevenueAsync()
+        {
+            var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+                TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date;
+            var tomorrow = today.AddDays(1);
+            var weekStart = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+            var daily = await _context.Sales.AsNoTracking()
+                .Where(s => s.Status == "Confirmed" && s.SaleDate >= weekStart && s.SaleDate < tomorrow)
+                .GroupBy(s => s.SaleDate.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.TotalAmount) })
+                .ToListAsync();
+            return new StaffRevenueViewModel {
+                Today = today, WeekStart = weekStart,
+                TodayRevenue = daily.Where(d => d.Date == today).Sum(d => d.Revenue),
+                WeekRevenue = daily.Sum(d => d.Revenue)
+            };
+        }
     }
 }

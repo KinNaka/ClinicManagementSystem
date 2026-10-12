@@ -142,6 +142,20 @@ namespace ClinicManagementSystem.Web.Controllers
             return model == null ? NotFound() : View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> PrintPrescription(long id)
+        {
+            var model = await _saleService.GetByIdAsync(id);
+            return model == null ? NotFound() : View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PrintSelectedProducts(long id)
+        {
+            var model = await _saleService.GetByIdAsync(id);
+            return model == null ? NotFound() : View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Confirm(long id)

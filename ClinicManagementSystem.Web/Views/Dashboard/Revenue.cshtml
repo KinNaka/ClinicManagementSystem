@@ -1,0 +1,16 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Dashboard.StaffRevenueViewModel
+@{ ViewData["Title"] = "Doanh thu ngày / tuần"; }
+<h2 class="mb-4">Doanh thu ngày / tuần</h2>
+<div class="row g-3">
+    <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h3 class="h5">Doanh thu hôm nay</h3>
+        <p class="text-muted">@Model.Today.ToString("dd/MM/yyyy")</p>
+        <p class="fs-3 fw-bold mb-0">@Model.TodayRevenue.ToString("N0") đ</p>
+    </div></div></div>
+    <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h3 class="h5">Doanh thu tuần này</h3>
+        <p class="text-muted">@Model.WeekStart.ToString("dd/MM/yyyy") – @Model.WeekStart.AddDays(6).ToString("dd/MM/yyyy")</p>
+        <p class="fs-3 fw-bold mb-0">@Model.WeekRevenue.ToString("N0") đ</p>
+    </div></div></div>
+</div>
+<p class="text-muted mt-3">Tuần tính từ thứ Hai đến Chủ nhật. Doanh thu ghi nhận từ hóa đơn đã xác nhận, tính đến hôm nay.</p>

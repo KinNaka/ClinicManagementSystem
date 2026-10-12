@@ -3,7 +3,7 @@
     var isDashboard = controller == "Dashboard";
     var signedIn = User.Identity?.IsAuthenticated == true;
     var sections = new[] {
-        (Controller: "Dashboard", Label: "Tổng quan", Icon: "◫"),
+        (Controller: "Dashboard", Label: User.IsInRole("Admin") ? "Tổng quan" : "Doanh thu ngày / tuần", Icon: "◫"),
         (Controller: "Patients", Label: "Bệnh nhân", Icon: "♧"),
         (Controller: "Products", Label: "Sản phẩm", Icon: "▦"),
         (Controller: "ProductCategories", Label: "Danh mục sản phẩm", Icon: "≡"),

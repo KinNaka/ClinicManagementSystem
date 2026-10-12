@@ -19,10 +19,17 @@ namespace ClinicManagementSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            if (!User.IsInRole("Admin")) return RedirectToAction(nameof(Revenue));
             var model = await _dashboardService
                 .GetDashboardAsync();
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Revenue()
+        {
+            return View(await _dashboardService.GetStaffRevenueAsync());
         }
     }
 }

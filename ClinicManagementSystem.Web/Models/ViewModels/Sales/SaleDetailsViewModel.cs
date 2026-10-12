@@ -13,6 +13,11 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
         public string PatientName { get; set; } = string.Empty;
         public string? PatientPhone { get; set; }
+        public DateOnly? PatientDateOfBirth { get; set; }
+        public string? PatientGender { get; set; }
+        public string? PatientAddress { get; set; }
+        public string? PatientWardName { get; set; }
+        public string? PatientProvinceName { get; set; }
 
         public DateTime SaleDate { get; set; }
 
@@ -32,6 +37,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
     public class SaleDetailDisplayViewModel
     {
+        public bool IsService { get; set; }
         public string? Notes { get; set; }
 
         public string ProductCode { get; set; } = string.Empty;

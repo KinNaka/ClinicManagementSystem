@@ -1,0 +1,123 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>In sản phẩm — @Model.SaleCode</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #edf0f3; color: #000; font-family: Arial, sans-serif; }
+        .toolbar { max-width: 800px; margin: 16px auto; padding: 16px; background: white; font-size: 14px; }
+        .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        button, select, .back { font: inherit; padding: 8px 12px; }
+        button { border: 0; border-radius: 4px; background: #1459bd; color: white; cursor: pointer; }
+        .back { color: #1459bd; }
+        .picker { width: 100%; margin: 12px 0; border-collapse: collapse; }
+        .picker td, .picker th { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+        .picker label { cursor: pointer; }
+        .notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .error { color: #b00020; }
+        .help { line-height: 1.5; }
+        #receipt { width: 80mm; padding: 3mm; margin: 0 auto 24px; background: white; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+        #receipt.narrow { width: 58mm; }
+        h1 { text-align: center; font-size: 14px; margin: 10px 0 4px; }
+        .center { text-align: center; }
+        .customer { margin: 10px 0 15px; }
+        .item { padding: 8px 0; border-bottom: 1px dotted #777; break-inside: avoid; }
+        .item[hidden] { display: none !important; }
+        .item p { margin: 3px 0; }
+        .thanks { margin: 20px 0 0; text-align: center; font-style: italic; }
+        @@media print {
+            html, body { margin: 0; padding: 0; background: white; }
+            .toolbar { display: none !important; }
+            #receipt { margin: 0; }
+        }
+    </style>
+    <style id="paper-size">@@page { size: 80mm 160mm; margin: 0; }</style>
+</head>
+<body>
+    <div class="toolbar">
+        <h2>Chọn sản phẩm cần in</h2>
+        <div class="controls">
+            <label for="paper-width">Khổ giấy POS</label><select id="paper-width"><option value="80">80 mm</option><option value="58">58 mm</option></select>
+            <button type="button" id="select-all">Chọn tất cả</button>
+            <button type="button" id="clear-all">Bỏ chọn tất cả</button>
+            <button type="button" id="print">In sản phẩm đã chọn</button>
+            <a class="back" asp-action="Details" asp-route-id="@Model.Id">Quay lại hóa đơn</a>
+        </div>
+        <table class="picker"><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Ghi chú</th></tr></thead><tbody>
+        @for (var i = 0; i < Model.Details.Count; i++)
+        {
+            var item = Model.Details[i];
+            <tr><td><label><input type="checkbox" class="product-choice" value="@i" /> @item.ProductName</label></td><td>@item.Quantity.ToString("0.###") @item.Unit</td><td class="notes">@item.Notes</td></tr>
+        }
+        </tbody></table>
+        <p id="selection-count" aria-live="polite">Đã chọn 0 sản phẩm.</p>
+        <p id="error" class="error" role="alert"></p>
+        <p class="help">Chọn ít nhất một dòng sản phẩm. Bản in chỉ gồm các dòng đã chọn và ghi chú tương ứng. Chọn máy POS, đúng khổ giấy, tỷ lệ 100%, lề “Không” và tắt đầu trang/chân trang.</p>
+    </div>
+    <main id="receipt">
+        <span id="print-time"></span>
+        <h1>THÔNG TIN SẢN PHẨM</h1>
+        <div class="center">Số HĐ: @Model.SaleCode</div>
+        <div class="center">Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")</div>
+        @if (Model.Status == "Draft") { <div class="center"><strong>BẢN NHÁP</strong></div> }
+        <div class="customer">Khách hàng: @(string.IsNullOrWhiteSpace(Model.PatientName) ? "Khách lẻ" : Model.PatientName)<br />SĐT: @(string.IsNullOrWhiteSpace(Model.PatientPhone) ? "—" : Model.PatientPhone)</div>
+        @for (var i = 0; i < Model.Details.Count; i++)
+        {
+            var item = Model.Details[i];
+            <section class="item" data-index="@i" hidden>
+                <strong><span class="item-number"></span>) @item.ProductName</strong>
+                <p>Số lượng: @item.Quantity.ToString("0.###") @item.Unit</p>
+                @if (!string.IsNullOrWhiteSpace(item.Notes)) { <p class="notes">Ghi chú: @item.Notes</p> }
+            </section>
+        }
+        <p class="thanks">Cảm ơn và hẹn gặp lại!</p>
+    </main>
+    <script>
+        (() => {
+            const choices = [...document.querySelectorAll('.product-choice')];
+            const items = [...document.querySelectorAll('.item')];
+            const paper = document.getElementById('paper-width');
+            const receipt = document.getElementById('receipt');
+            const error = document.getElementById('error');
+            function sizePaper() {
+                const width = paper.value === '58' ? 58 : 80;
+                receipt.classList.toggle('narrow', width === 58);
+                const height = Math.max(60, Math.ceil(receipt.getBoundingClientRect().height * 25.4 / 96) + 6);
+                document.getElementById('paper-size').textContent = `@@page { size: ${width}mm ${height}mm; margin: 0; }`;
+            }
+            function updateSelection() {
+                const selected = new Set(choices.filter(c => c.checked).map(c => c.value));
+                let number = 0;
+                items.forEach(item => {
+                    item.hidden = !selected.has(item.dataset.index);
+                    if (!item.hidden) item.querySelector('.item-number').textContent = String(++number);
+                });
+                document.getElementById('selection-count').textContent = `Đã chọn ${selected.size} sản phẩm.`;
+                error.textContent = '';
+                sizePaper();
+            }
+            function preparePrint() {
+                document.getElementById('print-time').textContent = new Intl.DateTimeFormat('vi-VN', {
+                    timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+                }).format(new Date());
+                updateSelection();
+            }
+            try { paper.value = localStorage.getItem('receipt-paper-width') === '58' ? '58' : '80'; } catch { }
+            paper.addEventListener('change', () => { try { localStorage.setItem('receipt-paper-width', paper.value); } catch { } sizePaper(); });
+            choices.forEach(c => c.addEventListener('change', updateSelection));
+            document.getElementById('select-all').addEventListener('click', () => { choices.forEach(c => c.checked = true); updateSelection(); });
+            document.getElementById('clear-all').addEventListener('click', () => { choices.forEach(c => c.checked = false); updateSelection(); });
+            document.getElementById('print').addEventListener('click', () => {
+                if (!choices.some(c => c.checked)) { error.textContent = 'Vui lòng chọn ít nhất một sản phẩm để in.'; return; }
+                preparePrint(); window.print();
+            });
+            window.addEventListener('beforeprint', preparePrint);
+            preparePrint();
+        })();
+    </script>
+</body>
+</html>

@@ -80,6 +80,11 @@ namespace ClinicManagementSystem.Web.Services
                     Id = s.Id,
                     PatientId = s.PatientId,
                     PatientPhone = s.Patient.PhoneNumber,
+                    PatientDateOfBirth = s.Patient.DateOfBirth,
+                    PatientGender = s.Patient.Gender,
+                    PatientAddress = s.Patient.Address,
+                    PatientWardName = s.Patient.WardName,
+                    PatientProvinceName = s.Patient.ProvinceName,
                     SaleCode = s.SaleCode,
                     PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
                     PatientName = s.SourcePatientName ?? s.Patient.FullName,
@@ -91,6 +96,7 @@ namespace ClinicManagementSystem.Web.Services
                     Details = s.Details.Select(d =>
                         new SaleDetailDisplayViewModel
                         {
+                            IsService = d.Product.IsService,
                             ProductCode = d.SourceProductCode ?? d.Product.ProductCode,
                             Notes = d.Notes,
                             ProductName = d.SourceProductName ?? d.Product.Name,

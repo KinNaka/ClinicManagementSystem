@@ -6,5 +6,6 @@ namespace ClinicManagementSystem.Web.Services
     public interface IDashboardService
     {
         Task<DashboardViewModel> GetDashboardAsync();
+        Task<StaffRevenueViewModel> GetStaffRevenueAsync();
     }
 }

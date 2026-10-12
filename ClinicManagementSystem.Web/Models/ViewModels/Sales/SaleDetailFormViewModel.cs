@@ -8,9 +8,12 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         [Range(1, long.MaxValue,
             ErrorMessage = "Vui lòng chọn sản phẩm.")]
         public long ProductId { get; set; }
+        public long SourceDetailId { get; set; }
+        public decimal PreservedQuantity { get; set; }
+        public decimal PreservedLineTotal { get; set; }
 
-        [Range(typeof(decimal), "1", "999999999",
-            ErrorMessage = "Số lượng phải từ 1 đến 999999999.")]
+        [Range(typeof(decimal), "0.001", "999999999",
+            ErrorMessage = "Số lượng phải từ 0,001 đến 999999999.")]
         public decimal Quantity { get; set; } = 1;
 
         [StringLength(500, ErrorMessage = "Ghi chú sản phẩm tối đa 500 ký tự.")]

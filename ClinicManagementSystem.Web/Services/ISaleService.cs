@@ -9,6 +9,7 @@ namespace ClinicManagementSystem.Web.Services
             string? searchTerm, string? statusFilter, int page = 1);
 
         Task<SaleDetailsViewModel?> GetByIdAsync(long id);
+        Task<SaleFormViewModel?> PrepareCopyAsync(long id);
 
         Task<SaleFormViewModel> PrepareFormAsync(
             SaleFormViewModel model);

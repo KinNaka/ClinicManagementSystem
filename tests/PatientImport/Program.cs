@@ -76,6 +76,7 @@ Check(PatientCodeGenerator.Next(new[] { "LT000002", "LT000010", "LT999999", "KH9
 Check(PatientCodeGenerator.Next(new[] { "lt000123", "LT_BAD" }) == "LT000124", "Case-insensitive sequence failed.");
 Console.WriteLine("Passed: code preservation, phone zeroes, old sales, address mapping/fallback, duplicate codes, invalid values, two date epochs, required headers and LT sequence.");
 if (args.FirstOrDefault() == "--combo") await ComboTests.RunAsync();
+if (args.FirstOrDefault() == "--copy") await SaleCopyTests.RunAsync();
 if (args.FirstOrDefault() == "--products") await ProductImportTests.RunAsync(args[1]);
 if (args.FirstOrDefault() == "--sales")
 {
@@ -97,7 +98,7 @@ if (args.FirstOrDefault() == "--sales")
         Check(saleReader.Read(file, "test.xlsx").Single().Errors.Count > 0, "Zero quantity accepted.");
     await SaleImportTests.RunAsync(args.Skip(1).ToArray());
 }
-if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales"))
+if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales" or "--copy"))
 {
     using var file = File.OpenRead(args[0]);
     var rows = reader.Read(file);

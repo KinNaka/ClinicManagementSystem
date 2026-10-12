@@ -9,6 +9,7 @@
     <h2>Chi tiết hóa đơn</h2>
 
     <div class="d-flex gap-2">
+        <a asp-action="Create" asp-route-copyFromId="@Model.Id" class="btn btn-primary">Sao chép</a>
         <a asp-action="Index"
            class="btn btn-outline-secondary">
             Quay lại
@@ -23,11 +24,9 @@
             </a>
         }
 
-        <button type="button"
-                onclick="window.print()"
-                class="btn btn-outline-dark">
+        <a asp-action="Print" asp-route-id="@Model.Id" class="btn btn-outline-dark">
             In hóa đơn
-        </button>
+        </a>
     </div>
 </div>
 
@@ -94,7 +93,8 @@
 
                 <p class="mb-2">
                     <strong>Họ và tên:</strong>
-                    @Model.PatientName
+                    <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId"
+                       title="Xem chi tiết bệnh nhân">@(string.IsNullOrWhiteSpace(Model.PatientName) ? "Xem hồ sơ bệnh nhân" : Model.PatientName)</a>
                 </p>
             </div>
         </div>
@@ -146,7 +146,7 @@
                 </tbody>
 
                 <tfoot>
-                @if (Model.Status == "Imported") { <tr><td colspan="6" class="text-end">Tổng tiền hàng</td><td class="text-end">@Model.ImportedGoodsTotal.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Giảm giá hóa đơn</td><td class="text-end">@Model.ImportedDiscount.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Thu khác</td><td class="text-end">@Model.ImportedSurcharge.ToString("N2") đ</td></tr> }
+                @if (Model.Status == "Imported" || Model.ImportedDiscount != 0 || Model.ImportedSurcharge != 0) { <tr><td colspan="6" class="text-end">Tổng tiền hàng</td><td class="text-end">@Model.ImportedGoodsTotal.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Giảm giá hóa đơn</td><td class="text-end">@Model.ImportedDiscount.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Thu khác</td><td class="text-end">@Model.ImportedSurcharge.ToString("N2") đ</td></tr> }
                     <tr class="table-light">
                         <td colspan="6"
                             class="text-end fw-bold">

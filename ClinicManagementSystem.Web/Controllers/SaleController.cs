@@ -26,8 +26,13 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(long? copyFromId)
         {
+            if (copyFromId.HasValue)
+            {
+                var copy = await _saleService.PrepareCopyAsync(copyFromId.Value);
+                return copy == null ? NotFound() : View(copy);
+            }
             var model = await _saleService.PrepareFormAsync(
                 new SaleFormViewModel
                 {
@@ -130,6 +135,13 @@ namespace ClinicManagementSystem.Web.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Print(long id)
+        {
+            var model = await _saleService.GetByIdAsync(id);
+            return model == null ? NotFound() : View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Confirm(long id)
@@ -170,8 +182,8 @@ namespace ClinicManagementSystem.Web.Controllers
             }
 
             if (model.Details.Any(d =>
-                d.ProductId <= 0 || d.Quantity < 1 || d.Quantity > 999999999 ||
-                d.Quantity != decimal.Truncate(d.Quantity)))
+                d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 ||
+                d.Quantity != decimal.Round(d.Quantity, d.SourceDetailId > 0 ? 3 : 0)))
             {
                 ModelState.AddModelError(
                     nameof(model.Details),
@@ -180,7 +192,7 @@ namespace ClinicManagementSystem.Web.Controllers
 
             if (model.Details
                 .GroupBy(d => d.ProductId)
-                .Any(g => g.Count() > 1))
+                .Any(g => g.Count() > 1 && (g.Any(d => d.SourceDetailId <= 0) || g.Select(d => d.SourceDetailId).Distinct().Count() != g.Count())))
             {
                 ModelState.AddModelError(
                     nameof(model.Details),

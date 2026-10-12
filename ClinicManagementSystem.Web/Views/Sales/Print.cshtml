@@ -1,0 +1,99 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
+@{
+    Layout = null;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal value) => value.ToString("N0", culture);
+    var goods = Model.Details.Sum(d => d.LineTotal);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hóa đơn @Model.SaleCode</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #edf0f3; color: #000; font-family: Arial, sans-serif; }
+        .toolbar { max-width: 680px; margin: 20px auto; padding: 16px; background: white; border-radius: 8px; font-size: 14px; }
+        .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        button, select, .back { font: inherit; padding: 8px 12px; }
+        button { background: #1459bd; color: white; border: 0; border-radius: 4px; cursor: pointer; }
+        .back { color: #1459bd; }
+        .help { line-height: 1.5; margin: 12px 0 0; }
+        #receipt { width: 80mm; padding: 4mm 3mm; margin: 0 auto 24px; background: white; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+        #receipt.narrow { width: 58mm; font-size: 12px; }
+        .timestamp { font-size: .85em; }
+        h1 { font-size: 1.25em; text-align: center; margin: 6mm 0 1mm; }
+        .center { text-align: center; }
+        .customer { margin: 7mm 0 10mm; }
+        .customer p { margin: 1mm 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 1.15em; font-weight: bold; }
+        th { text-align: left; font-weight: bold; }
+        td { text-align: right; white-space: nowrap; }
+        th, td { padding: 1.5mm 0; vertical-align: top; }
+        .total th, .total td { border-top: 1px dashed #000; padding-top: 3mm; }
+        .thanks { text-align: center; font-style: italic; margin: 7mm 0 2mm; }
+        .notes { white-space: pre-wrap; font-size: .9em; margin-top: 4mm; }
+        .status { text-align: center; font-weight: bold; margin-top: 2mm; }
+        @@media print {
+            html, body { background: white; margin: 0 !important; padding: 0 !important; }
+            .toolbar { display: none !important; }
+            #receipt { margin: 0; padding: 3mm; }
+            tr, .customer, .thanks { break-inside: avoid; }
+        }
+    </style>
+    <style id="paper-size">@@page { size: 80mm 160mm; margin: 0; }</style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="controls">
+            <label for="paper-width">Khổ giấy POS</label>
+            <select id="paper-width"><option value="80">80 mm</option><option value="58">58 mm</option></select>
+            <button type="button" id="print-receipt">In hóa đơn</button>
+            <a class="back" asp-action="Details" asp-route-id="@Model.Id">Quay lại hóa đơn</a>
+        </div>
+        <p class="help">Chọn máy in POS và đúng khổ giấy trong hộp thoại in. Đặt tỷ lệ 100%, lề “Không”, tắt đầu trang và chân trang để không in kèm địa chỉ trang web.</p>
+    </div>
+    <main id="receipt">
+        <div class="timestamp">@Model.SaleDate.ToString("dd/MM/yyyy HH:mm")</div>
+        <h1>HÓA ĐƠN BÁN HÀNG</h1>
+        <div class="center">Số: @Model.SaleCode</div>
+        <div class="center">Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")</div>
+        @if (Model.Status == "Draft") { <div class="status">HÓA ĐƠN NHÁP</div> }
+        <div class="customer">
+            <p>Khách hàng: @(string.IsNullOrWhiteSpace(Model.PatientName) ? "Khách lẻ" : Model.PatientName)</p>
+            <p>SĐT: @(string.IsNullOrWhiteSpace(Model.PatientPhone) ? "—" : Model.PatientPhone)</p>
+        </div>
+        <table aria-label="Tổng tiền hóa đơn">
+            <tbody>
+                <tr><th>Tiền thuốc:</th><td>@Money(goods)</td></tr>
+                @if (Model.ImportedDiscount != 0) { <tr><th>Giảm giá:</th><td>@Money(Model.ImportedDiscount)</td></tr> }
+                <tr><th>Tiền thu khác:</th><td>@Money(Model.ImportedSurcharge)</td></tr>
+                <tr class="total"><th>Thành tiền:</th><td>@Money(Model.TotalAmount)</td></tr>
+            </tbody>
+        </table>
+        @if (!string.IsNullOrWhiteSpace(Model.Notes)) { <div class="notes">@Model.Notes</div> }
+        <p class="thanks">Cảm ơn và hẹn gặp lại!</p>
+    </main>
+    <script>
+        (() => {
+            const width = document.getElementById('paper-width');
+            const receipt = document.getElementById('receipt');
+            function sizePaper() {
+                const paperWidth = width.value === '58' ? 58 : 80;
+                receipt.classList.toggle('narrow', paperWidth === 58);
+                const height = Math.max(60, Math.ceil(receipt.getBoundingClientRect().height * 25.4 / 96) + 6);
+                document.getElementById('paper-size').textContent = `@@page { size: ${paperWidth}mm ${height}mm; margin: 0; }`;
+            }
+            try { width.value = localStorage.getItem('receipt-paper-width') === '58' ? '58' : '80'; } catch { }
+            width.addEventListener('change', () => {
+                try { localStorage.setItem('receipt-paper-width', width.value); } catch { }
+                sizePaper();
+            });
+            window.addEventListener('beforeprint', sizePaper);
+            document.getElementById('print-receipt').addEventListener('click', () => { sizePaper(); window.print(); });
+            sizePaper();
+        })();
+    </script>
+</body>
+</html>

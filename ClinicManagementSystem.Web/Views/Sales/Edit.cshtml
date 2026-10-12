@@ -8,6 +8,8 @@
 
 <form asp-controller="Sales" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="saleForm">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="CopyFromId" />
+    @if (Model.CopyFromId.HasValue) { <div class="alert alert-info">Sao chép từ @Model.CopyFromCode. Giữ giá và ghi chú gốc; hóa đơn mới được lưu ở trạng thái nháp.</div> }
     <input type="hidden" asp-for="Id" />
 
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -43,15 +45,16 @@
                     <tbody id="productRows">
                         @for (int i = 0; i < Model.Details.Count; i++)
                         {
-                            <tr>
+                            <tr data-source-id="@Model.Details[i].SourceDetailId" data-source-product="@Model.Details[i].ProductId" data-source-price="@Model.Details[i].UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-source-quantity="@Model.Details[i].PreservedQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-source-total="@Model.Details[i].PreservedLineTotal.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                 <td>
+                                    <input type="hidden" class="source-detail-id" name="Details[@i].SourceDetailId" value="@Model.Details[i].SourceDetailId" />
                                     <select name="Details[@i].ProductId" class="form-select product-select" data-search-picker="Sản phẩm" required>
                                         <option value="">-- Chọn sản phẩm --</option>
                                         @foreach (var p in Model.Products)
                                         {
                                             if (p.Value == Model.Details[i].ProductId.ToString())
                                             {
-                                                <option value="@p.Value" selected>@p.Text</option>
+                                                <option value="@p.Value" selected>@(Model.Details[i].SourceDetailId > 0 ? Model.Details[i].ProductName : p.Text)</option>
                                             }
                                             else
                                             {
@@ -64,7 +67,7 @@
                                 <td>
                                     <div class="quantity-stepper" role="group" aria-label="Điều chỉnh số lượng">
                                         <button type="button" class="quantity-step" data-quantity-step="-1" aria-label="Giảm số lượng">−</button>
-                                        <input name="Details[@i].Quantity" type="number" min="1" max="999999999" step="1" inputmode="numeric" aria-label="Số lượng sản phẩm"
+                                        <input name="Details[@i].Quantity" type="number" min="@(Model.Details[i].SourceDetailId > 0 ? "0.001" : "1")" max="999999999" step="@(Model.Details[i].SourceDetailId > 0 ? "0.001" : "1")" inputmode="numeric" aria-label="Số lượng sản phẩm"
                                            value="@Model.Details[i].Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                            class="form-control quantity-input" required />
                                         <button type="button" class="quantity-step" data-quantity-step="1" aria-label="Tăng số lượng">+</button>
@@ -82,9 +85,10 @@
             </div>
 
             <div id="productError" class="text-danger mb-2" role="alert"></div>
+            <div class="text-end">Giảm giá hóa đơn: @Model.Discount.ToString("N2") đ · Thu khác: @Model.Surcharge.ToString("N2") đ</div>
             <div class="text-end fs-5">Tổng tiền: <strong id="grandTotal">0 đ</strong></div>
             <small class="text-muted">
-                Tổng tiền hiển thị chỉ là tạm tính. Giá chính thức được lấy từ database khi lưu.
+                Dòng giữ nguyên sản phẩm sẽ giữ giá đã lưu. Sản phẩm chọn mới dùng giá hiện tại. Giảm giá và thu khác được giữ từ hóa đơn gốc.
             </small>
         </div>
     </div>
@@ -147,26 +151,36 @@
                 maximumFractionDigits: 2
             });
 
+            const discount = @Model.Discount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const surcharge = @Model.Surcharge.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            function validQuantity(row, value) {
+                return Number.isFinite(value) && value > 0 && value <= 999999999 &&
+                    (Number(row.dataset.sourceId) > 0 ? Math.abs(value * 1000 - Math.round(value * 1000)) < 0.000001 : Number.isInteger(value));
+            }
             function renumber() {
                 window.ClinicQuantity.init(rows);
                 [...rows.querySelectorAll("tr")].forEach((row, i) => {
                     row.querySelector(".product-select").name = `Details[${i}].ProductId`;
                     row.querySelector(".quantity-input").name = `Details[${i}].Quantity`;
                     row.querySelector(".line-notes").name = `Details[${i}].Notes`;
+                    let source = row.querySelector(".source-detail-id");
+                    if (!source) { source = document.createElement("input"); source.type = "hidden"; source.className = "source-detail-id"; row.querySelector("td").appendChild(source); }
+                    source.name = `Details[${i}].SourceDetailId`;
+                    source.value = row.dataset.sourceId || "0";
                 });
             }
 
             function calculate() {
-                let total = 0;
+                let total = -discount + surcharge;
 
                 rows.querySelectorAll("tr").forEach(row => {
                     const productId = row.querySelector(".product-select").value;
                     const quantity = Number(row.querySelector(".quantity-input").value);
                     const loaded = row.dataset.loadedProductId === productId && productId !== "";
 
-                    if (loaded && Number.isInteger(quantity) && quantity >= 1 && quantity <= 999999999) {
+                    if (loaded && validQuantity(row, quantity)) {
                         const price = Number(row.dataset.price);
-                        const lineTotal = price * quantity;
+                        const lineTotal = Number(row.dataset.sourceId) > 0 && quantity === Number(row.dataset.sourceQuantity) ? Number(row.dataset.sourceTotal) : Math.round((price * quantity + Number.EPSILON) * 100) / 100;
                         row.querySelector(".line-total").textContent = formatter.format(lineTotal) + " đ";
                         total += lineTotal;
                     } else {
@@ -188,6 +202,13 @@
                 calculate();
 
                 if (!productId) return;
+                if (Number(row.dataset.sourceId) > 0 && row.dataset.sourceProduct === productId) {
+                    row.dataset.price = row.dataset.sourcePrice;
+                    row.dataset.loadedProductId = productId;
+                    row.querySelector(".unit-price").textContent = formatter.format(Number(row.dataset.price)) + " đ";
+                    calculate();
+                    return;
+                }
 
                 try {
                     const response = await fetch(`${priceUrl}?productId=${encodeURIComponent(productId)}`);
@@ -239,7 +260,12 @@
             rows.addEventListener("change", e => {
                 if (e.target.matches(".product-select")) {
                     error.textContent = "";
-                    updateRow(e.target.closest("tr"));
+                    const row = e.target.closest("tr");
+                    row.dataset.sourceId = "0";
+                    row.querySelector(".quantity-input").min = "1";
+                    row.querySelector(".quantity-input").step = "1";
+                    renumber();
+                    updateRow(row);
                 }
             });
 
@@ -253,7 +279,7 @@
 
                 const allRows = [...rows.querySelectorAll("tr")];
                 const ids = allRows.map(row => row.querySelector(".product-select").value);
-                if (ids.some(id => !id) || new Set(ids).size !== ids.length) {
+                if (ids.some(id => !id) || allRows.some((row, index) => ids.some((id, other) => other !== index && id === ids[index] && (!Number(row.dataset.sourceId) || !Number(allRows[other].dataset.sourceId) || row.dataset.sourceId === allRows[other].dataset.sourceId)))) {
                     e.preventDefault();
                     error.textContent = "Vui lòng chọn sản phẩm và không chọn trùng.";
                     return;
@@ -261,11 +287,11 @@
 
                 const quantitiesValid = allRows.every(row => {
                     const value = Number(row.querySelector(".quantity-input").value);
-                    return Number.isInteger(value) && value >= 1 && value <= 999999999;
+                    return validQuantity(row, value);
                 });
                 if (!quantitiesValid) {
                     e.preventDefault();
-                    error.textContent = "Số lượng phải là số nguyên từ 1 đến 999999999.";
+                    error.textContent = "Số lượng không hợp lệ. Dòng sao chép hỗ trợ tối đa 3 chữ số thập phân; dòng mới dùng số nguyên.";
                     return;
                 }
 

@@ -78,6 +78,8 @@ namespace ClinicManagementSystem.Web.Services
                 .Select(s => new SaleDetailsViewModel
                 {
                     Id = s.Id,
+                    PatientId = s.PatientId,
+                    PatientPhone = s.Patient.PhoneNumber,
                     SaleCode = s.SaleCode,
                     PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
                     PatientName = s.SourcePatientName ?? s.Patient.FullName,
@@ -101,12 +103,44 @@ namespace ClinicManagementSystem.Web.Services
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<SaleFormViewModel?> PrepareCopyAsync(long id)
+        {
+            var source = await _context.Sales.AsNoTracking().Include(s => s.Details).FirstOrDefaultAsync(s => s.Id == id);
+            if (source == null) return null;
+            return await PrepareFormAsync(new SaleFormViewModel {
+                CopyFromId = source.Id, PatientId = source.PatientId, Notes = source.Notes,
+                TotalAmount = source.TotalAmount,
+                Details = source.Details.OrderBy(d => d.Id).Select(d => new SaleDetailFormViewModel {
+                    SourceDetailId = d.Id, ProductId = d.ProductId, Quantity = d.Quantity, Notes = d.Notes
+                }).ToList()
+            });
+        }
+
         public async Task<SaleFormViewModel> PrepareFormAsync(
             SaleFormViewModel model)
         {
+            var sourceId = model.Id > 0 ? model.Id : model.CopyFromId;
+            var source = sourceId.HasValue ? await _context.Sales.AsNoTracking().Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == sourceId) : null;
+            model.CopyFromCode = model.CopyFromId.HasValue ? source?.SaleCode : null;
+            model.Discount = source?.ImportedDiscount ?? 0;
+            model.Surcharge = source?.ImportedSurcharge ?? 0;
+            foreach (var item in model.Details)
+            {
+                var original = source?.Details.FirstOrDefault(d => d.Id == item.SourceDetailId && d.ProductId == item.ProductId);
+                if (original != null)
+                {
+                    item.UnitPrice = original.UnitPrice;
+                    item.PreservedQuantity = original.Quantity;
+                    item.PreservedLineTotal = original.LineTotal;
+                    item.ProductName = original.SourceProductName ?? original.Product.Name;
+                    item.Unit = original.SourceUnit ?? original.Product.Unit;
+                    item.LineTotal = item.Quantity == original.Quantity ? original.LineTotal : decimal.Round(item.Quantity * original.UnitPrice, 2, MidpointRounding.AwayFromZero);
+                }
+                else { item.SourceDetailId = 0; item.PreservedQuantity = 0; item.PreservedLineTotal = 0; }
+            }
             model.Patients = await _context.Patients
                 .AsNoTracking()
-                .Where(p => (p.Status == "Active" || p.Status == "ACTIVE"))
+                .Where(p => p.Id == model.PatientId || (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.FullName)
                 .Select(p => new SelectListItem
                 {
@@ -115,9 +149,15 @@ namespace ClinicManagementSystem.Web.Services
                 })
                 .ToListAsync();
 
+            if (source?.PatientId == model.PatientId && !string.IsNullOrWhiteSpace(source.SourcePatientName))
+            {
+                var selectedPatient = model.Patients.FirstOrDefault(p => p.Value == model.PatientId.ToString());
+                if (selectedPatient != null) selectedPatient.Text = (source.SourcePatientCode ?? "") + " - " + source.SourcePatientName;
+            }
+            var selectedIds = model.Details.Select(d => d.ProductId).ToList();
             model.Products = await _context.Products
                 .AsNoTracking()
-                .Where(p => (p.Status == "Active" || p.Status == "ACTIVE"))
+                .Where(p => selectedIds.Contains(p.Id) || (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.Name)
                 .Select(p => new SelectListItem
                 {
@@ -130,7 +170,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         private async Task<List<SaleDetail>> BuildDetailsAsync(
-            SaleFormViewModel model)
+            SaleFormViewModel model, Sale? source = null)
         {
             if (model.Details == null ||
                 model.Details.Count == 0)
@@ -138,8 +178,8 @@ namespace ClinicManagementSystem.Web.Services
                     "Hóa đơn phải có ít nhất một sản phẩm.");
 
             if (model.Details.Any(d =>
-                d.ProductId <= 0 || d.Quantity < 1 || d.Quantity > 999999999 ||
-                d.Quantity != decimal.Truncate(d.Quantity)))
+                d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 ||
+                d.Quantity != decimal.Round(d.Quantity, d.SourceDetailId > 0 ? 3 : 0)))
                 throw new InvalidOperationException(
                     "Sản phẩm không hợp lệ hoặc số lượng không phải số nguyên từ 1 đến 999999999.");
 
@@ -148,14 +188,14 @@ namespace ClinicManagementSystem.Web.Services
                 .Distinct()
                 .ToList();
 
-            if (productIds.Count != model.Details.Count)
+            if (model.Details.Where(d => d.SourceDetailId > 0).GroupBy(d => d.SourceDetailId).Any(g => g.Count() > 1) ||
+                model.Details.GroupBy(d => d.ProductId).Any(g => g.Count() > 1 && g.Any(d => d.SourceDetailId <= 0)))
                 throw new InvalidOperationException(
                     "Không được thêm trùng sản phẩm.");
 
             var products = await _context.Products
                 .AsNoTracking()
-                .Where(p => productIds.Contains(p.Id) &&
-                            (p.Status == "Active" || p.Status == "ACTIVE"))
+                .Where(p => productIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id);
 
             if (products.Count != productIds.Count)
@@ -167,6 +207,12 @@ namespace ClinicManagementSystem.Web.Services
             foreach (var item in model.Details)
             {
                 var product = products[item.ProductId];
+                var original = source?.Details.FirstOrDefault(d => d.Id == item.SourceDetailId && d.ProductId == item.ProductId);
+                if (original == null && product.Status is not ("Active" or "ACTIVE"))
+                    throw new InvalidOperationException("Sản phẩm chọn mới đã ngừng hoạt động.");
+                if (item.SourceDetailId > 0 && original == null)
+                    throw new InvalidOperationException("Dòng sản phẩm sao chép không khớp hóa đơn gốc. Vui lòng tải lại trang.");
+                var price = original?.UnitPrice ?? product.SellingPrice;
 
                 if (product.SellingPrice < 0)
                     throw new InvalidOperationException(
@@ -176,8 +222,8 @@ namespace ClinicManagementSystem.Web.Services
 
                 try
                 {
-                    lineTotal = item.Quantity *
-                                product.SellingPrice;
+                    lineTotal = original != null && item.Quantity == original.Quantity ? original.LineTotal :
+                        decimal.Round(item.Quantity * price, 2, MidpointRounding.AwayFromZero);
                 }
                 catch (OverflowException)
                 {
@@ -188,21 +234,25 @@ namespace ClinicManagementSystem.Web.Services
                 details.Add(new SaleDetail
                 {
                     ProductId = product.Id,
-                    Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
+                    Notes = item.Notes,
                     Quantity = item.Quantity,
-                    UnitPrice = product.SellingPrice,
-                    LineTotal = lineTotal
+                    UnitPrice = price,
+                    LineTotal = lineTotal,
+                    SourceProductCode = original?.SourceProductCode,
+                    SourceProductName = original?.SourceProductName,
+                    SourceUnit = original?.SourceUnit,
+                    KiotVietInfo = original?.KiotVietInfo
                 });
             }
 
             return details;
         }
 
-        private async Task ValidatePatientAsync(long patientId)
+        private async Task ValidatePatientAsync(long patientId, bool allowInactive = false)
         {
             var exists = await _context.Patients
                 .AnyAsync(p => p.Id == patientId &&
-                               (p.Status == "Active" || p.Status == "ACTIVE"));
+                               (allowInactive || p.Status == "Active" || p.Status == "ACTIVE"));
 
             if (!exists)
                 throw new InvalidOperationException(
@@ -212,9 +262,12 @@ namespace ClinicManagementSystem.Web.Services
         public async Task<long> CreateAsync(
             SaleFormViewModel model)
         {
-            await ValidatePatientAsync(model.PatientId);
-
-            var details = await BuildDetailsAsync(model);
+            var source = model.CopyFromId.HasValue ? await _context.Sales.AsNoTracking().Include(s => s.Details).FirstOrDefaultAsync(s => s.Id == model.CopyFromId) : null;
+            if (model.CopyFromId.HasValue && source == null) throw new InvalidOperationException("Hóa đơn gốc không còn tồn tại.");
+            await ValidatePatientAsync(model.PatientId, source?.PatientId == model.PatientId);
+            var details = await BuildDetailsAsync(model, source);
+            var total = details.Sum(d => d.LineTotal) - (source?.ImportedDiscount ?? 0) + (source?.ImportedSurcharge ?? 0);
+            if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
 
             var sale = new Sale
             {
@@ -224,7 +277,12 @@ namespace ClinicManagementSystem.Web.Services
                 SaleDate = DateTime.Now,
                 Status = "Draft",
                 Notes = model.Notes,
-                TotalAmount = details.Sum(d => d.LineTotal),
+                TotalAmount = total,
+                ImportedGoodsTotal = details.Sum(d => d.LineTotal),
+                ImportedDiscount = source?.ImportedDiscount ?? 0,
+                ImportedSurcharge = source?.ImportedSurcharge ?? 0,
+                SourcePatientName = source?.PatientId == model.PatientId ? source.SourcePatientName : null,
+                SourcePatientCode = source?.PatientId == model.PatientId ? source.SourcePatientCode : null,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 Details = details
@@ -261,6 +319,7 @@ namespace ClinicManagementSystem.Web.Services
                     Details = sale.Details.Select(d =>
                         new SaleDetailFormViewModel
                         {
+                            SourceDetailId = d.Id,
                             ProductId = d.ProductId,
                             Notes = d.Notes,
                             ProductName = d.SourceProductName ?? d.Product.Name,
@@ -275,9 +334,6 @@ namespace ClinicManagementSystem.Web.Services
         public async Task UpdateDraftAsync(
             long id, SaleFormViewModel model)
         {
-            await ValidatePatientAsync(model.PatientId);
-            var details = await BuildDetailsAsync(model);
-
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
@@ -288,6 +344,10 @@ namespace ClinicManagementSystem.Web.Services
             if (sale == null || sale.Status != "Draft")
                 throw new InvalidOperationException(
                     "Chỉ được sửa hóa đơn nháp.");
+            await ValidatePatientAsync(model.PatientId, sale.PatientId == model.PatientId);
+            var details = await BuildDetailsAsync(model, sale);
+            var total = details.Sum(d => d.LineTotal) - sale.ImportedDiscount + sale.ImportedSurcharge;
+            if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
 
             // Chặn việc xác nhận đồng thời trong lúc sửa.
             var updated = await _context.Sales
@@ -301,9 +361,11 @@ namespace ClinicManagementSystem.Web.Services
 
             _context.SaleDetails.RemoveRange(sale.Details);
 
+            if (sale.PatientId != model.PatientId) { sale.SourcePatientCode = null; sale.SourcePatientName = null; }
             sale.PatientId = model.PatientId;
             sale.Notes = model.Notes;
-            sale.TotalAmount = details.Sum(d => d.LineTotal);
+            sale.TotalAmount = total;
+            sale.ImportedGoodsTotal = details.Sum(d => d.LineTotal);
             sale.UpdatedAt = DateTime.Now;
             sale.Details = details;
 

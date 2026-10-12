@@ -7,9 +7,12 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
         public string SaleCode { get; set; } = string.Empty;
 
+        public long PatientId { get; set; }
+
         public string PatientCode { get; set; } = string.Empty;
 
         public string PatientName { get; set; } = string.Empty;
+        public string? PatientPhone { get; set; }
 
         public DateTime SaleDate { get; set; }
 

@@ -13,6 +13,7 @@ static class BirthDateTests
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
             foreach (var test in new[] { ("01/02/1990", (DateOnly?)new DateOnly(1990, 2, 1), true),
+                ("27112003", (DateOnly?)new DateOnly(2003, 11, 27), true), ("31022003", (DateOnly?)null, false),
                 ("29/02/2000", (DateOnly?)new DateOnly(2000, 2, 29), true), ("", (DateOnly?)null, true),
                 ("31/04/1990", (DateOnly?)null, false), ("29/02/2001", (DateOnly?)null, false),
                 ("1990-02-01", (DateOnly?)null, false), ("02/25/1990", (DateOnly?)null, false) })

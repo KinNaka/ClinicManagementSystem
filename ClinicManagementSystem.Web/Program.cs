@@ -6,7 +6,20 @@ using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath =
+        Microsoft.Extensions.Hosting.WindowsServices.WindowsServiceHelpers.IsWindowsService()
+            ? AppContext.BaseDirectory
+            : Directory.GetCurrentDirectory()
+});
+
+builder.Host.UseWindowsService(options =>
+{
+    options.ServiceName = "LamThaoClinic";
+});
+var allowInternalHttp = builder.Configuration.GetValue<bool>("Hosting:AllowHttp");
 var databaseConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Chưa cấu hình DefaultConnection.");
 if (builder.Environment.IsDevelopment())
@@ -47,7 +60,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy =
-        CookieSecurePolicy.Always;
+        allowInternalHttp ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -123,10 +136,10 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    if (!allowInternalHttp) app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!allowInternalHttp) app.UseHttpsRedirection();
 
 app.UseRouting();
 

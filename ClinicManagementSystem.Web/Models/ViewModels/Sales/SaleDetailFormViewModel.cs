@@ -12,7 +12,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public decimal PreservedQuantity { get; set; }
         public decimal PreservedLineTotal { get; set; }
 
-        [Range(typeof(decimal), "0.001", "999999999",
+        [Range(typeof(decimal), "0.001", "999999999", ParseLimitsInInvariantCulture = true,
             ErrorMessage = "Số lượng phải từ 0,001 đến 999999999.")]
         public decimal Quantity { get; set; } = 1;
 

@@ -42,19 +42,19 @@ public class ProductFormViewModel
     [Display(Name = "Nhà sản xuất")]
     public string? Manufacturer { get; set; }
 
-    [Range(typeof(decimal), "0", "9999999999999999", ErrorMessage = "{0} phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Giá vốn")]
     public decimal CostPrice { get; set; }
 
-    [Range(typeof(decimal), "0", "9999999999999999", ErrorMessage = "{0} phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Giá bán")]
     public decimal SellingPrice { get; set; }
 
-    [Range(typeof(decimal), "0", "9999999999999999", ErrorMessage = "{0} phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Tồn tối thiểu")]
     public decimal MinimumStock { get; set; }
 
-    [Range(typeof(decimal), "0", "9999999999999999", ErrorMessage = "{0} phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Tồn kho")]
     public decimal CurrentStock { get; set; }
 
@@ -69,6 +69,6 @@ public class ComboComponentFormViewModel
 {
     [Range(1, long.MaxValue, ErrorMessage = "Vui lòng chọn sản phẩm thành phần.")]
     public long ComponentProductId { get; set; }
-    [Range(typeof(decimal), "0.01", "999999999", ErrorMessage = "Số lượng thành phần phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "0.01", "999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Số lượng thành phần phải từ {1} đến {2}.")]
     public decimal Quantity { get; set; } = 1;
 }

@@ -13,7 +13,7 @@ public class StockCountRow
     public string ProductName { get; set; } = "";
     public string? Unit { get; set; }
     public decimal ExpectedStock { get; set; }
-    [Range(typeof(decimal), "0", "999999999", ErrorMessage = "Tồn thực tế phải từ 0 đến 999999999.")]
+    [Range(typeof(decimal), "0", "999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Tồn thực tế phải từ 0 đến 999999999.")]
     public decimal? CountedStock { get; set; }
     [StringLength(180)]
     public string? Note { get; set; }

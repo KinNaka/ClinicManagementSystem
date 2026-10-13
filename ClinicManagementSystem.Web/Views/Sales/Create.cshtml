@@ -17,7 +17,7 @@
         <div class="card-header fw-bold">Thông tin bệnh nhân</div>
         <div class="card-body">
             <label asp-for="PatientId" class="form-label">Bệnh nhân</label>
-            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select" data-search-picker="Bệnh nhân">
+            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select" data-search-picker="Bệnh nhân" data-placeholder="Tìm họ tên, năm sinh hoặc số điện thoại…" data-empty-action="patient-create" data-empty-action-label="+ Tạo nhanh bệnh nhân mới">
                 <option value="0">-- Chọn bệnh nhân --</option>
             </select>
             <span asp-validation-for="PatientId" class="text-danger"></span>
@@ -134,9 +134,17 @@
     </tr>
 </template>
 
+<div class="modal fade" id="quick-patient-modal" tabindex="-1" aria-labelledby="quick-patient-title" aria-hidden="true" data-url="@Url.Action("QuickCreate", "Patients")">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title fs-5" id="quick-patient-title">Tạo nhanh bệnh nhân</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+        <div class="modal-body p-0"><iframe id="quick-patient-frame" title="Form tạo nhanh bệnh nhân" src="about:blank" class="w-100 border-0" style="height:65vh;min-height:420px"></iframe></div>
+    </div></div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/search-picker.js" asp-append-version="true"></script>
+    <script src="~/js/quick-patient.js" asp-append-version="true"></script>
     <script src="~/js/quantity-stepper.js" asp-append-version="true"></script>
 
     <script>

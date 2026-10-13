@@ -84,6 +84,7 @@ if (args.FirstOrDefault() == "--delete-sales") await SaleDeletionTests.RunAsync(
 if (args.FirstOrDefault() == "--stock-count") await StockCountTests.RunAsync();
 if (args.FirstOrDefault() == "--accounts") await AccountSecurityTests.RunAsync();
 if (args.FirstOrDefault() == "--shared-phone") await SharedPhoneTests.RunAsync();
+if (args.FirstOrDefault() == "--quick-patient") await QuickPatientTests.RunAsync();
 if (args.FirstOrDefault() == "--products") await ProductImportTests.RunAsync(args[1]);
 if (args.FirstOrDefault() == "--sales")
 {
@@ -105,7 +106,7 @@ if (args.FirstOrDefault() == "--sales")
         Check(saleReader.Read(file, "test.xlsx").Single().Errors.Count > 0, "Zero quantity accepted.");
     await SaleImportTests.RunAsync(args.Skip(1).ToArray());
 }
-if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales" or "--copy" or "--roles" or "--delete-sales" or "--stock-count" or "--accounts" or "--shared-phone"))
+if (args.Length > 0 && args[0] is not ("--integration" or "--localdb" or "--combo" or "--products" or "--sales" or "--copy" or "--roles" or "--delete-sales" or "--stock-count" or "--accounts" or "--shared-phone" or "--quick-patient"))
 {
     using var file = File.OpenRead(args[0]);
     var rows = reader.Read(file);

@@ -1,0 +1,9 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.QuickPatientCreatedViewModel
+@{ Layout = "_QuickPatientLayout"; ViewData["Title"] = "Đã tạo bệnh nhân"; }
+<div class="alert alert-success">Đã tạo bệnh nhân: @Model.Text</div>
+<p>Bệnh nhân mới sẽ được chọn trên hóa đơn.</p>
+@section Scripts {
+    <script>
+        window.parent.postMessage({ type: 'clinic:patient-created', patient: @Json.Serialize(Model) }, window.location.origin);
+    </script>
+}

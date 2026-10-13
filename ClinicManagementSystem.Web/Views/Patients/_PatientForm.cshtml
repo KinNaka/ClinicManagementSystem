@@ -1,6 +1,6 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel
 
-<div class="mb-3">
+<div class="mb-3 @(ViewData["QuickCreate"] is true ? "d-none" : "")">
     <label asp-for="PatientCode" class="form-label">Mã bệnh nhân</label>
     <input asp-for="PatientCode" class="form-control" readonly />
     <span asp-validation-for="PatientCode" class="text-danger"></span>
@@ -51,6 +51,8 @@
 </div>
 <partial name="_SharedPhonePopup" />
 
+@if (ViewData["QuickCreate"] is not true)
+{
 <div class="mb-3">
     <label asp-for="Address" class="form-label">Địa chỉ</label>
     <input asp-for="Address" class="form-control" placeholder="Số nhà, đường, thôn/ấp…" />
@@ -93,3 +95,4 @@
     </select>
     <span asp-validation-for="Status" class="text-danger"></span>
 </div>
+}

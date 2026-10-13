@@ -102,6 +102,23 @@ test('no match cannot commit arbitrary text and Escape closes results', () => {
     assert.equal(input.attrs['aria-expanded'], 'false');
 });
 
+test('patient no-match action opens quick creation by keyboard without selecting arbitrary text', () => {
+    const f = setup(); const select = f.make();
+    f.context.CustomEvent = class { constructor(type, init) { this.type = type; Object.assign(this, init); } };
+    select.dataset.emptyAction = 'patient-create';
+    select.dataset.emptyActionLabel = '+ Tạo nhanh bệnh nhân mới';
+    const events = []; select.dispatchEvent = event => events.push(event);
+    const input = select.input;
+    input.handlers.focus(); input.value = 'Nguyễn Mới'; input.handlers.input(); f.tick();
+    assert.equal(f.context.popup.querySelectorAll()[0].textContent, '+ Tạo nhanh bệnh nhân mới');
+    input.handlers.keydown({key:'ArrowDown',preventDefault() {}});
+    input.handlers.keydown({key:'Enter',preventDefault() {}});
+    const action = events.find(event => event.type === 'picker:empty-action');
+    assert.equal(action.detail.searchTerm, 'Nguyễn Mới');
+    assert.equal(select.value, '');
+    assert.equal(f.context.popup.hidden, true);
+});
+
 test('address picker refresh replaces options, restores selection and respects disabled/optional state', () => {
     const f = setup(); const select = f.make();
     select.dataset.optional = 'true'; select.disabled = true;

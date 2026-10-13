@@ -84,6 +84,37 @@ namespace ClinicManagementSystem.Web.Controllers
             return View(patient);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> QuickCreate(string? searchTerm)
+        {
+            ViewData["QuickCreate"] = true;
+            var term = searchTerm?.Trim() ?? "";
+            var model = new PatientFormViewModel { PatientCode = await _patientService.GeneratePatientCodeAsync(), Status = "Active" };
+            if (term.Length <= 200 && term.Any(char.IsLetter) && !term.Any(char.IsDigit)) model.FullName = term;
+            else if (term.Length <= 20 && System.Text.RegularExpressions.Regex.IsMatch(term, @"^[+\d ().-]{8,20}$")) model.PhoneNumber = term;
+            return View("Create", model);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuickCreate(PatientFormViewModel model)
+        {
+            ViewData["QuickCreate"] = true;
+            model.PatientCode = await _patientService.GeneratePatientCodeAsync();
+            model.Status = "Active";
+            ModelState.Remove(nameof(model.PatientCode));
+            ModelState.Remove(nameof(model.Status));
+            ValidatePatient(model);
+            if (!ModelState.IsValid) return View("Create", model);
+            var result = await _patientService.CreateAsync(model);
+            if (!result.Success) { ModelState.AddModelError("", result.Error ?? "Không thể tạo bệnh nhân."); return View("Create", model); }
+            var created = (await _patientService.GetAllAsync(model.PatientCode, null)).Single(p => p.PatientCode == model.PatientCode);
+            return View("QuickCreated", new QuickPatientCreatedViewModel {
+                Id = created.Id,
+                Text = created.FullName + " - " + (created.DateOfBirth?.Year.ToString() ?? "Chưa có năm sinh") + " - " +
+                    (string.IsNullOrWhiteSpace(created.PhoneNumber) ? "Chưa có SĐT" : created.PhoneNumber)
+            });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(

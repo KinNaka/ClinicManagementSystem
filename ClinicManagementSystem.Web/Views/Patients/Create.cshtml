@@ -2,11 +2,13 @@
 
 @{
     ViewData["Title"] = "Thêm bệnh nhân";
+    var quickCreate = ViewData["QuickCreate"] is true;
+    if (quickCreate) Layout = "_QuickPatientLayout";
 }
 
-<h2>Thêm bệnh nhân</h2>
+<h2>@(quickCreate ? "Tạo nhanh bệnh nhân" : "Thêm bệnh nhân")</h2>
 
-<form asp-action="Create" method="post">
+<form asp-action="@(quickCreate ? "QuickCreate" : "Create")" method="post">
     @Html.AntiForgeryToken()
 
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -14,7 +16,7 @@
     <partial name="_PatientForm" model="Model" />
 
     <button type="submit" class="btn btn-primary">Lưu bệnh nhân</button>
-    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    @if (!quickCreate) { <a asp-action="Index" class="btn btn-secondary">Quay lại</a> }
 </form>
 
 @section Scripts {
@@ -22,4 +24,15 @@
     <script src="~/js/birth-date.js" asp-append-version="true"></script>
     <script src="~/js/shared-phone.js" asp-append-version="true"></script>
 <script src="~/js/search-picker.js" asp-append-version="true"></script><script src="~/js/vietnam-address.js" asp-append-version="true"></script>
+    @if (quickCreate)
+    {
+        <script>
+            document.querySelector('form').addEventListener('submit', event => {
+                if (!event.defaultPrevented && event.target.checkValidity() && (!window.jQuery || window.jQuery(event.target).valid())) {
+                    const button = event.target.querySelector('button[type="submit"]');
+                    button.disabled = true; button.textContent = 'Đang lưu…';
+                }
+            });
+        </script>
+    }
 }

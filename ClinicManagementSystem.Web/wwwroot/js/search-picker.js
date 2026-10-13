@@ -51,6 +51,12 @@
     const choose = option => {
         const picker = active;
         if (!picker) return;
+        if (option.emptyAction) {
+            const term = picker.input.value;
+            close();
+            picker.select.dispatchEvent(new CustomEvent('picker:empty-action', { bubbles: true, detail: { searchTerm: term } }));
+            return;
+        }
         picker.select.value = option.value;
         picker.input.value = option.text;
         picker.input.setCustomValidity("");
@@ -68,9 +74,13 @@
             message.setAttribute("role", "status");
             message.textContent = "Không tìm thấy kết quả phù hợp.";
             popup.appendChild(message);
+            if (picker.select.dataset.emptyAction && picker.input.value.trim()) {
+                picker.found = [{ emptyAction: true, text: picker.select.dataset.emptyActionLabel || 'Tạo mới' }];
+            }
         }
         picker.found.forEach((option, i) => {
-            const button = document.createElement("div");
+            const button = document.createElement(option.emptyAction ? "button" : "div");
+            if (option.emptyAction) { button.type = 'button'; button.className = 'btn btn-outline-primary m-2'; }
             button.id = `search-option-${picker.id}-${i}`;
             button.setAttribute("role", "option");
             button.textContent = option.text;
@@ -121,7 +131,7 @@
             select.before(input);
             select.addEventListener("picker:refresh", () => {
                 if (active === picker) close();
-                picker.options = [...select.options].filter(o => o.value && !o.disabled).map(o => ({ value: o.value, text: o.text }));
+                picker.options = [...select.options].filter(o => o.value && o.value !== '0' && !o.disabled).map(o => ({ value: o.value, text: o.text }));
                 input.value = picker.options.find(o => o.value === select.value)?.text ?? "";
                 input.disabled = select.disabled;
                 input.required = select.dataset.optional !== "true";

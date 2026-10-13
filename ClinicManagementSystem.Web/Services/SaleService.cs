@@ -144,21 +144,28 @@ namespace ClinicManagementSystem.Web.Services
                 }
                 else { item.SourceDetailId = 0; item.PreservedQuantity = 0; item.PreservedLineTotal = 0; }
             }
-            model.Patients = await _context.Patients
+            var patientOptions = await _context.Patients
                 .AsNoTracking()
                 .Where(p => p.Id == model.PatientId || (p.Status == "Active" || p.Status == "ACTIVE"))
                 .OrderBy(p => p.FullName)
-                .Select(p => new SelectListItem
+                .Select(p => new
                 {
-                    Value = p.Id.ToString(),
-                    Text = p.PatientCode + " - " + p.FullName
+                    p.Id, p.FullName, p.DateOfBirth, p.PhoneNumber
                 })
                 .ToListAsync();
+            static string PatientLabel(string name, DateOnly? birthday, string? phone) =>
+                name + " - " + (birthday?.Year.ToString() ?? "Chưa có năm sinh") + " - " +
+                (string.IsNullOrWhiteSpace(phone) ? "Chưa có SĐT" : phone);
+            model.Patients = patientOptions.Select(p => new SelectListItem {
+                Value = p.Id.ToString(), Text = PatientLabel(p.FullName, p.DateOfBirth, p.PhoneNumber)
+            }).ToList();
 
             if (source?.PatientId == model.PatientId && !string.IsNullOrWhiteSpace(source.SourcePatientName))
             {
                 var selectedPatient = model.Patients.FirstOrDefault(p => p.Value == model.PatientId.ToString());
-                if (selectedPatient != null) selectedPatient.Text = (source.SourcePatientCode ?? "") + " - " + source.SourcePatientName;
+                var selectedProfile = patientOptions.FirstOrDefault(p => p.Id == model.PatientId);
+                if (selectedPatient != null && selectedProfile != null)
+                    selectedPatient.Text = PatientLabel(source.SourcePatientName, selectedProfile.DateOfBirth, selectedProfile.PhoneNumber);
             }
             var selectedIds = model.Details.Select(d => d.ProductId).ToList();
             model.Products = await _context.Products

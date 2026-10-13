@@ -39,7 +39,16 @@
     <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
     <input asp-for="PhoneNumber" class="form-control" />
     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    <div id="shared-phone-widget" data-url="@Url.Action("PhoneMatches", "Patients")" data-exclude-id="@ViewContext.RouteData.Values["id"]">
+        <input type="hidden" asp-for="SharedPhoneWithPatientId" />
+        <input type="hidden" asp-for="SharedPhoneRelationship" />
+        <p id="shared-phone-status" class="small mt-2" role="status">
+            @if (Model.SharedPhoneWithPatientId.HasValue) { <span>Đã xác nhận @Model.SharedPhoneRelationship của @Model.SharedPhoneOwnerName, dùng chung số điện thoại.</span> }
+        </p>
+        <button type="button" id="check-shared-phone" class="btn btn-outline-secondary btn-sm">Kiểm tra số điện thoại / Chọn người thân</button>
+    </div>
 </div>
+<partial name="_SharedPhonePopup" />
 
 <div class="mb-3">
     <label asp-for="Address" class="form-label">Địa chỉ</label>

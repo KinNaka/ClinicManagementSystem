@@ -21,6 +21,10 @@ namespace ClinicManagementSystem.Web.Models.Entities
 
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
+        public long? SharedPhoneWithPatientId { get; set; }
+        public Patient? SharedPhoneWithPatient { get; set; }
+        [MaxLength(50)]
+        public string? SharedPhoneRelationship { get; set; }
 
         [MaxLength(300)]
         public string? Address { get; set; }

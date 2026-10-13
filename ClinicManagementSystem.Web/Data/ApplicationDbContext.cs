@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Patient>().HasOne(p => p.SharedPhoneWithPatient).WithMany()
+            .HasForeignKey(p => p.SharedPhoneWithPatientId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<ComboComponent>().HasKey(c => new { c.ComboProductId, c.ComponentProductId });
         modelBuilder.Entity<ComboComponent>().Property(c => c.Quantity).HasPrecision(18, 2);
         modelBuilder.Entity<ComboComponent>().ToTable(t => t.HasCheckConstraint("CK_ComboComponent_Quantity", "[Quantity] > 0"));

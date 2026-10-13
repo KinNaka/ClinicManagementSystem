@@ -147,6 +147,15 @@ namespace ClinicManagementSystem.Web.Controllers
         public IActionResult AddressProvinces() => Json(_addresses.Provinces.Select(p => new { code = p.Code, name = p.Name }));
 
         [HttpGet]
+        public async Task<IActionResult> PhoneMatches(string? phoneNumber, long? excludeId)
+        {
+            if (phoneNumber?.Length > 40) return BadRequest();
+            var matches = await _patientService.FindByPhoneAsync(phoneNumber, excludeId);
+            return Json(matches.Select(p => new { p.Id, p.PatientCode, p.FullName, p.PhoneNumber, p.Status,
+                detailsUrl = Url.Action(nameof(Details), new { id = p.Id }) }));
+        }
+
+        [HttpGet]
         public IActionResult AddressWards(int provinceCode) => Json(_addresses.FindProvince(provinceCode)?.Wards ?? new());
 
         private void ValidatePatient(PatientFormViewModel model)

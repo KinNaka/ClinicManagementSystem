@@ -37,6 +37,13 @@
 
     <dt class="col-sm-3">Số điện thoại</dt>
     <dd class="col-sm-9">@(Model.Patient.PhoneNumber ?? "—")</dd>
+    @if (Model.Patient.SharedPhoneWithPatientId.HasValue)
+    {
+        <dt class="col-sm-3">Dùng chung số điện thoại</dt>
+        <dd class="col-sm-9">@Model.Patient.SharedPhoneRelationship của
+            <a asp-action="Details" asp-route-id="@Model.Patient.SharedPhoneWithPatientId">@Model.Patient.SharedPhoneOwnerName</a>
+        </dd>
+    }
 
     <dt class="col-sm-3">Địa chỉ</dt>
     <dd class="col-sm-9">@(string.Join(", ", new[] { Model.Patient.Address, Model.Patient.WardName, Model.Patient.ProvinceName }.Where(s => !string.IsNullOrWhiteSpace(s))) is var address && address.Length > 0 ? address : "—")</dd>

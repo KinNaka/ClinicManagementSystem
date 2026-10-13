@@ -67,6 +67,9 @@ namespace ClinicManagementSystem.Web.Services
                     DateOfBirth = p.DateOfBirth,
                     Gender = p.Gender,
                     PhoneNumber = p.PhoneNumber,
+                    SharedPhoneWithPatientId = p.SharedPhoneWithPatientId,
+                    SharedPhoneRelationship = p.SharedPhoneRelationship,
+                    SharedPhoneOwnerName = p.SharedPhoneWithPatient == null ? null : p.SharedPhoneWithPatient.FullName,
                     Address = p.Address,
                     ProvinceCode = p.ProvinceCode,
                     WardCode = p.WardCode,
@@ -135,24 +138,11 @@ namespace ClinicManagementSystem.Web.Services
         public async Task<(bool Success, string? Error)> CreateAsync(
             PatientFormViewModel model)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var code = model.PatientCode.Trim().ToUpperInvariant();
-            var phoneNumber = NormalizeOptional(model.PhoneNumber);
-
-            if (phoneNumber != null)
-            {
-                var existingPatient = await _context.Patients
-                    .AsNoTracking()
-                    .Where(p => p.PhoneNumber != null && p.PhoneNumber.Trim() == phoneNumber)
-                    .OrderBy(p => p.Id)
-                    .Select(p => new { p.FullName })
-                    .FirstOrDefaultAsync();
-
-                if (existingPatient != null)
-                {
-                    return (false,
-                        $"Số điện thoại đã có trên hệ thống với tên khách hàng là: {existingPatient.FullName}.");
-                }
-            }
+            var phoneNumber = NormalizePhone(model.PhoneNumber);
+            var sharedError = await ValidateSharedPhoneAsync(model, phoneNumber);
+            if (sharedError != null) return (false, sharedError);
 
             if (await ExistsCodeAsync(code))
             {
@@ -171,6 +161,8 @@ namespace ClinicManagementSystem.Web.Services
                 DateOfBirth = model.DateOfBirth,
                 Gender = NormalizeOptional(model.Gender),
                 PhoneNumber = phoneNumber,
+                SharedPhoneWithPatientId = model.SharedPhoneWithPatientId,
+                SharedPhoneRelationship = NormalizeOptional(model.SharedPhoneRelationship),
                 Address = NormalizeOptional(model.Address),
                 ProvinceCode = model.ProvinceCode,
                 WardCode = model.WardCode,
@@ -188,6 +180,7 @@ namespace ClinicManagementSystem.Web.Services
             try
             {
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return (true, null);
             }
             catch (DbUpdateException)
@@ -201,6 +194,7 @@ namespace ClinicManagementSystem.Web.Services
             long id,
             PatientFormViewModel model)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var patient = await _context.Patients
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -221,11 +215,19 @@ namespace ClinicManagementSystem.Web.Services
                 return (false, "Trạng thái bệnh nhân không hợp lệ.");
             }
 
+            var phoneNumber = NormalizePhone(model.PhoneNumber);
+            if (phoneNumber != NormalizePhone(patient.PhoneNumber) || model.SharedPhoneWithPatientId != patient.SharedPhoneWithPatientId || model.SharedPhoneRelationship != patient.SharedPhoneRelationship)
+            {
+                var sharedError = await ValidateSharedPhoneAsync(model, phoneNumber, id);
+                if (sharedError != null) return (false, sharedError);
+            }
             patient.PatientCode = code;
             patient.FullName = model.FullName.Trim();
             patient.DateOfBirth = model.DateOfBirth;
             patient.Gender = NormalizeOptional(model.Gender);
-            patient.PhoneNumber = NormalizeOptional(model.PhoneNumber);
+            patient.PhoneNumber = phoneNumber;
+            patient.SharedPhoneWithPatientId = model.SharedPhoneWithPatientId;
+            patient.SharedPhoneRelationship = NormalizeOptional(model.SharedPhoneRelationship);
             patient.Address = NormalizeOptional(model.Address);
             patient.ProvinceCode = model.ProvinceCode;
             patient.WardCode = model.WardCode;
@@ -239,6 +241,7 @@ namespace ClinicManagementSystem.Web.Services
             try
             {
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return (true, null);
             }
             catch (DbUpdateException)
@@ -263,6 +266,39 @@ namespace ClinicManagementSystem.Web.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public static string? NormalizePhone(string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return null;
+            return System.Text.RegularExpressions.Regex.Replace(phone.Trim(), @"[ \t\r\n().-]", "").Replace("+84", "0");
+        }
+
+        public async Task<List<PhoneMatchViewModel>> FindByPhoneAsync(string? phoneNumber, long? excludeId = null)
+        {
+            var phone = NormalizePhone(phoneNumber);
+            if (phone == null) return new();
+            return await _context.Patients.AsNoTracking().Where(p => (!excludeId.HasValue || p.Id != excludeId.Value) && p.PhoneNumber != null &&
+                p.PhoneNumber.Replace(" ", "").Replace("\t", "").Replace("\r", "").Replace("\n", "").Replace(".", "").Replace("-", "").Replace("(", "").Replace(")", "").Replace("+84", "0") == phone)
+                .OrderBy(p => p.Id).Select(p => new PhoneMatchViewModel { Id = p.Id, PatientCode = p.PatientCode, FullName = p.FullName, PhoneNumber = p.PhoneNumber, Status = p.Status }).ToListAsync();
+        }
+
+        private async Task<string?> ValidateSharedPhoneAsync(PatientFormViewModel model, string? phone, long? excludeId = null)
+        {
+            var matches = await FindByPhoneAsync(phone, excludeId);
+            if (model.SharedPhoneWithPatientId.HasValue)
+            {
+                if (!matches.Any(p => p.Id == model.SharedPhoneWithPatientId))
+                    return "Khách hàng được chọn không dùng số điện thoại này. Vui lòng kiểm tra và xác nhận người thân lại.";
+                if (model.SharedPhoneRelationship is not ("Con" or "Cha" or "Mẹ" or "Vợ" or "Chồng" or "Anh/chị/em" or "Người thân khác"))
+                    return "Vui lòng chọn quan hệ người thân để dùng chung số điện thoại.";
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(model.SharedPhoneRelationship)) return "Vui lòng chọn khách hàng dùng chung số điện thoại.";
+                if (matches.Count > 0) return $"Số điện thoại đã được dùng bởi {matches[0].FullName} ({matches[0].PatientCode}). Chọn hồ sơ hiện có hoặc xác nhận người thân để dùng chung số.";
+            }
+            return null;
         }
 
         private static bool IsValidStatus(string? status)

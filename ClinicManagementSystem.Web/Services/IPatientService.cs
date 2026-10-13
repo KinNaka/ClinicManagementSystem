@@ -5,6 +5,7 @@ namespace ClinicManagementSystem.Web.Services
     public interface IPatientService
     {
         Task<string> GeneratePatientCodeAsync();
+        Task<List<PhoneMatchViewModel>> FindByPhoneAsync(string? phoneNumber, long? excludeId = null);
         Task<List<PatientListViewModel>> GetAllAsync(
             string? searchTerm,
             string? status);

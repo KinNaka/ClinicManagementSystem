@@ -1,0 +1,19 @@
+<div class="modal fade" id="shared-phone-modal" tabindex="-1" aria-labelledby="shared-phone-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title fs-5" id="shared-phone-title">Số điện thoại đã có khách hàng sử dụng</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+        <div class="modal-body">
+            <p>Chọn “Xem hồ sơ” nếu đây là khách hàng đã có. Nếu đang thêm người thân, chọn người dùng chung số điện thoại và quan hệ bên dưới.</p>
+            <div id="shared-phone-matches" class="mb-3"></div>
+            <label for="shared-phone-relation" class="form-label">Khách hàng đang nhập là gì của người được chọn?</label>
+            <select id="shared-phone-relation" class="form-select">
+                <option value="">-- Chọn quan hệ --</option>
+                <option>Con</option><option>Cha</option><option>Mẹ</option><option>Vợ</option><option>Chồng</option><option>Anh/chị/em</option><option>Người thân khác</option>
+            </select>
+            <p id="shared-phone-modal-error" class="text-danger mt-2" role="alert"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="change-shared-phone" class="btn btn-outline-secondary">Sửa số điện thoại</button>
+            <button type="button" id="confirm-shared-phone" class="btn btn-primary">Xác nhận người thân, dùng chung số</button>
+        </div>
+    </div></div>
+</div>

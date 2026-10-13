@@ -181,6 +181,13 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("SharedPhoneRelationship")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("SharedPhoneWithPatientId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -200,6 +207,8 @@ namespace ClinicManagementSystem.Web.Migrations
 
                     b.HasIndex("PatientCode")
                         .IsUnique();
+
+                    b.HasIndex("SharedPhoneWithPatientId");
 
                     b.ToTable("Patients");
                 });
@@ -697,6 +706,16 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.Navigation("ComboProduct");
 
                     b.Navigation("ComponentProduct");
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Patient", b =>
+                {
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Patient", "SharedPhoneWithPatient")
+                        .WithMany()
+                        .HasForeignKey("SharedPhoneWithPatientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("SharedPhoneWithPatient");
                 });
 
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Product", b =>

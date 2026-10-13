@@ -24,6 +24,10 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ.")]
         [StringLength(20)]
         public string? PhoneNumber { get; set; }
+        public long? SharedPhoneWithPatientId { get; set; }
+        [StringLength(50)]
+        public string? SharedPhoneRelationship { get; set; }
+        public string? SharedPhoneOwnerName { get; set; }
 
         [StringLength(300)]
         public string? Address { get; set; }

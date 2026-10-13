@@ -51,8 +51,6 @@
 </div>
 <partial name="_SharedPhonePopup" />
 
-@if (ViewData["QuickCreate"] is not true)
-{
 <div class="mb-3">
     <label asp-for="Address" class="form-label">Địa chỉ</label>
     <input asp-for="Address" class="form-control" placeholder="Số nhà, đường, thôn/ấp…" />
@@ -75,6 +73,8 @@
     <button type="button" data-address-retry class="btn btn-outline-secondary mb-3" hidden>Thử tải lại danh mục</button>
 </div>
 
+@if (ViewData["QuickCreate"] is not true)
+{
 <div class="mb-3">
     <label asp-for="Occupation" class="form-label">Nghề nghiệp</label>
     <input asp-for="Occupation" class="form-control" />

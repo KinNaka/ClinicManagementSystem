@@ -1,6 +1,25 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Dashboard.StaffRevenueViewModel
 @{ ViewData["Title"] = "Doanh thu ngày / tuần"; }
 <h2 class="mb-4">Doanh thu ngày / tuần</h2>
+<section class="mb-4" aria-labelledby="staff-quick-title">
+    <h3 id="staff-quick-title" class="h5 mb-3">Thao tác nhanh</h3>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <a class="metric h-100" asp-controller="Sales" asp-action="Create">
+                <div class="metric-top"><span class="metric-icon blue" aria-hidden="true">▤</span><span class="metric-arrow" aria-hidden="true">→</span></div>
+                <b class="mb-2">Tạo hóa đơn</b>
+                <span class="metric-caption">Ghi nhận giao dịch mới</span>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a class="metric h-100" asp-controller="Patients" asp-action="Create">
+                <div class="metric-top"><span class="metric-icon teal" aria-hidden="true">＋</span><span class="metric-arrow" aria-hidden="true">→</span></div>
+                <b class="mb-2">Thêm bệnh nhân</b>
+                <span class="metric-caption">Tạo hồ sơ bệnh nhân mới</span>
+            </a>
+        </div>
+    </div>
+</section>
 <div class="row g-3">
     <div class="col-md-6"><div class="card h-100"><div class="card-body">
         <h3 class="h5">Doanh thu hôm nay</h3>

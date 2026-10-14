@@ -21,7 +21,7 @@
         button { background: #1459bd; color: white; border: 0; border-radius: 4px; cursor: pointer; }
         .back { color: #1459bd; }
         .help { line-height: 1.5; margin: 12px 0 0; }
-        #receipt { width: 80mm; padding: 3mm; margin: 0 auto 24px; background: white; }
+        #receipt { width: 80mm; padding: 0 3mm 3mm; margin: 0 auto 24px; background: white; }
         #receipt.narrow { width: 58mm; }
         .printBox { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; }
         .printBox span { font-size: 12px; }
@@ -39,11 +39,12 @@
         @@media print {
             html, body { background: white; margin: 0 !important; padding: 0 !important; }
             .toolbar { display: none !important; }
-            #receipt { margin: 0; padding: 3mm; }
+            #receipt, #receipt.narrow { width: 100%; max-width: 74mm; margin: 0 auto; padding: 0 0 3mm; }
+            #receipt.narrow { max-width: 52mm; }
             tr, .customer, .thanks { break-inside: avoid; }
         }
     </style>
-    <style id="paper-size">@@page { size: 80mm 160mm; margin: 0; }</style>
+    <style>@@page { size: auto; margin: 0 3mm; }</style>
 </head>
 <body>
     <div class="toolbar">
@@ -53,7 +54,7 @@
             <button type="button" id="print-receipt">In hóa đơn</button>
             <a class="back" asp-action="Details" asp-route-id="@Model.Id">Quay lại hóa đơn</a>
         </div>
-        <p class="help">Chọn máy in POS và đúng khổ giấy trong hộp thoại in. Đặt tỷ lệ 100%, lề “Không”, tắt đầu trang và chân trang để không in kèm địa chỉ trang web.</p>
+        <p class="help">Chọn máy in POS và đúng khổ giấy trong hộp thoại in. Đặt tỷ lệ 100%, giữ lề “Mặc định”, tắt đầu trang và chân trang. Mẫu in đặt lề trái/phải 3 mm và lề trên/dưới 0 mm để nội dung nằm giữa khổ giấy.</p>
     </div>
     <main id="receipt" class="printBox">
         <span id="print-time">@printTime.ToString("dd/MM/yyyy HH:mm")</span>
@@ -84,8 +85,6 @@
             function sizePaper() {
                 const paperWidth = width.value === '58' ? 58 : 80;
                 receipt.classList.toggle('narrow', paperWidth === 58);
-                const height = Math.max(60, Math.ceil(receipt.getBoundingClientRect().height * 25.4 / 96) + 6);
-                document.getElementById('paper-size').textContent = `@@page { size: ${paperWidth}mm ${height}mm; margin: 0; }`;
             }
             try { width.value = localStorage.getItem('receipt-paper-width') === '58' ? '58' : '80'; } catch { }
             width.addEventListener('change', () => {

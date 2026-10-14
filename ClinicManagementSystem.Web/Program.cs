@@ -5,7 +5,6 @@ using ClinicManagementSystem.Web.Models.Identity;
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,

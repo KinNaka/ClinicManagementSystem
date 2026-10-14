@@ -1,7 +1,17 @@
 @echo off
 cd /d "%~dp0"
+
 set "ASPNETCORE_ENVIRONMENT=LocalNetwork"
-"ClinicManagementSystem.Web.exe" --environment LocalNetwork
-echo.
-echo Ung dung da dung. Kiem tra thong bao loi phia tren neu co.
-pause
+
+if not exist "Logs" mkdir "Logs"
+
+:restart
+echo [%date% %time%] Khoi dong MVC >> "Logs\restart.log"
+
+"ClinicManagementSystem.Web.exe" --environment LocalNetwork >> "Logs\mvc.log" 2>&1
+
+echo [%date% %time%] MVC da dung >> "Logs\restart.log"
+
+timeout /t 5 /nobreak >nul
+
+goto restart

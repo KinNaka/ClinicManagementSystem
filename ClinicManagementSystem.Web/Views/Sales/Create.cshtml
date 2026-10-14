@@ -27,10 +27,15 @@
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">Danh sách thuốc / vật tư</span>
-            <button type="button" id="addProduct" class="btn btn-sm btn-primary">+ Thêm sản phẩm</button>
+
         </div>
         <div class="card-body">
-            <div class="table-responsive">
+            <label for="productSearch" class="form-label">Tìm kiếm sản phẩm để thêm vào hóa đơn</label>
+            <select id="productSearch" class="form-select" data-search-picker="Tìm sản phẩm" data-placeholder="Tìm mã hoặc tên sản phẩm…" data-optional="true">
+                <option value="">-- Tìm sản phẩm --</option>
+                @foreach (var p in Model.Products) { <option value="@p.Value">@p.Text</option> }
+            </select>
+            <div class="table-responsive mt-3">
                 <table class="table table-bordered align-middle" id="productTable">
                     <thead class="table-light">
                         <tr>
@@ -84,11 +89,15 @@
             </div>
 
             <div id="productError" class="text-danger mb-2" role="alert"></div>
-            <div class="text-end">Giảm giá hóa đơn: @Model.Discount.ToString("N2") đ · Thu khác: @Model.Surcharge.ToString("N2") đ</div>
-            <div class="text-end fs-5">Tổng tiền: <strong id="grandTotal">0 đ</strong></div>
-            <small class="text-muted">
-                Dòng giữ nguyên sản phẩm sẽ giữ giá đã lưu. Sản phẩm chọn mới dùng giá hiện tại. Giảm giá và thu khác được giữ từ hóa đơn gốc.
-            </small>
+            <div class="row g-3 justify-content-end">
+                <div class="col-md-3"><label for="DiscountType" class="form-label">Giảm giá theo</label>
+                    <select asp-for="DiscountType" class="form-select"><option value="Amount">Số tiền (đ)</option><option value="Percent">Phần trăm (%)</option></select></div>
+                <div class="col-md-3"><label asp-for="Discount" class="form-label">Mức giảm giá</label><input asp-for="Discount" type="number" min="0" step="0.01" max="999999999999" class="form-control" /><span asp-validation-for="Discount" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="Surcharge" class="form-label">Thu khác (đ)</label><input asp-for="Surcharge" type="number" min="0" step="0.01" max="999999999999" class="form-control" /><span asp-validation-for="Surcharge" class="text-danger"></span></div>
+            </div>
+            <div class="text-end mt-3">Tiền hàng: <strong id="goodsTotal">0 đ</strong> · Giảm giá: <span id="discountTotal">0 đ</span></div>
+            <div class="text-end fs-5">Thành tiền: <strong id="grandTotal">0 đ</strong></div>
+            <small class="text-muted">Thành tiền = tiền hàng − giảm giá + thu khác. Dòng sao chép giữ giá gốc; sản phẩm mới dùng giá hiện tại.</small>
         </div>
     </div>
 
@@ -145,6 +154,7 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/search-picker.js" asp-append-version="true"></script>
     <script src="~/js/quick-patient.js" asp-append-version="true"></script>
+    <script src="~/js/sale-pricing.js" asp-append-version="true"></script>
     <script src="~/js/quantity-stepper.js" asp-append-version="true"></script>
 
     <script>
@@ -158,8 +168,9 @@
                 maximumFractionDigits: 2
             });
 
-            const discount = @Model.Discount.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            const surcharge = @Model.Surcharge.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const discountInput = document.getElementById("Discount");
+            const discountType = document.getElementById("DiscountType");
+            const surchargeInput = document.getElementById("Surcharge");
             function validQuantity(row, value) {
                 return Number.isFinite(value) && value > 0 && value <= 999999999 &&
                     (Number(row.dataset.sourceId) > 0 ? Math.abs(value * 1000 - Math.round(value * 1000)) < 0.000001 : Number.isInteger(value));
@@ -178,7 +189,7 @@
             }
 
             function calculate() {
-                let total = -discount + surcharge;
+                let total = 0;
 
                 rows.querySelectorAll("tr").forEach(row => {
                     const productId = row.querySelector(".product-select").value;
@@ -195,7 +206,12 @@
                     }
                 });
 
-                document.getElementById("grandTotal").textContent = formatter.format(total) + " đ";
+                const result = window.ClinicSalePricing.calculate(total, discountType.value, Number(discountInput.value), Number(surchargeInput.value));
+                discountInput.max = discountType.value === "Percent" ? "100" : "999999999999";
+                discountInput.setCustomValidity(result.error || "");
+                document.getElementById("goodsTotal").textContent = formatter.format(total) + " đ";
+                document.getElementById("discountTotal").textContent = formatter.format(result.discount) + " đ";
+                document.getElementById("grandTotal").textContent = result.error ? "—" : formatter.format(result.total) + " đ";
             }
 
             async function updateRow(row) {
@@ -241,12 +257,26 @@
                 }
             }
 
-            document.getElementById("addProduct").addEventListener("click", () => {
-                rows.appendChild(template.content.cloneNode(true));
-                window.ClinicSearchPicker.init(rows);
-                error.textContent = "";
-                renumber();
-                calculate();
+            [discountInput, discountType, surchargeInput].forEach(input => input.addEventListener("input", calculate));
+            const search = document.getElementById("productSearch");
+            search.addEventListener("change", () => {
+                if (!search.value) return;
+                const id = search.value;
+                let row = [...rows.querySelectorAll("tr")].find(r => r.querySelector(".product-select").value === id);
+                if (row) {
+                    const quantity = row.querySelector(".quantity-input");
+                    quantity.value = String(Math.min(999999999, Number(quantity.value) + 1));
+                } else {
+                    row = [...rows.querySelectorAll("tr")].find(r => !r.querySelector(".product-select").value);
+                    if (!row) { rows.appendChild(template.content.cloneNode(true)); row = rows.lastElementChild; }
+                    row.querySelector(".product-select").value = id;
+                    window.ClinicSearchPicker.init(rows);
+                    row.querySelector(".product-select").dispatchEvent(new Event("picker:refresh"));
+                    renumber(); updateRow(row);
+                }
+                error.textContent = ""; calculate();
+                search.value = ""; search.dispatchEvent(new Event("picker:refresh"));
+                document.getElementById("productSearch").focus();
             });
 
             rows.addEventListener("click", e => {

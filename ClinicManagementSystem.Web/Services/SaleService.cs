@@ -115,7 +115,7 @@ namespace ClinicManagementSystem.Web.Services
             if (source == null) return null;
             return await PrepareFormAsync(new SaleFormViewModel {
                 CopyFromId = source.Id, PatientId = source.PatientId, Notes = source.Notes,
-                TotalAmount = source.TotalAmount,
+                TotalAmount = source.TotalAmount, DiscountType = "Amount", Discount = source.ImportedDiscount, Surcharge = source.ImportedSurcharge,
                 Details = source.Details.OrderBy(d => d.Id).Select(d => new SaleDetailFormViewModel {
                     SourceDetailId = d.Id, ProductId = d.ProductId, Quantity = d.Quantity, Notes = d.Notes
                 }).ToList()
@@ -128,8 +128,7 @@ namespace ClinicManagementSystem.Web.Services
             var sourceId = model.Id > 0 ? model.Id : model.CopyFromId;
             var source = sourceId.HasValue ? await _context.Sales.AsNoTracking().Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == sourceId) : null;
             model.CopyFromCode = model.CopyFromId.HasValue ? source?.SaleCode : null;
-            model.Discount = source?.ImportedDiscount ?? 0;
-            model.Surcharge = source?.ImportedSurcharge ?? 0;
+            if (model.DiscountType == null) { model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
             foreach (var item in model.Details)
             {
                 var original = source?.Details.FirstOrDefault(d => d.Id == item.SourceDetailId && d.ProductId == item.ProductId);
@@ -175,7 +174,7 @@ namespace ClinicManagementSystem.Web.Services
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.ProductCode + " - " + p.Name
+                    Text = p.ProductCode + " - " + p.Name + " | " + (p.Unit ?? "—") + " | " + p.SellingPrice.ToString("N0") + " đ"
                 })
                 .ToListAsync();
 
@@ -279,7 +278,9 @@ namespace ClinicManagementSystem.Web.Services
             if (model.CopyFromId.HasValue && source == null) throw new InvalidOperationException("Hóa đơn gốc không còn tồn tại.");
             await ValidatePatientAsync(model.PatientId, source?.PatientId == model.PatientId);
             var details = await BuildDetailsAsync(model, source);
-            var total = details.Sum(d => d.LineTotal) - (source?.ImportedDiscount ?? 0) + (source?.ImportedSurcharge ?? 0);
+            if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
+            var pricing = SalePricing.Calculate(details.Sum(d => d.LineTotal), model);
+            var total = pricing.Total;
             if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
 
             var sale = new Sale
@@ -292,8 +293,8 @@ namespace ClinicManagementSystem.Web.Services
                 Notes = model.Notes,
                 TotalAmount = total,
                 ImportedGoodsTotal = details.Sum(d => d.LineTotal),
-                ImportedDiscount = source?.ImportedDiscount ?? 0,
-                ImportedSurcharge = source?.ImportedSurcharge ?? 0,
+                ImportedDiscount = pricing.Discount,
+                ImportedSurcharge = decimal.Round(model.Surcharge, 2, MidpointRounding.AwayFromZero),
                 SourcePatientName = source?.PatientId == model.PatientId ? source.SourcePatientName : null,
                 SourcePatientCode = source?.PatientId == model.PatientId ? source.SourcePatientCode : null,
                 CreatedAt = DateTime.Now,

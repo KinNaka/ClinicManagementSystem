@@ -28,8 +28,10 @@ static class SaleCopyTests
             Check(form.Id == 0 && form.Status == "Draft" && form.PatientId == patient.Id && form.Notes == source.Notes && form.TotalAmount == 11.44m && form.Discount == 1.11m && form.Surcharge == 2.22m, "Copy header incorrect.");
             Check(form.Details.Count == 2 && form.Details[0].Quantity == .333m && form.Details[0].UnitPrice == 10 && form.Details[0].Notes == "First note" && form.Patients.Single().Text.Contains("Historical name"), "Copied lines/names incorrect.");
             Check(await db.Sales.CountAsync() == 1 && !await db.InventoryTransactions.AnyAsync(), "Opening copy wrote data.");
-            // Posted prices and totals must never override the source stored by the server.
+            // Prices/totals remain server-owned; discount is now editable and validated.
             form.TotalAmount = 0; form.Discount = 999; form.Details[0].UnitPrice = 0; form.Details[0].LineTotal = 0;
+            try { await service.CreateAsync(form); throw new Exception("Excessive discount accepted."); } catch (InvalidOperationException) { }
+            form.Discount = 1.11m;
             var id = await service.CreateAsync(form);
             db.ChangeTracker.Clear();
             var copy = await db.Sales.Include(s => s.Details).SingleAsync(s => s.Id == id);
@@ -60,6 +62,18 @@ static class SaleCopyTests
             Check(revenue.TodayRevenue == 11.44m && revenue.WeekRevenue == 11.44m && revenue.WeekStart.DayOfWeek == DayOfWeek.Monday, "Staff revenue included past week, future, drafts or legacy invoices.");
             Check((await db.Products.SingleAsync()).CurrentStock == 8.667m && await db.InventoryTransactionDetails.SumAsync(d => d.Quantity) == 1.333m, "Confirmation did not deduct exactly once.");
             Check((await db.Sales.SingleAsync(s => s.Id == source.Id)).Status == "Imported" && (await db.Sales.SingleAsync(s => s.Id == source.Id)).TotalAmount == 11.44m, "Source invoice modified.");
+            var discounted = new ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel {
+                PatientId = patient.Id, DiscountType = "Percent", Discount = 10, Surcharge = 50,
+                Details = new() { new() { ProductId = product.Id, Quantity = 2 } }
+            };
+            await service.PrepareFormAsync(discounted);
+            Check(discounted.Discount == 10 && discounted.Surcharge == 50, "Form refresh lost entered adjustments.");
+            var discountedId = await service.CreateAsync(discounted); db.ChangeTracker.Clear();
+            var priced = await db.Sales.SingleAsync(s => s.Id == discountedId);
+            Check(priced.TotalAmount == 950 && priced.ImportedDiscount == 100 && priced.ImportedSurcharge == 50, "Percentage discount/surcharge not persisted correctly.");
+            var pricedDraft = (await service.GetDraftAsync(discountedId))!;
+            await service.UpdateDraftAsync(discountedId, pricedDraft); db.ChangeTracker.Clear();
+            Check((await db.Sales.SingleAsync(s => s.Id == discountedId)).TotalAmount == 950, "Editing draft lost adjustments.");
             var inactive = await db.Products.SingleAsync(); inactive.Status = "INACTIVE"; await db.SaveChangesAsync(); db.ChangeTracker.Clear();
             var inactiveId = await service.CreateAsync((await service.PrepareCopyAsync(source.Id))!);
             try { await service.ConfirmAsync(inactiveId); throw new Exception("Inactive product confirmed."); } catch (InvalidOperationException) { }

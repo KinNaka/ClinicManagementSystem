@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
+SalePricingTests.Run();
+if (args.Contains("--pricing")) return;
 DecimalRangeTests.Run();
 await BirthDateTests.RunAsync();
 var reader = new KiotVietCustomerReader(new VietnamAddressService(new TestEnvironment(root)));

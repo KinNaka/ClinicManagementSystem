@@ -10,6 +10,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public long? CopyFromId { get; set; }
         public string? CopyFromCode { get; set; }
         public decimal Discount { get; set; }
+        public string? DiscountType { get; set; }
         public decimal Surcharge { get; set; }
 
         public string SaleCode { get; set; } = string.Empty;

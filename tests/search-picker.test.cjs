@@ -15,16 +15,18 @@ class Element {
     querySelectorAll() { return this.children.filter(child => child.attrs.role === 'option'); }
     contains(child) { return this.children.includes(child); }
     before(input) { this.input = input; }
-    getBoundingClientRect() { return { left: 40, width: 300, bottom: 100, top: 60 }; }
+    getBoundingClientRect() { return this.rect || { left: 40, width: 300, bottom: 100, top: 60 }; }
+    get offsetHeight() { return Math.min(this.children.length * 44 + 12, parseFloat(this.style.maxHeight) + 12); }
     scrollIntoView() {}
 }
 function setup() {
     const popup = new Element();
+    const documentHandlers = {}, windowHandlers = {}, viewportHandlers = {};
     const timers = new Map();
     let id = 0;
     const context = {
-        document: { createElement: type => type === 'div' ? new Element() : new Element(), body: { appendChild(element) { context.popup = element; } }, addEventListener() {} },
-        window: { innerWidth: 1000, innerHeight: 800, addEventListener() {} },
+        document: { createElement: type => type === 'div' ? new Element() : new Element(), body: { appendChild(element) { context.popup = element; } }, addEventListener(type, fn) { documentHandlers[type] = fn; } },
+        window: { innerWidth: 1000, innerHeight: 800, addEventListener(type, fn) { windowHandlers[type] = fn; }, visualViewport: { width: 1000, height: 800, offsetLeft: 0, offsetTop: 0, addEventListener(type, fn) { viewportHandlers[type] = fn; } } },
         Event: class {},
         setTimeout(fn, ms) { const key = ++id; timers.set(key, { fn, ms }); return key; },
         clearTimeout(key) { timers.delete(key); }
@@ -40,8 +42,37 @@ function setup() {
         return select;
     };
     const tick = () => { const queue = [...timers.values()]; timers.clear(); queue.forEach(timer => { assert.equal(timer.ms, 200); timer.fn(); }); };
-    return { context, make, tick, timers };
+    return { context, make, tick, timers, documentHandlers, windowHandlers, viewportHandlers };
 }
+
+test('mobile keyboard resize and automatic scroll keep filtered results visible above the keyboard', () => {
+    const f = setup(); const select = f.make(); const input = select.input;
+    input.rect = { left: 20, width: 340, top: 430, bottom: 474 };
+    input.handlers.focus();
+    const viewport = f.context.window.visualViewport;
+    Object.assign(viewport, { width: 390, height: 320, offsetTop: 200 });
+    f.viewportHandlers.resize();
+    f.windowHandlers.resize();
+    f.documentHandlers.scroll({ target: {} });
+    assert.equal(f.context.popup.hidden, false);
+    assert.equal(input.attrs['aria-expanded'], 'true');
+    assert.ok(parseFloat(f.context.popup.style.top) >= 208);
+    assert.ok(parseFloat(f.context.popup.style.top) + f.context.popup.offsetHeight < input.rect.top);
+    assert.ok(parseFloat(f.context.popup.style.left) + parseFloat(f.context.popup.style.width) <= 382);
+    input.value = 'bong'; input.handlers.input();
+    f.viewportHandlers.scroll(); f.tick();
+    assert.equal(f.context.popup.hidden, false);
+    assert.equal(f.context.popup.querySelectorAll().length, 1);
+    f.context.popup.querySelectorAll()[0].handlers.pointerdown({ preventDefault() {} });
+    assert.equal(select.value, '2');
+});
+
+test('desktop positioning works without the visual viewport API', () => {
+    const f = setup(); delete f.context.window.visualViewport;
+    f.make().input.handlers.focus();
+    assert.equal(f.context.popup.style.top, '105px');
+    assert.equal(f.context.popup.hidden, false);
+});
 
 test('search ignores Vietnamese accents and matches both code and name', () => {
     const f = setup();

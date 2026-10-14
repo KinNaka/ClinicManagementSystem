@@ -10,3 +10,4 @@
 
 .brand-name { font-size: 18px; letter-spacing: 0; line-height: 1.3; }
 .brand-name .brand-subtitle { font-size: 16px; letter-spacing: 0; color: inherit; }
+@media(max-width:760px){.search-picker-input{font-size:16px}.search-picker-results{overscroll-behavior:contain;touch-action:pan-y}.search-picker-results [role="option"]{min-height:44px}}

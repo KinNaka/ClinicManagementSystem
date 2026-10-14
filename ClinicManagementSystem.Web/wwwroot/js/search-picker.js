@@ -27,14 +27,24 @@
     const position = () => {
         if (!active?.input.isConnected) { close(); return; }
         const rect = active.input.getBoundingClientRect();
-        popup.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)) + "px";
-        popup.style.width = Math.min(Math.max(rect.width, 280), window.innerWidth - 16) + "px";
-        const below = window.innerHeight - rect.bottom - 12;
-        const above = rect.top - 12;
+        // Mobile keyboards shrink/pan the visual viewport, not always the layout viewport.
+        const viewport = window.visualViewport;
+        const left = viewport?.offsetLeft ?? 0;
+        const top = viewport?.offsetTop ?? 0;
+        const width = viewport?.width ?? window.innerWidth;
+        const bottom = top + (viewport?.height ?? window.innerHeight);
+        const popupWidth = Math.min(Math.max(rect.width, 280), width - 16);
+        popup.style.left = Math.max(left + 8, Math.min(rect.left, left + width - popupWidth - 8)) + "px";
+        popup.style.width = popupWidth + "px";
+        const below = bottom - rect.bottom - 12;
+        const above = rect.top - top - 12;
         const upward = below < 180 && above > below;
-        popup.style.maxHeight = Math.max(80, Math.min(280, upward ? above : below)) + "px";
-        popup.style.top = upward ? "auto" : (rect.bottom + 5) + "px";
-        popup.style.bottom = upward ? (window.innerHeight - rect.top + 5) + "px" : "auto";
+        const height = Math.max(0, Math.min(280, upward ? above : below));
+        popup.style.maxHeight = height + "px";
+        popup.style.bottom = "auto";
+        popup.style.top = (upward
+            ? Math.max(top + 8, rect.top - Math.min(popup.offsetHeight, height + 12) - 5)
+            : rect.bottom + 5) + "px";
     };
     const highlight = index => {
         if (!active) return;
@@ -174,7 +184,10 @@
     document.addEventListener("pointerdown", event => {
         if (active && event.target !== active.input && !popup.contains(event.target)) close();
     });
-    window.addEventListener("resize", close);
-    document.addEventListener("scroll", event => { if (!popup.contains(event.target)) close(); }, true);
+    const reposition = () => { if (active && !popup.hidden) position(); };
+    window.addEventListener("resize", reposition);
+    window.visualViewport?.addEventListener("resize", reposition);
+    window.visualViewport?.addEventListener("scroll", reposition);
+    document.addEventListener("scroll", event => { if (!popup.contains(event.target)) reposition(); }, true);
     window.ClinicSearchPicker = { init, matches };
 })();

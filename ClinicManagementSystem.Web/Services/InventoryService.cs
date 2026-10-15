@@ -54,7 +54,7 @@ namespace ClinicManagementSystem.Web.Services
 
             if (model.Details.Any(d =>
                 d.ProductId <= 0 ||
-                d.Quantity <= 0 ||
+                d.Quantity <= 0 || d.Quantity > 999999999 || d.Quantity != decimal.Truncate(d.Quantity) ||
                 d.UnitPrice < 0))
                 return false;
 
@@ -125,7 +125,7 @@ namespace ClinicManagementSystem.Web.Services
                 return false;
 
             if (model.Details.Any(d =>
-                d.ProductId <= 0 || d.Quantity <= 0))
+                d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 || d.Quantity != decimal.Truncate(d.Quantity)))
                 return false;
 
             // Gộp các dòng trùng sản phẩm để kiểm tra đủ tồn.
@@ -223,8 +223,8 @@ namespace ClinicManagementSystem.Web.Services
         {
             var rows = model.Details.Where(d => d.CountedStock.HasValue).ToList();
             if (rows.Count == 0) throw new InvalidOperationException("Nhập tồn thực tế cho ít nhất một sản phẩm. Để trống các sản phẩm chưa kiểm.");
-            if (string.IsNullOrWhiteSpace(model.Reason) || model.Reason.Length > 500 || rows.Any(d => d.ProductId <= 0 || d.CountedStock < 0 || d.CountedStock > 999999999 || d.CountedStock != decimal.Round(d.CountedStock!.Value, 3) || d.Note?.Length > 180) || rows.Select(d => d.ProductId).Distinct().Count() != rows.Count)
-                throw new InvalidOperationException("Dữ liệu kiểm kho không hợp lệ; số lượng tối đa 3 chữ số thập phân và không trùng sản phẩm.");
+            if (string.IsNullOrWhiteSpace(model.Reason) || model.Reason.Length > 500 || rows.Any(d => d.ProductId <= 0 || d.CountedStock < 0 || d.CountedStock > 999999999 || d.CountedStock != decimal.Truncate(d.CountedStock!.Value) || d.Note?.Length > 180) || rows.Select(d => d.ProductId).Distinct().Count() != rows.Count)
+                throw new InvalidOperationException("Dữ liệu kiểm kho không hợp lệ; số lượng phải là số nguyên và không trùng sản phẩm.");
             await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var ids = rows.Select(d => d.ProductId).ToList();
             var products = await _context.Products.AsNoTracking().Where(p => ids.Contains(p.Id) && !p.IsCombo && !p.IsService).ToDictionaryAsync(p => p.Id);

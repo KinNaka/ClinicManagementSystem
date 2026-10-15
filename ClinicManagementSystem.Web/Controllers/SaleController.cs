@@ -212,7 +212,7 @@ namespace ClinicManagementSystem.Web.Controllers
 
             if (model.Details.Any(d =>
                 d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 ||
-                d.Quantity != decimal.Round(d.Quantity, d.SourceDetailId > 0 ? 3 : 0)))
+                d.Quantity != decimal.Truncate(d.Quantity)))
             {
                 ModelState.AddModelError(
                     nameof(model.Details),

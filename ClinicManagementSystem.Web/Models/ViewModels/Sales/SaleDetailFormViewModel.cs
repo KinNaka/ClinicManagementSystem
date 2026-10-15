@@ -12,8 +12,10 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public decimal PreservedQuantity { get; set; }
         public decimal PreservedLineTotal { get; set; }
 
-        [Range(typeof(decimal), "0.001", "999999999", ParseLimitsInInvariantCulture = true,
-            ErrorMessage = "Số lượng phải từ 0,001 đến 999999999.")]
+        [Range(typeof(decimal), "1", "999999999", ParseLimitsInInvariantCulture = true,
+            ErrorMessage = "Số lượng phải từ 1 đến 999999999.")]
+        [Microsoft.AspNetCore.Mvc.ModelBinder(typeof(ClinicManagementSystem.Web.Models.Validation.QuantityModelBinder))]
+        [ClinicManagementSystem.Web.Models.Validation.WholeQuantity]
         public decimal Quantity { get; set; } = 1;
 
         [StringLength(500, ErrorMessage = "Ghi chú sản phẩm tối đa 500 ký tự.")]

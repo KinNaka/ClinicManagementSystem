@@ -19,6 +19,13 @@ static class ProductImportTests
         }
         using var source = File.OpenRead(fileName);
         var rows = reader.Read(source, true, true);
+        if (rows.Any(r => r.SourceStock != decimal.Truncate(r.SourceStock)))
+        {
+            Check(rows.Where(r => r.SourceStock != decimal.Truncate(r.SourceStock))
+                .All(r => r.Errors.Any(e => e.Contains("số nguyên"))), "Fractional source stock must block import without rounding.");
+            Console.WriteLine("Passed: legacy file with fractional stock is rejected; database import checks require a file with whole stock quantities.");
+            return;
+        }
         Check(rows.Count == 467 && rows.All(r => r.Errors.Count == 0), "Provided product file did not parse cleanly.");
         Check(rows.Count(r => r.Product.IsService) == 41 && rows.Count(r => r.Product.IsCombo) == 15, "Product type mapping incorrect.");
         Check(rows.Count(r => r.Product.Unit == null) == 111, "Blank units changed.");
@@ -58,8 +65,8 @@ static class ProductImportTests
             var retained = await db.Products.SingleAsync(p => p.Id == existing.Id);
             Check(retained.CurrentStock == 42 && retained.SellingPrice == 7 && retained.Name == "Keep existing", "Existing product was overwritten.");
             Check(await db.Products.CountAsync() == 467 && await db.ProductCategories.CountAsync() == rows.Select(r => r.CategoryName).Distinct(StringComparer.OrdinalIgnoreCase).Count(), "Products/groups were duplicated or omitted.");
-            var fractional = rows.First(r => !r.Product.IsCombo && !r.Product.IsService && decimal.Round(r.Product.CurrentStock, 2) != r.Product.CurrentStock);
-            Check((await db.Products.SingleAsync(p => p.ProductCode == fractional.Product.ProductCode)).CurrentStock == fractional.Product.CurrentStock, "Three-decimal source stock was rounded away.");
+            var whole = rows.First(r => !r.Exists && !r.Product.IsCombo && !r.Product.IsService);
+            Check((await db.Products.SingleAsync(p => p.ProductCode == whole.Product.ProductCode)).CurrentStock == whole.Product.CurrentStock, "Whole source stock changed during import.");
             Check(!(await importer.ImportAsync(preview.Token!, "owner")).Success, "Confirmation replay accepted.");
             source.Position = 0;
             var repeat = await importer.PreviewAsync(source, "repeat.xlsx", "owner", true, false);

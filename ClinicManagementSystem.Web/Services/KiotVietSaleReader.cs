@@ -35,6 +35,8 @@ public sealed class KiotVietSaleReader
                 if (text.Length == 0 && !required) return 0;
                 if (!decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) || value < 0 || value > 999999999999999m)
                 { invoice.Errors.Add($"Dòng {row.Number}: {name} không phải số không âm hợp lệ."); return 0; }
+                if (name == "Số lượng" && value != decimal.Truncate(value))
+                { invoice.Errors.Add($"Dòng {row.Number}: số lượng phải là số nguyên."); return value; }
                 var rounded = decimal.Round(value, scale, MidpointRounding.AwayFromZero);
                 if (Math.Abs(rounded - value) > 0.000001m) invoice.Warnings.Add($"Dòng {row.Number}: {name} được làm tròn đến {scale} chữ số thập phân.");
                 return rounded;
@@ -68,7 +70,7 @@ public sealed class KiotVietSaleReader
             else if (invoice.PatientCode != Get("Mã khách hàng") || sale.SaleDate != date || goods != sale.ImportedGoodsTotal || discount != sale.ImportedDiscount || surcharge != sale.ImportedSurcharge)
                 invoice.Errors.Add($"Dòng {row.Number}: thông tin chung không khớp với các dòng cùng mã hóa đơn.");
             var detail = new SaleDetail { SourceProductCode = Get("Mã hàng"), SourceProductName = Get("Tên hàng"), SourceUnit = Get("ĐVT"),
-                Quantity = Number("Số lượng", 3), UnitPrice = Number("Giá bán", 2), LineTotal = Number("Thành tiền", 2), Notes = Get("Ghi chú hàng hóa") };
+                Quantity = Number("Số lượng", 0), UnitPrice = Number("Giá bán", 2), LineTotal = Number("Thành tiền", 2), Notes = Get("Ghi chú hàng hóa") };
             detail.KiotVietInfo = JsonSerializer.Serialize(row.Values.Where(v => new[] { "Đơn giá", "Giảm giá %", "Giảm giá", "Nhóm hàng", "Hạn sử dụng", "Bảng giá" }.Contains(v.Key)).ToDictionary(v => v.Key, v => v.Value));
             if (detail.Quantity <= 0) invoice.Errors.Add($"Dòng {row.Number}: số lượng phải lớn hơn 0.");
             if (detail.SourceProductCode.Length is 0 or > 50 || detail.SourceProductCode.Any(char.IsControl)) invoice.Errors.Add($"Dòng {row.Number}: mã hàng trống hoặc không hợp lệ.");

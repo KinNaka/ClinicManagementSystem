@@ -14,6 +14,7 @@ var root = Path.GetFullPath("ClinicManagementSystem.Web");
 SalePricingTests.Run();
 if (args.Contains("--pricing")) return;
 DecimalRangeTests.Run();
+await WholeQuantityTests.RunAsync();
 await BirthDateTests.RunAsync();
 var reader = new KiotVietCustomerReader(new VietnamAddressService(new TestEnvironment(root)));
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
@@ -38,6 +39,24 @@ MemoryStream Workbook(string[][] rows, bool date1904 = false)
     stream.Position = 0;
     return stream;
 }
+foreach (var quantity in new[] { "1.000", "1.5" })
+{
+    using var products = Workbook(new[] {
+        new[] { "Loại hàng", "Nhóm hàng(3 Cấp)", "Mã hàng", "Tên hàng", "Giá bán", "Giá vốn", "Tồn kho" },
+        new[] { "Hàng hóa", "Test", "P1", "Product", "10", "5", quantity }
+    });
+    var product = new KiotVietProductReader().Read(products, true, true).Single();
+    Check(quantity == "1.000" ? product.Product.CurrentStock == 1 && product.Errors.Count == 0
+        : product.Errors.Any(e => e.Contains("số nguyên")), "Product import quantity policy failed.");
+    using var sales = Workbook(new[] {
+        new[] { "Mã hóa đơn", "Thời gian", "Mã khách hàng", "Tên khách hàng", "Tổng tiền hàng", "Giảm giá hóa đơn", "Thu khác", "Mã hàng", "Tên hàng", "Số lượng", "Giá bán", "Thành tiền" },
+        new[] { "HD1", "12/10/2026", "KH1", "Patient", "10", "0", "0", "P1", "Product", quantity, "10", "10" }
+    });
+    var sale = new KiotVietSaleReader().Read(sales, "test.xlsx").Single();
+    Check(quantity == "1.000" ? sale.Sale.Details.Single().Quantity == 1 && sale.Errors.Count == 0
+        : sale.Errors.Any(e => e.Contains("số nguyên")), "Sale import quantity policy failed.");
+}
+Console.WriteLine("Passed: product and invoice imports preserve integer scale and reject fractional quantities without rounding.");
 var headers = new[] { "Mã khách hàng", "Tên khách hàng", "Điện thoại", "Tổng bán", "Ngày sinh", "Khu vực giao hàng", "Phường/Xã", "Trạng thái", "Ghi chú" };
 using (var file = Workbook(new[] { headers, new[] { "kh000001", "Nguyễn An", "0900123456", "123456.50", "01/02/1990", "Thành phố Hà Nội", "Phường Ba Đình", "1", "Ghi chú" } }))
 {

@@ -191,7 +191,7 @@ namespace ClinicManagementSystem.Web.Services
 
             if (model.Details.Any(d =>
                 d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 ||
-                d.Quantity != decimal.Round(d.Quantity, d.SourceDetailId > 0 ? 3 : 0)))
+                d.Quantity != decimal.Truncate(d.Quantity)))
                 throw new InvalidOperationException(
                     "Sản phẩm không hợp lệ hoặc số lượng không phải số nguyên từ 1 đến 999999999.");
 
@@ -435,7 +435,7 @@ namespace ClinicManagementSystem.Web.Services
             var required = new Dictionary<long, decimal>();
             foreach (var detail in sale.Details)
             {
-                if (detail.Quantity <= 0)
+                if (detail.Quantity <= 0 || detail.Quantity != decimal.Truncate(detail.Quantity))
                     throw new InvalidOperationException(
                         "Số lượng hóa đơn không hợp lệ.");
                 if (!soldProducts.TryGetValue(detail.ProductId, out var sold) || sold.Status is not ("Active" or "ACTIVE"))
@@ -447,7 +447,7 @@ namespace ClinicManagementSystem.Web.Services
                 {
                     foreach (var component in sold.Components)
                     {
-                        if (component.Quantity <= 0) throw new InvalidOperationException("Cấu hình thành phần combo không hợp lệ.");
+                        if (component.Quantity <= 0 || component.Quantity != decimal.Truncate(component.Quantity)) throw new InvalidOperationException("Cấu hình thành phần combo không hợp lệ.");
                         required[component.ComponentProductId] = required.GetValueOrDefault(component.ComponentProductId) + detail.Quantity * component.Quantity;
                     }
                 }

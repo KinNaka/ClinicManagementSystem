@@ -52,10 +52,14 @@ public class ProductFormViewModel
 
     [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Tồn tối thiểu")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(typeof(ClinicManagementSystem.Web.Models.Validation.QuantityModelBinder))]
+    [ClinicManagementSystem.Web.Models.Validation.WholeQuantity]
     public decimal MinimumStock { get; set; }
 
     [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "{0} phải từ {1} đến {2}.")]
     [Display(Name = "Tồn kho")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(typeof(ClinicManagementSystem.Web.Models.Validation.QuantityModelBinder))]
+    [ClinicManagementSystem.Web.Models.Validation.WholeQuantity]
     public decimal CurrentStock { get; set; }
 
     [Required(ErrorMessage = "Vui lòng nhập {0}.")]
@@ -69,6 +73,8 @@ public class ComboComponentFormViewModel
 {
     [Range(1, long.MaxValue, ErrorMessage = "Vui lòng chọn sản phẩm thành phần.")]
     public long ComponentProductId { get; set; }
-    [Range(typeof(decimal), "0.01", "999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Số lượng thành phần phải từ {1} đến {2}.")]
+    [Range(typeof(decimal), "1", "999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Số lượng thành phần phải từ {1} đến {2}.")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(typeof(ClinicManagementSystem.Web.Models.Validation.QuantityModelBinder))]
+    [ClinicManagementSystem.Web.Models.Validation.WholeQuantity]
     public decimal Quantity { get; set; } = 1;
 }

@@ -12,9 +12,9 @@
         @for (var i = 0; i < Model.Details.Count; i++)
         {
             <tr data-search="@Model.Details[i].ProductCode @Model.Details[i].ProductName" data-stock="@Model.Details[i].ExpectedStock.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-                <td>@Model.Details[i].ProductCode<input type="hidden" asp-for="Details[i].ProductId" /><input type="hidden" asp-for="Details[i].ExpectedStock" /></td>
+                <td>@Model.Details[i].ProductCode<input type="hidden" asp-for="Details[i].ProductId" /><input type="hidden" asp-for="Details[i].ExpectedStock" value="@Model.Details[i].ExpectedStock.ToString(System.Globalization.CultureInfo.InvariantCulture)" /></td>
                 <td>@Model.Details[i].ProductName</td><td>@Model.Details[i].Unit</td><td>@Model.Details[i].ExpectedStock.ToString("0.###")</td>
-                <td><input asp-for="Details[i].CountedStock" type="number" min="0" max="999999999" step="0.001" class="form-control counted-stock" aria-label="Tồn thực tế @Model.Details[i].ProductName" /><span asp-validation-for="Details[i].CountedStock" class="text-danger"></span></td>
+                <td><input asp-for="Details[i].CountedStock" asp-format="{0:0.############################}" type="number" min="0" max="999999999" step="1" class="form-control counted-stock" aria-label="Tồn thực tế @Model.Details[i].ProductName" /><span asp-validation-for="Details[i].CountedStock" class="text-danger"></span></td>
                 <td class="difference text-end">—</td>
                 <td><input asp-for="Details[i].Note" maxlength="180" class="form-control" aria-label="Ghi chú @Model.Details[i].ProductName" /></td>
             </tr>
@@ -30,7 +30,7 @@
     <script>
         (() => {
             const rows = [...document.querySelectorAll('#count-rows tr')];
-            const formatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 });
+            const formatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
             function calculate() {
                 let checked = 0, changed = 0;
                 rows.forEach(row => {
@@ -38,9 +38,9 @@
                     const actual = Number(raw);
                     const cell = row.querySelector('.difference');
                     cell.classList.remove('text-success', 'text-danger');
-                    if (!raw.trim() || !Number.isFinite(actual) || actual < 0) { cell.textContent = '—'; return; }
+                    if (!raw.trim() || !Number.isInteger(actual) || actual < 0) { cell.textContent = '—'; return; }
                     checked++;
-                    const difference = Math.round((actual - Number(row.dataset.stock)) * 1000) / 1000;
+                    const difference = actual - Number(row.dataset.stock);
                     if (difference !== 0) changed++;
                     cell.textContent = (difference > 0 ? '+' : '') + formatter.format(difference);
                     if (difference !== 0) cell.classList.add(difference > 0 ? 'text-success' : 'text-danger');

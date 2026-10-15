@@ -63,12 +63,14 @@ public sealed class KiotVietProductReader
                 if (value.Length == 0) { row.Warnings.Add($"'{name}' trống, dùng 0."); return 0; }
                 if (!decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) || (!allowNegative && number < 0) || Math.Abs(number) > 999999999999999m)
                 { row.Errors.Add($"'{name}' không phải số hợp lệ."); return 0; }
+                if (name == "Tồn kho" && number != decimal.Truncate(number))
+                { row.Errors.Add("Tồn kho phải là số nguyên; hãy kiểm tra lại dữ liệu nguồn."); return number; }
                 var rounded = decimal.Round(number, scale, MidpointRounding.AwayFromZero);
                 if (rounded != number) row.Warnings.Add($"'{name}' làm tròn đến {scale} chữ số thập phân.");
                 return rounded;
             }
             p.SellingPrice = Number("Giá bán", 2); p.CostPrice = Number("Giá vốn", 2);
-            row.SourceStock = Number("Tồn kho", 3, true);
+            row.SourceStock = Number("Tồn kho", 0, true);
             p.CurrentStock = importStock && !p.IsCombo && !p.IsService ? row.SourceStock : 0;
             if (p.CurrentStock < 0 && resetNegativeStock) { p.CurrentStock = 0; row.Warnings.Add("Tồn kho âm đưa về 0 theo lựa chọn nhập; giá trị gốc được giữ trong thông tin KiotViet."); }
             else if (p.CurrentStock < 0) row.Warnings.Add("Giữ tồn kho âm từ KiotViet; cần đối chiếu và điều chỉnh kho sau nhập.");

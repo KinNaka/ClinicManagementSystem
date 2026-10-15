@@ -1,4 +1,4 @@
-﻿@model ClinicManagementSystem.Web.ViewModels.Inventory.StockOutViewModel
+@model ClinicManagementSystem.Web.ViewModels.Inventory.StockOutViewModel
 
 @{
     ViewData["Title"] = "Xuất kho";
@@ -35,10 +35,10 @@
 
     <div class="mb-3">
         <label class="form-label">Số lượng xuất</label>
-        <input asp-for="Details[0].Quantity"
+        <input asp-for="Details[0].Quantity" asp-format="{0:0.############################}"
                type="number"
-               min="0.001"
-               step="0.001"
+               min="1"
+               step="1"
                class="form-control" />
     </div>
 

@@ -64,8 +64,8 @@
                 <td>@item.ProductCode</td>
                 <td>@item.ProductName</td>
                 <td>@item.Unit</td>
-                <td class="text-end">@item.CurrentStock</td>
-                <td class="text-end">@item.MinimumStock</td>
+                <td class="text-end">@item.CurrentStock.ToString("0.###")</td>
+                <td class="text-end">@item.MinimumStock.ToString("0.###")</td>
                 <td class="text-end">@item.CostPrice.ToString("N0")</td>
                 <td>
                     @if (item.IsLowStock)

@@ -188,13 +188,15 @@ public class ProductService : IProductService
 
     public async Task ValidateComboAsync(ProductFormViewModel model, long id)
     {
+        if (model.MinimumStock < 0 || model.CurrentStock < 0 || model.MinimumStock != decimal.Truncate(model.MinimumStock) || model.CurrentStock != decimal.Truncate(model.CurrentStock))
+            throw new InvalidOperationException("Tồn kho và tồn tối thiểu phải là số nguyên không âm.");
         if (model.IsCombo && model.IsService) throw new InvalidOperationException("Hàng không thể vừa là combo vừa là dịch vụ.");
         if (model.IsService && id > 0 && (await _context.Set<ComboComponent>().AnyAsync(c => c.ComponentProductId == id) || await _context.Products.AnyAsync(p => p.Id == id && p.CurrentStock != 0))) throw new InvalidOperationException("Hàng còn tồn kho hoặc đang là thành phần combo, không thể chuyển thành dịch vụ.");
         if (!model.IsCombo) return;
         if (model.Components.Count == 0 || model.Components.Count > 100)
             throw new InvalidOperationException("Combo phải có từ 1 đến 100 thành phần.");
-        if (model.Components.Any(c => c.ComponentProductId == id || c.Quantity <= 0 || c.Quantity > 999999999 || decimal.Round(c.Quantity, 2) != c.Quantity))
-            throw new InvalidOperationException("Thành phần không được là chính combo; số lượng phải dương và tối đa 2 chữ số thập phân.");
+        if (model.Components.Any(c => c.ComponentProductId == id || c.Quantity <= 0 || c.Quantity > 999999999 || decimal.Truncate(c.Quantity) != c.Quantity))
+            throw new InvalidOperationException("Thành phần không được là chính combo; số lượng phải là số nguyên dương.");
         var ids = model.Components.Select(c => c.ComponentProductId).ToList();
         if (ids.Distinct().Count() != ids.Count)
             throw new InvalidOperationException("Không được chọn trùng thành phần trong combo.");

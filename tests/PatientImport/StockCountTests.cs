@@ -25,13 +25,13 @@ static class StockCountTests
             Check((await service.GetStockAsync(null, true)).Single().ProductCode == "B" && (await service.GetStockAsync("First", true)).Count == 0, "Low stock/search filter incorrect.");
             var form = await service.GetStockCountAsync();
             Check(form.Details.Count == 2 && form.Details.All(r => r.CountedStock == null), "Combo/service included or uncounted lines prefilled.");
-            form.Details.Single(r => r.ProductId == first.Id).CountedStock = 8.125m;
-            form.Details.Single(r => r.ProductId == second.Id).CountedStock = 7.5m;
+            form.Details.Single(r => r.ProductId == first.Id).CountedStock = 8m;
+            form.Details.Single(r => r.ProductId == second.Id).CountedStock = 7m;
             Check(await service.AdjustStockAsync(form, "Admin") == 2, "Adjustment count incorrect.");
             db.ChangeTracker.Clear();
-            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8.125m && (await db.Products.SingleAsync(p => p.Id == second.Id)).CurrentStock == 7.5m, "Fractional adjustment incorrect.");
+            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8m && (await db.Products.SingleAsync(p => p.Id == second.Id)).CurrentStock == 7m, "Whole quantity adjustment incorrect.");
             var audit = await db.InventoryTransactions.Include(t => t.Details).SingleAsync();
-            Check(audit.TransactionType == "Adjustment" && audit.CreatedBy == "Admin" && audit.Details.Single(d => d.ProductId == first.Id).Quantity == -1.875m && audit.Details.Single(d => d.ProductId == second.Id).Quantity == 4.5m, "Adjustment history/actor/direction incorrect.");
+            Check(audit.TransactionType == "Adjustment" && audit.CreatedBy == "Admin" && audit.Details.Single(d => d.ProductId == first.Id).Quantity == -2m && audit.Details.Single(d => d.ProductId == second.Id).Quantity == 4m, "Adjustment history/actor/direction incorrect.");
             Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CostPrice == 12 && !await db.Sales.AnyAsync(), "Stock count changed price or revenue.");
             try { await service.AdjustStockAsync(form, "Admin"); throw new Exception("Stale form accepted."); } catch (InvalidOperationException) { }
             var stale = await service.GetStockCountAsync();
@@ -40,22 +40,22 @@ static class StockCountTests
             stale.Details.Single(r => r.ProductId == second.Id).ExpectedStock = 0;
             try { await service.AdjustStockAsync(stale, "Admin"); throw new Exception("Partially stale form accepted."); } catch (InvalidOperationException) { }
             db.ChangeTracker.Clear();
-            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8.125m && await db.InventoryTransactions.CountAsync() == 1, "Partial adjustment failed to roll back.");
+            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8m && await db.InventoryTransactions.CountAsync() == 1, "Partial adjustment failed to roll back.");
             var same = await service.GetStockCountAsync();
             foreach (var row in same.Details) row.CountedStock = row.ExpectedStock;
             Check(await service.AdjustStockAsync(same, "Admin") == 0 && await db.InventoryTransactions.CountAsync() == 1, "Matching count generated adjustments.");
             var zero = await service.GetStockCountAsync(); zero.Details.Single(r => r.ProductId == second.Id).CountedStock = 0;
             Check(await service.AdjustStockAsync(zero, "Admin") == 1, "Zero count or blank skipping failed."); db.ChangeTracker.Clear();
-            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8.125m && (await db.Products.SingleAsync(p => p.Id == second.Id)).CurrentStock == 0, "Blank counts overwrote stock.");
+            Check((await db.Products.SingleAsync(p => p.Id == first.Id)).CurrentStock == 8m && (await db.Products.SingleAsync(p => p.Id == second.Id)).CurrentStock == 0, "Blank counts overwrote stock.");
             foreach (var invalid in new[] {
                 new StockCountRow { ProductId = first.Id, CountedStock = -1 },
-                new StockCountRow { ProductId = first.Id, CountedStock = 1.0001m },
+                new StockCountRow { ProductId = first.Id, CountedStock = 1.5m },
                 new StockCountRow { ProductId = combo.Id, CountedStock = 1 }
             })
             {
                 try { await service.AdjustStockAsync(new StockAdjustmentViewModel { Details = new() { invalid } }, "Admin"); throw new Exception("Invalid count accepted."); } catch (InvalidOperationException) { }
             }
-            Console.WriteLine("Passed: low-stock/search filter, combo/service exclusion, blank vs zero counts, signed 3-decimal adjustments, history/actor, unchanged cost/revenue, stale count/replay rejection, atomic rollback, unchanged counts, invalid quantities.");
+            Console.WriteLine("Passed: low-stock/search filter, combo/service exclusion, blank vs zero counts, signed whole quantity adjustments, history/actor, unchanged cost/revenue, stale count/replay rejection, atomic rollback, unchanged counts, invalid quantities.");
         }
         finally
         {

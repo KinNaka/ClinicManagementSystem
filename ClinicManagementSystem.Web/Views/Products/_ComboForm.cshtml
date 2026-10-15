@@ -18,7 +18,7 @@
                 {
                     <tr>
                         <td><select asp-for="Components[i].ComponentProductId" asp-items="Model.ComponentOptions" data-search-picker="Hàng thành phần" data-placeholder="Tìm mã hoặc tên hàng…" class="form-select"><option value="">Chọn hàng</option></select></td>
-                        <td><input asp-for="Components[i].Quantity" aria-label="Số lượng thành phần cho một combo" type="number" min="0.01" max="999999999" step="0.01" class="form-control" /></td>
+                        <td><input asp-for="Components[i].Quantity" asp-format="{0:0.############################}" aria-label="Số lượng thành phần cho một combo" type="number" min="1" max="999999999" step="1" class="form-control" /></td>
                         <td><button type="button" data-remove-component class="btn btn-outline-danger">Xóa</button></td>
                     </tr>
                 }
@@ -30,7 +30,7 @@
     <template data-component-template>
         <tr>
             <td><select data-field="ComponentProductId" asp-items="Model.ComponentOptions" data-search-picker="Hàng thành phần" data-placeholder="Tìm mã hoặc tên hàng…" class="form-select"><option value="">Chọn hàng</option></select></td>
-            <td><input data-field="Quantity" aria-label="Số lượng thành phần cho một combo" type="number" value="1" min="0.01" max="999999999" step="0.01" class="form-control" required /></td>
+            <td><input data-field="Quantity" aria-label="Số lượng thành phần cho một combo" type="number" value="1" min="1" max="999999999" step="1" class="form-control" required /></td>
             <td><button type="button" data-remove-component class="btn btn-outline-danger">Xóa</button></td>
         </tr>
     </template>

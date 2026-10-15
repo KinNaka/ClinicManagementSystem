@@ -6,7 +6,7 @@
 
 <h2 class="mb-4">Chỉnh sửa hóa đơn nháp</h2>
 
-<form asp-controller="Sales" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="saleForm">
+<form asp-controller="Sales" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="saleForm" class="sale-entry-form">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="CopyFromId" />
     @if (Model.CopyFromId.HasValue) { <div class="alert alert-info">Sao chép từ @Model.CopyFromCode. Giữ giá và ghi chú gốc; hóa đơn mới được lưu ở trạng thái nháp.</div> }
@@ -14,7 +14,7 @@
 
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-    <div class="card mb-3">
+    <div class="card mb-3 sale-patient-card">
         <div class="card-header fw-bold">Thông tin bệnh nhân</div>
         <div class="card-body">
             <label asp-for="PatientId" class="form-label">Bệnh nhân</label>
@@ -25,14 +25,20 @@
         </div>
     </div>
 
-    <div class="card mb-3">
+    <div class="card mb-3 sale-products-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">Danh sách thuốc / vật tư</span>
-            <button type="button" id="addProduct" class="btn btn-sm btn-primary">+ Thêm sản phẩm</button>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle" id="productTable">
+            <div class="sale-product-toolbar">
+                <label for="productSearch" class="form-label">Tìm kiếm sản phẩm để thêm vào hóa đơn</label>
+                <select id="productSearch" class="form-select" data-search-picker="Tìm sản phẩm" data-placeholder="Tìm mã hoặc tên sản phẩm…" data-optional="true">
+                    <option value="">-- Tìm sản phẩm --</option>
+                    @foreach (var p in Model.Products) { <option value="@p.Value">@p.Text</option> }
+                </select>
+            </div>
+            <div class="table-responsive mt-3">
+                <table data-mobile-cards class="table table-bordered align-middle" id="productTable">
                     <thead class="table-light">
                         <tr>
                             <th style="min-width:240px">Sản phẩm</th>
@@ -62,7 +68,7 @@
                                             }
                                         }
                                     </select>
-                                    <textarea name="Details[@i].Notes" class="form-control line-notes mt-2" rows="2" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…">@Model.Details[i].Notes</textarea>
+                                    <textarea name="Details[@i].Notes" class="form-control line-notes mt-2" rows="1" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…">@Model.Details[i].Notes</textarea>
                                 </td>
                                 <td>
                                     <div class="quantity-stepper" role="group" aria-label="Điều chỉnh số lượng">
@@ -117,7 +123,7 @@
                     <option value="@p.Value">@p.Text</option>
                 }
             </select>
-            <textarea class="form-control line-notes mt-2" rows="2" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…"></textarea>
+            <textarea class="form-control line-notes mt-2" rows="1" maxlength="500" aria-label="Ghi chú sản phẩm" placeholder="Ghi chú riêng: cách dùng, yêu cầu…"></textarea>
         </td>
         <td>
             <div class="quantity-stepper" role="group" aria-label="Điều chỉnh số lượng">
@@ -234,12 +240,26 @@
                 }
             }
 
-            document.getElementById("addProduct").addEventListener("click", () => {
-                rows.appendChild(template.content.cloneNode(true));
-                window.ClinicSearchPicker.init(rows);
-                error.textContent = "";
-                renumber();
-                calculate();
+            const search = document.getElementById("productSearch");
+            search.addEventListener("change", () => {
+                if (!search.value) return;
+                const id = search.value;
+                let row = [...rows.querySelectorAll("tr")].find(r => r.querySelector(".product-select").value === id);
+                if (row) {
+                    const quantity = row.querySelector(".quantity-input");
+                    quantity.value = String(Math.min(999999999, Number(quantity.value) + 1));
+                    window.ClinicQuantity.init(rows);
+                } else {
+                    row = [...rows.querySelectorAll("tr")].find(r => !r.querySelector(".product-select").value);
+                    if (!row) { rows.appendChild(template.content.cloneNode(true)); row = rows.lastElementChild; }
+                    row.querySelector(".product-select").value = id;
+                    window.ClinicSearchPicker.init(rows);
+                    row.querySelector(".product-select").dispatchEvent(new Event("picker:refresh"));
+                    renumber(); updateRow(row);
+                }
+                error.textContent = ""; calculate();
+                search.value = ""; search.dispatchEvent(new Event("picker:refresh"));
+                document.getElementById("productSearch").focus();
             });
 
             rows.addEventListener("click", e => {

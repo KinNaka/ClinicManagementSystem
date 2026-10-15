@@ -45,6 +45,73 @@ function setup() {
     return { context, make, tick, timers, documentHandlers, windowHandlers, viewportHandlers };
 }
 
+function pointer(overrides = {}) {
+    return { pointerId: 1, pointerType: 'touch', button: 0, isPrimary: true, clientX: 30, clientY: 100, preventDefault() {}, ...overrides };
+}
+function tap(option, overrides = {}) {
+    option.handlers.pointerdown(pointer(overrides));
+    option.handlers.pointerup(pointer(overrides));
+}
+
+test('touch selects only on release and scrolling does not commit a product', () => {
+    const f = setup(); const select = f.make(); const input = select.input;
+    input.handlers.focus();
+    let option = f.context.popup.querySelectorAll()[0];
+    option.handlers.pointerdown(pointer());
+    assert.equal(select.value, '');
+    input.handlers.blur();
+    assert.equal(f.context.popup.hidden, false);
+    option.handlers.pointermove(pointer({ clientY: 45 }));
+    option.handlers.pointerup(pointer({ clientY: 45 }));
+    assert.equal(select.value, '');
+    assert.equal(f.context.popup.hidden, false);
+    // A fresh deliberate tap after the swipe still works, without refocusing the input.
+    option = f.context.popup.querySelectorAll()[1];
+    tap(option);
+    assert.equal(select.value, '2');
+    assert.equal(f.context.popup.hidden, true);
+});
+
+test('cancelled gestures, native scroll, and moving away then back never select', () => {
+    for (const action of ['cancel', 'scroll', 'return', 'release-far']) {
+        const f = setup(); const select = f.make(); select.input.handlers.focus();
+        const option = f.context.popup.querySelectorAll()[0];
+        option.handlers.pointerdown(pointer());
+        if (action === 'cancel') option.handlers.pointercancel(pointer());
+        if (action === 'scroll') f.context.popup.handlers.scroll();
+        if (action === 'return') {
+            option.handlers.pointermove(pointer({ clientY: 30 }));
+            option.handlers.pointermove(pointer());
+        }
+        option.handlers.pointerup(pointer(action === 'release-far' ? { clientY: 30 } : {}));
+        option.handlers.click({ detail: 1 });
+        assert.equal(select.value, '', action);
+        assert.equal(f.context.popup.hidden, false, action);
+    }
+});
+
+test('mouse selection, minor touch movement and accessible activation still work', () => {
+    for (const type of ['mouse', 'touch', 'accessible']) {
+        const f = setup(); const select = f.make(); select.input.handlers.focus();
+        const option = f.context.popup.querySelectorAll()[0];
+        if (type === 'accessible') option.handlers.click({ detail: 0 });
+        else {
+            option.handlers.pointerdown(pointer({ pointerType: type }));
+            option.handlers.pointerup(pointer({ pointerType: type, clientY: 104 }));
+        }
+        assert.equal(select.value, '1');
+        assert.equal(select.changes, 1);
+    }
+});
+
+test('outside tap closes results and the focused input can reopen them', () => {
+    const f = setup(); const select = f.make(); select.input.handlers.focus();
+    f.documentHandlers.pointerdown({ target: {} });
+    assert.equal(f.context.popup.hidden, true);
+    select.input.handlers.click();
+    assert.equal(f.context.popup.hidden, false);
+});
+
 test('mobile keyboard resize and automatic scroll keep filtered results visible above the keyboard', () => {
     const f = setup(); const select = f.make(); const input = select.input;
     input.rect = { left: 20, width: 340, top: 430, bottom: 474 };
@@ -63,7 +130,7 @@ test('mobile keyboard resize and automatic scroll keep filtered results visible 
     f.viewportHandlers.scroll(); f.tick();
     assert.equal(f.context.popup.hidden, false);
     assert.equal(f.context.popup.querySelectorAll().length, 1);
-    f.context.popup.querySelectorAll()[0].handlers.pointerdown({ preventDefault() {} });
+    tap(f.context.popup.querySelectorAll()[0]);
     assert.equal(select.value, '2');
 });
 
@@ -113,7 +180,7 @@ test('typing clears the old ID and keyboard selection commits the new ID', () =>
 test('new rows have independent selection and notes bindings exist in both forms', () => {
     const f = setup(); const first = f.make('1'); const second = f.make();
     second.input.handlers.focus(); second.input.value = 'bong'; second.input.handlers.input(); f.tick();
-    f.context.popup.querySelectorAll()[0].handlers.pointerdown({preventDefault() {}});
+    tap(f.context.popup.querySelectorAll()[0]);
     assert.equal(first.value, '1'); assert.equal(second.value, '2');
     for (const name of ['Create','Edit']) {
         const view = fs.readFileSync(`ClinicManagementSystem.Web/Views/Sales/${name}.cshtml`, 'utf8');

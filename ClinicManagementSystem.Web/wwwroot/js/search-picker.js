@@ -3,6 +3,7 @@
     "use strict";
     let sequence = 0;
     let active = null;
+    let gesture = null;
     const popup = document.createElement("div");
     popup.className = "search-picker-results";
     popup.id = "clinic-search-results";
@@ -21,6 +22,7 @@
             active.input.removeAttribute("aria-activedescendant");
         }
         active = null;
+        gesture = null;
         popup.hidden = true;
         popup.replaceChildren();
     };
@@ -95,8 +97,26 @@
             button.setAttribute("role", "option");
             button.textContent = option.text;
             button.addEventListener("pointerdown", event => {
-                event.preventDefault();
-                choose(option);
+                if (event.isPrimary === false || (event.button != null && event.button !== 0)) return;
+                // Keep mouse focus on the input; touch must retain native scrolling.
+                if (event.pointerType === "mouse") event.preventDefault();
+                gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false, picker, button };
+            });
+            button.addEventListener("pointermove", event => {
+                if (gesture?.id !== event.pointerId) return;
+                if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 10) gesture.moved = true;
+            });
+            button.addEventListener("pointercancel", () => { gesture = null; });
+            button.addEventListener("pointerup", event => {
+                const started = gesture;
+                gesture = null;
+                if (!started || started.id !== event.pointerId || started.button !== button || started.picker !== active) return;
+                const distance = Math.hypot(event.clientX - started.x, event.clientY - started.y);
+                if (!started.moved && distance <= 10) choose(option);
+            });
+            button.addEventListener("click", event => {
+                // Keyboard/assistive activation. Pointer selection is handled on release.
+                if (event.detail === 0 && active === picker) choose(option);
             });
             popup.appendChild(button);
         });
@@ -148,6 +168,7 @@
                 input.setCustomValidity(input.required && !select.value ? "Vui lòng chọn một kết quả tìm kiếm." : "");
             });
             input.addEventListener("focus", () => open(picker));
+            input.addEventListener("click", () => { if (popup.hidden || active !== picker) open(picker); });
             input.addEventListener("input", () => {
                 // Typing invalidates the previous ID, even if its label is retyped.
                 select.value = "";
@@ -165,7 +186,7 @@
             });
             input.addEventListener("compositionstart", () => { picker.composing = true; clearTimeout(picker.timer); });
             input.addEventListener("compositionend", () => { picker.composing = false; picker.timer = setTimeout(() => render(picker), 200); });
-            input.addEventListener("blur", () => { if (active === picker) close(); });
+            input.addEventListener("blur", () => { if (active === picker && gesture?.picker !== picker) close(); });
             input.addEventListener("keydown", event => {
                 if (event.isComposing || picker.composing) return;
                 if (event.key === "Escape") { close(); event.preventDefault(); }
@@ -184,6 +205,7 @@
     document.addEventListener("pointerdown", event => {
         if (active && event.target !== active.input && !popup.contains(event.target)) close();
     });
+    popup.addEventListener("scroll", () => { if (gesture) gesture.moved = true; });
     const reposition = () => { if (active && !popup.hidden) position(); };
     window.addEventListener("resize", reposition);
     window.visualViewport?.addEventListener("resize", reposition);

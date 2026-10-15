@@ -6,7 +6,7 @@
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
     <div class="mb-3"><label asp-for="Reason" class="form-label">Lý do kiểm kho</label><input asp-for="Reason" maxlength="500" required class="form-control" /></div>
     <div class="mb-3"><label for="count-search" class="form-label">Tìm mã hoặc tên hàng</label><input type="search" id="count-search" class="form-control" placeholder="Lọc hàng cần kiểm..." /></div>
-    <div class="table-responsive"><table class="table table-bordered align-middle">
+    <div class="table-responsive"><table data-mobile-cards class="table table-bordered align-middle">
         <thead><tr><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Tồn hệ thống</th><th>Tồn thực tế</th><th>Chênh lệch</th><th>Ghi chú</th></tr></thead>
         <tbody id="count-rows">
         @for (var i = 0; i < Model.Details.Count; i++)

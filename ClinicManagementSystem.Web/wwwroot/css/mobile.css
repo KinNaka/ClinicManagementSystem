@@ -1,0 +1,52 @@
+@media screen and (max-width: 760px) {
+    .dashboard-main { padding: 20px 14px; }
+    .sidebar { padding: 14px; }
+    .main-nav { margin-top: 14px; }
+    .main-nav a { min-height: 44px; }
+    .topbar { padding: 12px 14px; }
+    .user-details { min-width: 0; max-width: 45vw; }
+    .form-control, .form-select, .search-picker-input { font-size: 16px; min-height: 46px; }
+    .form-label { font-size: 13px; }
+    .btn, .logout { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; white-space: normal; }
+    .btn { font-size: 14px; }
+    .management-page > .d-flex > .d-flex { flex-wrap: wrap; width: 100%; }
+    .management-page > .d-flex > .d-flex > .btn { flex: 1 1 140px; }
+    .management-page form > .d-flex { flex-wrap: wrap; }
+    .management-page form > .d-flex > .btn { flex: 1 1 140px; }
+    .management-page form[data-live-filter] .d-flex > .btn { flex: 1; }
+    .card-body { padding: 16px; }
+    .card-header { padding: 14px 16px; }
+    .search-picker-results { padding: 6px; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+    .search-picker-results [role="option"] { min-height: 52px; padding: 14px 12px; font-size: 15px; line-height: 1.5; border-bottom: 1px solid #edf1f7; user-select: none; }
+    .search-picker-results [role="option"]:last-child { border-bottom: 0; }
+    .search-picker-message { font-size: 13px; }
+    /* Headings remain available to assistive technology while each row becomes a card. */
+    table[data-mobile-cards] { display: block; width: 100%; border: 0; }
+    table[data-mobile-cards] thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+    table[data-mobile-cards] tbody { display: grid; gap: 12px; padding: 2px; }
+    table[data-mobile-cards] tbody tr { display: grid; min-width: 0; background: white; border: 1px solid #dce5f3; border-radius: 12px; padding: 14px; }
+    table[data-mobile-cards] tbody td { display: block; min-width: 0; width: auto !important; padding: 8px 0; border: 0; text-align: left !important; overflow-wrap: anywhere; background: transparent; box-shadow: none; }
+    table[data-mobile-cards] tbody td:not([colspan])::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 650; color: #697b96; margin-bottom: 6px; }
+    table[data-mobile-cards] td .d-flex { flex-wrap: wrap; }
+    table[data-mobile-cards] .btn { margin-bottom: 4px; }
+    .management-page .table-responsive:has(> table[data-mobile-cards]) { border: 0; border-radius: 0; background: transparent; overflow: visible; }
+    .management-page #productTable tbody tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 14px; }
+    .management-page #productTable td:first-child,
+    .management-page #productTable td:nth-child(2),
+    .management-page #productTable td:last-child { grid-column: 1 / -1; }
+    .management-page #productTable .search-picker-input { min-width: 0; width: 100%; }
+    .management-page #productTable .quantity-stepper { max-width: none; width: 100%; min-height: 48px; }
+    .quantity-step { min-width: 48px; min-height: 48px; }
+    .management-page #productTable .line-notes { font-size: 16px; }
+    .management-page #productTable .line-total { font-weight: 700; color: #2563eb; }
+    .management-page #productTable .remove-row { width: 100%; }
+    [data-combo-form] [data-add-component] { width: 100%; }
+    .pagination { flex-wrap: wrap; gap: 4px; }
+    .page-link { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+    #quick-patient-modal .modal-dialog { margin: 8px; }
+    #quick-patient-modal iframe { min-height: 0 !important; height: 75dvh !important; }
+}
+@media (hover: none) {
+    .search-picker-results [role="option"]:hover { background: white; color: #324966; }
+    .search-picker-results [aria-selected="true"] { background: #eaf1ff; color: #2563eb; }
+}

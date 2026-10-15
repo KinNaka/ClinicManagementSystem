@@ -11,7 +11,7 @@
         </div>
         <div data-combo-components hidden="@(!Model.IsCombo)">
             <p class="text-muted">Số lượng bên dưới là số đơn vị thành phần cho 1 combo. Ví dụ: Combo dại → hàng dại, số lượng 5. Tồn kho combo phụ thuộc thành phần.</p>
-            <div class="table-responsive"><table class="table">
+            <div class="table-responsive"><table data-mobile-cards class="table">
                 <thead><tr><th>Hàng thành phần</th><th>Số lượng / combo</th><th></th></tr></thead>
                 <tbody data-component-rows>
                 @for (var i = 0; i < Model.Components.Count; i++)

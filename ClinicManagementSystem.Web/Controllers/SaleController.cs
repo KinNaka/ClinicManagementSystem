@@ -178,16 +178,18 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
 
-        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Delete(long id)
         {
             try
             {
-                var deleted = await _saleService.DeleteAsync(id, User.Identity?.Name);
+                var draftOnly = !User.IsInRole("Admin");
+                var deleted = await _saleService.DeleteAsync(id, User.Identity?.Name, draftOnly);
                 TempData[deleted ? "SuccessMessage" : "ErrorMessage"] = deleted
-                    ? "Đã xóa hóa đơn. Hóa đơn đã xác nhận được loại khỏi doanh thu và hoàn kho theo phiếu xuất gốc."
+                    ? (draftOnly ? "Đã xóa hóa đơn nháp." : "Đã xóa hóa đơn. Hóa đơn đã xác nhận được loại khỏi doanh thu và hoàn kho theo phiếu xuất gốc.")
                     : "Hóa đơn không còn tồn tại.";
             }
+            catch (UnauthorizedAccessException) { return Forbid(); }
             catch (InvalidOperationException ex) { TempData["ErrorMessage"] = ex.Message; }
             return RedirectToAction(nameof(Index));
         }

@@ -494,11 +494,13 @@ namespace ClinicManagementSystem.Web.Services
             await transaction.CommitAsync();
         }
 
-        public async Task<bool> DeleteAsync(long id, string? actor = null)
+        public async Task<bool> DeleteAsync(long id, string? actor = null, bool draftOnly = false)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var sale = await _context.Sales.Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == id);
             if (sale == null) return false;
+            if (draftOnly && sale.Status != "Draft")
+                throw new UnauthorizedAccessException("Nhân viên chỉ được xóa hóa đơn nháp.");
             if (sale.Status is not ("Draft" or "Confirmed" or "Imported"))
                 throw new InvalidOperationException("Trạng thái hóa đơn không cho phép xóa.");
             var now = DateTime.Now;

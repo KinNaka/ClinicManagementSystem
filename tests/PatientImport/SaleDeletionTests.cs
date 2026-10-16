@@ -30,6 +30,9 @@ static class SaleDeletionTests
             Check((await new DashboardService(db).GetStaffRevenueAsync()).TodayRevenue == 1000, "Initial revenue wrong.");
             var config = await db.Set<ComboComponent>().SingleAsync(); config.Quantity = 2;
             await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+            try { await service.DeleteAsync(sale.Id, "Staff test", draftOnly: true); throw new Exception("Staff deleted a confirmed invoice."); } catch (UnauthorizedAccessException) { }
+            db.ChangeTracker.Clear();
+            Check(await db.Sales.AnyAsync(s => s.Id == sale.Id && s.Status == "Confirmed") && (await db.Products.SingleAsync(p => p.Id == component.Id)).CurrentStock == 87, "Denied deletion changed the invoice or stock.");
             Check(await service.DeleteAsync(sale.Id, "Admin test"), "Deletion failed."); db.ChangeTracker.Clear();
             Check((await db.Products.SingleAsync(p => p.Id == component.Id)).CurrentStock == 100, "Deletion used changed combo recipe instead of original stock out.");
             Check(!await db.Sales.AnyAsync() && !await db.SaleDetails.AnyAsync(), "Sale/details not deleted.");
@@ -41,7 +44,13 @@ static class SaleDeletionTests
                 var other = new Sale { SaleCode = "DELETE-" + status, PatientId = patient.Id, Status = status, TotalAmount = 30,
                     Details = new List<SaleDetail> { new() { ProductId = component.Id, Quantity = 3, UnitPrice = 10, LineTotal = 30 } } };
                 db.Sales.Add(other); await db.SaveChangesAsync(); db.ChangeTracker.Clear();
-                Check(await service.DeleteAsync(other.Id), "Draft/imported deletion failed."); db.ChangeTracker.Clear();
+                if (status == "Imported")
+                {
+                    try { await service.DeleteAsync(other.Id, "Staff test", draftOnly: true); throw new Exception("Staff deleted an imported invoice."); } catch (UnauthorizedAccessException) { }
+                    db.ChangeTracker.Clear();
+                    Check(await db.Sales.AnyAsync(s => s.Id == other.Id && s.Status == "Imported"), "Denied history deletion changed the invoice.");
+                }
+                Check(await service.DeleteAsync(other.Id, "Test user", draftOnly: status == "Draft"), "Draft/imported deletion failed."); db.ChangeTracker.Clear();
             }
             Check((await db.Products.SingleAsync(p => p.Id == component.Id)).CurrentStock == 100 && await db.InventoryTransactions.CountAsync() == 2 && (await db.Patients.SingleAsync()).LegacyTotalSales == 500, "Draft/history deletion changed stock or opening balance.");
             var corrupt = new Sale { SaleCode = "MISSING-AUDIT", PatientId = patient.Id, Status = "Confirmed", Details = new List<SaleDetail> { new() { ProductId = component.Id, Quantity = 1, UnitPrice = 10, LineTotal = 10 } } };

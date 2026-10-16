@@ -31,10 +31,10 @@
         </a>
         <a asp-action="PrintPrescription" asp-route-id="@Model.Id" class="btn btn-outline-dark">In toa thuốc</a>
         <a asp-action="PrintSelectedProducts" asp-route-id="@Model.Id" class="btn btn-outline-dark">In sản phẩm tùy chọn</a>
-        @if (User.IsInRole("Admin"))
+        @if (User.IsInRole("Admin") || (User.IsInRole("Staff") && Model.Status == "Draft"))
         {
             <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
-                  onsubmit="return confirm('Xóa hóa đơn này? Hóa đơn đã xác nhận sẽ được trừ khỏi doanh thu và hoàn kho theo phiếu xuất gốc. Hóa đơn nháp/lịch sử KiotViet không hoàn kho.');">
+                  onsubmit="return confirm(this.dataset.confirm);" data-confirm="@(Model.Status == "Draft" ? "Xóa hóa đơn nháp này?" : "Xóa hóa đơn này? Hóa đơn đã xác nhận sẽ được trừ khỏi doanh thu và hoàn kho theo phiếu xuất gốc. Hóa đơn lịch sử KiotViet không hoàn kho.")">
                 <button type="submit" class="btn btn-outline-danger">Xóa hóa đơn</button>
             </form>
         }

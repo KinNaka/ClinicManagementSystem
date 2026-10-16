@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using ClinicManagementSystem.Web.Models.Identity;
 using ClinicManagementSystem.Web.Entities;
 using ClinicManagementSystem.Web.Models.Entities;
@@ -19,6 +19,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => a.SaleId).IsUnique().HasFilter("[SaleId] IS NOT NULL");
+        modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => new { a.AppointmentDate, a.Status, a.Id });
+        modelBuilder.Entity<FollowUpAppointment>().HasOne(a => a.Patient).WithMany().HasForeignKey(a => a.PatientId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<FollowUpAppointment>().HasOne(a => a.Sale).WithMany().HasForeignKey(a => a.SaleId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<FollowUpAppointment>().ToTable(t =>
+        {
+            t.HasCheckConstraint("CK_FollowUpAppointment_Status", "[Status] IN ('Pending', 'Attended', 'Cancelled')");
+            t.HasCheckConstraint("CK_FollowUpAppointment_Days", "[MedicationDays] BETWEEN 1 AND 3650");
+            t.HasCheckConstraint("CK_FollowUpAppointment_Date", "[AppointmentDate] >= [MedicationStartDate]");
+        });
         modelBuilder.Entity<Patient>().HasOne(p => p.SharedPhoneWithPatient).WithMany()
             .HasForeignKey(p => p.SharedPhoneWithPatientId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<ComboComponent>().HasKey(c => new { c.ComboProductId, c.ComponentProductId });
@@ -144,6 +154,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<InventoryTransactionDetail> InventoryTransactionDetails
         => Set<InventoryTransactionDetail>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<FollowUpAppointment> FollowUpAppointments => Set<FollowUpAppointment>();
     public DbSet<Sale> Sales => Set<Sale>();
 
     public DbSet<SaleDetail> SaleDetails => Set<SaleDetail>();

@@ -123,6 +123,95 @@ namespace ClinicManagementSystem.Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.FollowUpAppointment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateOnly>("AppointmentDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("AttendedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AttendedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("MedicationDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("MedicationStartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("PatientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SaleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("SaleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("UseCustomDate")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("SaleId")
+                        .IsUnique()
+                        .HasFilter("[SaleId] IS NOT NULL");
+
+                    b.HasIndex("AppointmentDate", "Status", "Id");
+
+                    b.ToTable("FollowUpAppointments", t =>
+                        {
+                            t.HasCheckConstraint("CK_FollowUpAppointment_Date", "[AppointmentDate] >= [MedicationStartDate]");
+
+                            t.HasCheckConstraint("CK_FollowUpAppointment_Days", "[MedicationDays] BETWEEN 1 AND 3650");
+
+                            t.HasCheckConstraint("CK_FollowUpAppointment_Status", "[Status] IN ('Pending', 'Attended', 'Cancelled')");
+                        });
+                });
+
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Patient", b =>
                 {
                     b.Property<long>("Id")
@@ -713,6 +802,24 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.Navigation("ComboProduct");
 
                     b.Navigation("ComponentProduct");
+                });
+
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.FollowUpAppointment", b =>
+                {
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ClinicManagementSystem.Web.Models.Entities.Sale", "Sale")
+                        .WithMany()
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("Sale");
                 });
 
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Patient", b =>

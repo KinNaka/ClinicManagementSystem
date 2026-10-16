@@ -538,6 +538,10 @@ namespace ClinicManagementSystem.Web.Services
                     _context.InventoryTransactions.Add(reversal);
                 }
             }
+            // Preserve appointment history; pending appointments are cancelled when the source invoice is deleted.
+            await _context.FollowUpAppointments.Where(a => a.SaleId == id && a.Status == "Pending")
+                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.Status, "Cancelled")
+                    .SetProperty(a => a.UpdatedAtUtc, DateTime.UtcNow).SetProperty(a => a.UpdatedBy, actor ?? "Hệ thống"));
             // Revenue/customer totals are sums of remaining Confirmed invoices.
             _context.SaleDetails.RemoveRange(sale.Details);
             _context.Sales.Remove(sale);

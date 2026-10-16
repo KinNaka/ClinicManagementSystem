@@ -106,6 +106,7 @@ builder.Services.AddScoped<KiotVietSaleReader>();
 builder.Services.AddScoped<SaleImportService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<ISaleService, SaleService>();
+builder.Services.AddScoped<AppointmentService>();
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
     options.ValidationInterval = TimeSpan.Zero;

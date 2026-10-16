@@ -1,0 +1,70 @@
+@using ClinicManagementSystem.Web.Services
+@using ClinicManagementSystem.Web.Models.ViewModels.Appointments
+@model AppointmentListViewModel
+@{
+    ViewData["Title"] = "Lịch hẹn tái khám";
+    var today = AppointmentService.Today;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    string PageUrl(int page)
+    {
+        var values = Context.Request.Query.ToDictionary(q => q.Key, q => (string?)q.Value.ToString());
+        values["fromDate"] = Model.FromDate?.ToString("yyyy-MM-dd") ?? "";
+        values["page"] = page.ToString();
+        return Context.Request.Path + Microsoft.AspNetCore.Http.QueryString.Create(values).ToString();
+    }
+}
+<h2>Lịch hẹn tái khám</h2>
+<p class="text-muted">20 lịch hẹn mỗi trang. Chọn cùng ngày ở hai ô để xem riêng một ngày; để trống cả hai để xem mọi ngày.</p>
+@if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+@if (TempData["ErrorMessage"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+<form asp-action="Index" method="get" class="row g-2 align-items-end mb-3">
+    <div asp-validation-summary="All" class="text-danger col-12" role="alert"></div>
+    <div class="col-md-2"><label asp-for="FromDate" class="form-label">Từ ngày</label><input asp-for="FromDate" name="fromDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="ToDate" class="form-label">Đến ngày</label><input asp-for="ToDate" name="toDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="SearchTerm" class="form-label">Bệnh nhân / hóa đơn</label><input asp-for="SearchTerm" name="searchTerm" class="form-control" placeholder="Tên, mã bệnh nhân, số điện thoại, mã hóa đơn" /></div>
+    <div class="col-auto"><label asp-for="Status" class="form-label">Trạng thái</label><select asp-for="Status" name="status" class="form-select"><option value="">Tất cả</option><option value="Pending">Chờ tái khám</option><option value="Attended">Đã đến</option><option value="Cancelled">Đã hủy</option></select></div>
+    <div class="col-auto"><label asp-for="Sort" class="form-label">Sắp xếp</label><select asp-for="Sort" name="sort" class="form-select"><option value="soonest">Ngày hẹn gần nhất trước</option><option value="latest">Ngày hẹn xa nhất trước</option><option value="name_asc">Tên: A → Z</option><option value="name_desc">Tên: Z → A</option></select></div>
+    <div class="col-auto d-flex gap-2"><button class="btn btn-primary" type="submit">Lọc</button><a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a></div>
+</form>
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Index" asp-route-fromDate="@today.ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-primary btn-sm">Hôm nay</a>
+    <a asp-action="Index" asp-route-fromDate="" asp-route-toDate="@today.AddDays(-1).ToString("yyyy-MM-dd")" asp-route-status="Pending" class="btn btn-outline-danger btn-sm">Quá hạn chưa đến</a>
+</div>
+<div class="table-responsive"><table data-mobile-cards class="table table-bordered table-hover align-middle">
+    <thead><tr><th>Ngày hẹn</th><th>Bệnh nhân</th><th>Điện thoại</th><th>Hóa đơn gốc</th><th>Số ngày thuốc</th><th>Trạng thái</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+    <tbody>
+    @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Không có lịch hẹn phù hợp.</td></tr> }
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td class="text-nowrap">@item.AppointmentDate.ToString("dd/MM/yyyy")
+                @if (item.Status == "Pending" && item.AppointmentDate < today) { <div class="badge bg-danger">Quá hạn chưa đến</div> }
+            </td>
+            <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@item.PatientId">@item.PatientName</a><div class="small text-muted">@item.PatientCode</div></td>
+            <td>@(item.PhoneNumber ?? "—")</td>
+            <td>@if (item.SaleId.HasValue) { <a asp-controller="Sales" asp-action="Details" asp-route-id="@item.SaleId">@item.SaleCode</a> } else { <span>@item.SaleCode <small class="text-muted">(đã xóa)</small></span> }</td>
+            <td>@item.MedicationDays</td>
+            <td>
+                <span class="badge @(item.Status == "Attended" ? "bg-success" : item.Status == "Cancelled" ? "bg-secondary" : "bg-warning text-dark")">@(item.Status switch { "Attended" => "Đã đến", "Cancelled" => "Đã hủy", _ => "Chờ tái khám" })</span>
+                @if (item.AttendedAtUtc.HasValue) { <div class="small mt-1">@item.AttendedAtUtc.Value.AddHours(7).ToString("dd/MM/yyyy HH:mm")<br />@item.AttendedBy</div> }
+            </td>
+            <td>@item.Notes</td>
+            <td><div class="d-flex flex-wrap gap-2">
+                @if (item.SaleId.HasValue) { <a asp-action="Edit" asp-route-saleId="@item.SaleId" class="btn btn-sm btn-outline-primary">@(item.Status == "Pending" ? "Sửa lịch" : "Xem lịch")</a> }
+                @if (item.Status == "Pending")
+                {
+                    <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="version" value="@item.Version" /><input type="hidden" name="status" value="Attended" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-sm btn-success">Đã đến</button></form>
+                    <form asp-action="ChangeStatus" method="post" onsubmit="return confirm('Hủy lịch hẹn này?');"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="version" value="@item.Version" /><input type="hidden" name="status" value="Cancelled" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button></form>
+                }
+            </div></td>
+        </tr>
+    }
+    </tbody>
+</table></div>
+<nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3" aria-label="Phân trang lịch hẹn">
+    <span class="text-muted">@Model.TotalCount lịch hẹn · Trang @Model.Page / @Model.TotalPages · 20 hẹn/trang</span>
+    <div class="btn-group">
+        @if (Model.Page > 1) { <a class="btn btn-outline-primary" href="@PageUrl(1)">Đầu</a><a class="btn btn-outline-primary" href="@PageUrl(Model.Page - 1)">Trước</a> }
+        @if (Model.Page < Model.TotalPages) { <a class="btn btn-outline-primary" href="@PageUrl(Model.Page + 1)">Sau</a><a class="btn btn-outline-primary" href="@PageUrl(Model.TotalPages)">Cuối</a> }
+    </div>
+</nav>

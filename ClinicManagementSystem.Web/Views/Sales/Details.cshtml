@@ -12,6 +12,7 @@
 
     <div class="d-flex flex-wrap gap-2">
         <a asp-action="Create" asp-route-copyFromId="@Model.Id" class="btn btn-primary">Sao chép</a>
+        <a asp-controller="Appointments" asp-action="Edit" asp-route-saleId="@Model.Id" class="btn btn-outline-primary">Lịch tái khám</a>
         <a asp-action="Index"
            class="btn btn-outline-secondary">
             Quay lại

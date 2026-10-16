@@ -17,7 +17,7 @@ namespace ClinicManagementSystem.Web.Services
 
         public async Task<List<PatientListViewModel>> GetAllAsync(
             string? searchTerm,
-            string? status)
+            string? status, ListPaging? paging = null)
         {
             var query = _context.Patients.AsNoTracking();
 
@@ -37,8 +37,9 @@ namespace ClinicManagementSystem.Web.Services
                 query = query.Where(p => p.Status == status);
             }
 
+            query = query.OrderBy(p => p.FullName).ThenBy(p => p.Id);
+            if (paging != null) query = await paging.ApplyAsync(query);
             return await query
-                .OrderBy(p => p.FullName)
                 .Select(p => new PatientListViewModel
                 {
                     Id = p.Id,
@@ -301,7 +302,7 @@ namespace ClinicManagementSystem.Web.Services
             return null;
         }
 
-        private static bool IsValidStatus(string? status)
+        private static bool IsValidStatus(string? status, ListPaging? paging = null)
         {
             return status is "Active" or "Inactive";
         }

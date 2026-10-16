@@ -10,6 +10,7 @@ namespace ClinicManagementSystem.Web.Services;
 public sealed class SaleImportService(ApplicationDbContext db, KiotVietSaleReader reader, IMemoryCache cache)
 {
     public const string WalkInCode = "KV_WALKIN";
+    public SaleImportViewModel? GetPreview(string token, string owner) => cache.TryGetValue<Pending>("sale-import:" + token, out var pending) && pending != null && pending.Owner == owner && !pending.Completed ? pending.Model : null;
     private sealed class Pending(string owner, SaleImportViewModel model)
     {
         public string Owner { get; } = owner;

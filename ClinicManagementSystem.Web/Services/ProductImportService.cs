@@ -8,6 +8,7 @@ namespace ClinicManagementSystem.Web.Services;
 
 public sealed class ProductImportService(ApplicationDbContext db, KiotVietProductReader reader, IMemoryCache cache)
 {
+    public ProductImportViewModel? GetPreview(string token, string owner) => cache.TryGetValue<Pending>("product-import:" + token, out var pending) && pending != null && pending.Owner == owner && !pending.Completed ? pending.Model : null;
     private sealed class Pending(string owner, ProductImportViewModel model)
     {
         public string Owner { get; } = owner;

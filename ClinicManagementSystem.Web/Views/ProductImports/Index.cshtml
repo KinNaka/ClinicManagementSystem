@@ -1,3 +1,5 @@
+@using ClinicManagementSystem.Web.Services
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Rows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductImportViewModel
 @{
     ViewData["Title"] = "Nhập hàng hóa từ KiotViet";
@@ -30,7 +32,7 @@
     <div class="table-responsive"><table class="table table-bordered align-middle">
         <thead><tr><th>Dòng</th><th>Mã hàng</th><th>Tên hàng</th><th>Loại / nhóm</th><th>ĐVT</th><th>Giá bán</th><th>Giá vốn</th><th>Tồn sẽ nhập</th><th>Kết quả</th></tr></thead>
         <tbody>
-        @foreach (var row in Model.Rows)
+        @foreach (var row in visibleRows)
         {
             <tr>
                 <td>@row.RowNumber</td><td>@row.Product.ProductCode</td><td>@row.Product.Name</td><td>@row.TypeName<br />@row.CategoryName</td><td>@(row.Product.Unit ?? "—")</td>
@@ -50,3 +52,5 @@
         <span class="text-muted small ms-2">Bản xem trước có hiệu lực 20 phút.</span>
     </form>
 }
+
+<partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" />

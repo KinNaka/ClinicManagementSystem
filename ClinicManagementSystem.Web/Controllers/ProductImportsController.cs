@@ -12,7 +12,19 @@ namespace ClinicManagementSystem.Web.Controllers;
 public sealed class ProductImportsController(ProductImportService imports) : Controller
 {
     [HttpGet]
-    public IActionResult Index() => View(new ProductImportViewModel());
+    public IActionResult Index(string? token = null)
+    {
+        if (string.IsNullOrEmpty(token)) return View(new ProductImportViewModel());
+        var owner = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (owner == null) return Challenge();
+        var model = imports.GetPreview(token, owner);
+        if (model == null)
+        {
+            ModelState.AddModelError("", "Bản xem trước đã hết hạn. Vui lòng tải lại file.");
+            return View(new ProductImportViewModel());
+        }
+        return View(model);
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]

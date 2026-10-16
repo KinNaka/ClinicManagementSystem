@@ -1,3 +1,5 @@
+@using ClinicManagementSystem.Web.Services
+@{ var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var detailsPage) ? detailsPage : 1); var visibleDetails = detailsPaging.Slice(Model.Details).ToList(); }
 
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
 
@@ -127,7 +129,7 @@
                         var index = 1;
                     }
 
-                    @foreach (var detail in Model.Details)
+                    @foreach (var detail in visibleDetails)
                     {
                         <tr>
                             <td>@index</td>
@@ -254,3 +256,5 @@
         }
     }
 </style>
+
+<partial name="_ListPaging" model="detailsPaging" />

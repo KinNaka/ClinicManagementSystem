@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
+PagingTests.Run();
+if (args.Contains("--paging")) return;
 SalePricingTests.Run();
 if (args.Contains("--pricing")) return;
 DecimalRangeTests.Run();

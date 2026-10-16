@@ -22,9 +22,11 @@ namespace ClinicManagementSystem.Web.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(string? searchTerm, bool lowStockOnly = false)
+        public async Task<IActionResult> Index(string? searchTerm, bool lowStockOnly = false, int page = 1)
         {
-            var items = await _inventoryService.GetStockAsync(searchTerm, lowStockOnly);
+            var paging = new ListPaging(page);
+            ViewData["Paging"] = paging;
+            var items = await _inventoryService.GetStockAsync(searchTerm, lowStockOnly, paging);
             ViewBag.LowStockOnly = lowStockOnly;
 
             ViewBag.SearchTerm = searchTerm;
@@ -129,19 +131,21 @@ namespace ClinicManagementSystem.Web.Controllers
             }
         }
 
-        public async Task<IActionResult> Transactions()
+        public async Task<IActionResult> Transactions(int page = 1)
         {
+            var paging = new ListPaging(page);
+            ViewData["Paging"] = paging;
             var transactions =
-                await _inventoryService.GetTransactionsAsync();
+                await _inventoryService.GetTransactionsAsync(paging);
 
             return View(transactions);
         }
 
         [HttpGet, Authorize(Roles = "Admin")]
-        public async Task<IActionResult> StockCount() => View(await _inventoryService.GetStockCountAsync());
+        public async Task<IActionResult> StockCount(int page = 1, string? searchTerm = null) { var paging = new ListPaging(page); ViewData["Paging"] = paging; ViewData["SearchTerm"] = searchTerm; return View(await _inventoryService.GetStockCountAsync(paging, searchTerm)); }
 
         [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin"), RequestFormLimits(ValueCountLimit = 30000)]
-        public async Task<IActionResult> StockCount(StockAdjustmentViewModel model)
+        public async Task<IActionResult> StockCount(StockAdjustmentViewModel model, int page = 1, string? searchTerm = null)
         {
             if (ModelState.IsValid)
             {
@@ -153,7 +157,7 @@ namespace ClinicManagementSystem.Web.Controllers
                 }
                 catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
             }
-            var current = await _inventoryService.GetStockCountAsync();
+            var paging = new ListPaging(page); ViewData["Paging"] = paging; ViewData["SearchTerm"] = searchTerm; var current = await _inventoryService.GetStockCountAsync(paging, searchTerm);
             var entered = model.Details.GroupBy(d => d.ProductId).ToDictionary(g => g.Key, g => g.First());
             current.Reason = model.Reason;
             foreach (var row in current.Details)

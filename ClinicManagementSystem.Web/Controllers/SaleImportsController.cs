@@ -8,7 +8,19 @@ namespace ClinicManagementSystem.Web.Controllers;
 
 public sealed class SaleImportsController(SaleImportService imports) : Controller
 {
-    [HttpGet] public IActionResult Index() => View(new SaleImportViewModel());
+    [HttpGet] public IActionResult Index(string? token = null)
+    {
+        if (string.IsNullOrEmpty(token)) return View(new SaleImportViewModel());
+        var owner = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (owner == null) return Challenge();
+        var model = imports.GetPreview(token, owner);
+        if (model == null)
+        {
+            ModelState.AddModelError("", "Bản xem trước đã hết hạn. Vui lòng tải lại file.");
+            return View(new SaleImportViewModel());
+        }
+        return View(model);
+    }
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(64 * 1024 * 1024), RequestFormLimits(MultipartBodyLengthLimit = 64 * 1024 * 1024)]
     public async Task<IActionResult> Preview(List<IFormFile>? files, bool createMissingRecords = false, bool useWalkInCustomer = false)
     {

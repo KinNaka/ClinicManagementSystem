@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Models.ViewModels.Patients;
+using ClinicManagementSystem.Web.Models.ViewModels.Patients;
 
 namespace ClinicManagementSystem.Web.Services
 {
@@ -8,7 +8,7 @@ namespace ClinicManagementSystem.Web.Services
         Task<List<PhoneMatchViewModel>> FindByPhoneAsync(string? phoneNumber, long? excludeId = null);
         Task<List<PatientListViewModel>> GetAllAsync(
             string? searchTerm,
-            string? status);
+            string? status, ListPaging? paging = null);
 
         Task<PatientFormViewModel?> GetByIdAsync(long id);
 

@@ -18,14 +18,16 @@ namespace ClinicManagementSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
-            string? status)
+            string? status, int page = 1)
         {
+            var paging = new ListPaging(page);
+            ViewData["Paging"] = paging;
             var model = new PatientIndexViewModel
             {
                 SearchTerm = searchTerm,
                 Status = status,
                 Patients = await _patientService.GetAllAsync(
-                    searchTerm, status)
+                    searchTerm, status, paging)
             };
 
             return View(model);

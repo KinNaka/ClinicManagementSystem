@@ -31,10 +31,11 @@ namespace ClinicManagementSystem.Web.Services
 
             return true;
         }
-        public async Task<List<ProductCategoryListViewModel>> GetAllAsync()
+        public async Task<List<ProductCategoryListViewModel>> GetAllAsync(ListPaging? paging = null)
         {
-            return await _context.ProductCategories
-                .AsNoTracking()
+            var query = _context.ProductCategories.AsNoTracking().OrderBy(x => x.Name).ThenBy(x => x.Id).AsQueryable();
+            if (paging != null) query = await paging.ApplyAsync(query);
+            return await query
                 .Select(x => new ProductCategoryListViewModel{ 
                 Id = x.Id,
                 Code = x.Code,
@@ -46,8 +47,7 @@ namespace ClinicManagementSystem.Web.Services
 
         public async Task<ProductCategoryFormViewModel?> GetByIdAsync(long id)
         {
-            return await _context.ProductCategories
-                .AsNoTracking()
+            return await _context.ProductCategories.AsNoTracking()
                 .Where(x => x.Id == id)
                 .Select(x => new ProductCategoryFormViewModel
                 {

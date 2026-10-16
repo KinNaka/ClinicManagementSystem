@@ -7,6 +7,7 @@ namespace ClinicManagementSystem.Web.Services;
 
 public sealed class PatientImportService(ApplicationDbContext context, KiotVietCustomerReader reader, IMemoryCache cache)
 {
+    public PatientImportViewModel? GetPreview(string token, string owner) => cache.TryGetValue<PendingImport>("patient-import:" + token, out var pending) && pending != null && pending.Owner == owner && !pending.Completed ? pending.Model : null;
     private sealed class PendingImport(string owner, PatientImportViewModel model)
     {
         public string Owner { get; } = owner;

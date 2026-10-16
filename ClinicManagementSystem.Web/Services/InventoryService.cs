@@ -15,7 +15,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<List<InventoryIndexViewModel>>
-            GetStockAsync(string? searchTerm, bool lowStockOnly = false)
+            GetStockAsync(string? searchTerm, bool lowStockOnly = false, ListPaging? paging = null)
         {
             var query = _context.Products
                 .AsNoTracking()
@@ -32,8 +32,9 @@ namespace ClinicManagementSystem.Web.Services
                     p.ProductCode.Contains(keyword));
             }
 
+            query = query.OrderBy(p => p.Name).ThenBy(p => p.Id);
+            if (paging != null) query = await paging.ApplyAsync(query);
             return await query
-                .OrderBy(p => p.Name)
                 .Select(p => new InventoryIndexViewModel
                 {
                     ProductCode = p.ProductCode,
@@ -201,20 +202,29 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<List<InventoryTransaction>>
-            GetTransactionsAsync()
+            GetTransactionsAsync(ListPaging? paging = null)
         {
-            return await _context.InventoryTransactions
+            var query = _context.InventoryTransactions.AsNoTracking().OrderByDescending(t => t.TransactionDate).ThenByDescending(t => t.Id).AsQueryable();
+            if (paging != null) query = await paging.ApplyAsync(query);
+            return await query
                 .AsNoTracking()
                 .Include(t => t.Details)
                     .ThenInclude(d => d.Product)
-                .OrderByDescending(t => t.TransactionDate)
                 .ToListAsync();
         }
 
-        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync()
+        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null)
         {
-            return new() { Details = await _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService)
-                .OrderBy(p => p.Name).Select(p => new ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockCountRow {
+            var query = _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService);
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.Trim();
+                query = query.Where(p => p.ProductCode.Contains(term) || p.Name.Contains(term));
+            }
+            query = query.OrderBy(p => p.Name).ThenBy(p => p.Id);
+            if (paging != null) query = await paging.ApplyAsync(query);
+            return new() { Details = await query
+                .Select(p => new ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockCountRow {
                     ProductId = p.Id, ProductCode = p.ProductCode, ProductName = p.Name, Unit = p.Unit, ExpectedStock = p.CurrentStock
                 }).ToListAsync() };
         }

@@ -1,3 +1,4 @@
+using ClinicManagementSystem.Web.Services;
 using ClinicManagementSystem.Web.Models.Identity;
 using ClinicManagementSystem.Web.Models.ViewModels.UserManagement;
 using Microsoft.AspNetCore.Authorization;
@@ -18,11 +19,13 @@ public class UserManagementController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1)
     {
-        var users = await _userManager.Users
+        var paging = new ListPaging(page);
+        ViewData["Paging"] = paging;
+        var query = await paging.ApplyAsync(_userManager.Users.AsNoTracking().OrderBy(u => u.FullName).ThenBy(u => u.Id));
+        var users = await query
             .AsNoTracking()
-            .OrderBy(u => u.FullName)
             .ToListAsync();
 
         var model = new List<UserListViewModel>();

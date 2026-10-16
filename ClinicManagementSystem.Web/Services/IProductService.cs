@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Models.ViewModels.Products;
 
 namespace ClinicManagementSystem.Web.Services;
@@ -8,7 +8,7 @@ public interface IProductService
     Task<List<ProductListViewModel>> GetAllAsync(
     string? searchTerm,
     long? categoryId,
-    string? statusFilter);
+    string? statusFilter, ListPaging? paging = null);
 
     Task<ProductFormViewModel?> GetByIdAsync(long id);
 

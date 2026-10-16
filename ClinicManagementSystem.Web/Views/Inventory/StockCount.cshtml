@@ -2,10 +2,10 @@
 @{ ViewData["Title"] = "Kiểm kho / Cân kho"; }
 <h2>Kiểm kho / Cân kho</h2>
 <p class="text-muted">Nhập số lượng thực tế đã đếm. Để trống hàng chưa kiểm; nhập 0 khi thực tế hết hàng. Combo và dịch vụ không kiểm tồn riêng.</p>
-<form asp-action="StockCount" method="post" id="stock-count-form">
+<form asp-action="StockCount" method="get" class="mb-3"><label for="count-search" class="form-label">Tìm mã hoặc tên hàng</label><div class="input-group"><input type="search" id="count-search" name="searchTerm" value="@ViewData["SearchTerm"]" class="form-control" /><button class="btn btn-outline-primary">Tìm kiếm</button></div></form><p class="text-muted">Lưu số lượng đã nhập trên trang hiện tại trước khi chuyển trang hoặc tìm kiếm.</p><partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" /><form asp-action="StockCount" asp-route-page="@Context.Request.Query["page"]" asp-route-searchTerm="@ViewData["SearchTerm"]" method="post" id="stock-count-form">
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
     <div class="mb-3"><label asp-for="Reason" class="form-label">Lý do kiểm kho</label><input asp-for="Reason" maxlength="500" required class="form-control" /></div>
-    <div class="mb-3"><label for="count-search" class="form-label">Tìm mã hoặc tên hàng</label><input type="search" id="count-search" class="form-control" placeholder="Lọc hàng cần kiểm..." /></div>
+
     <div class="table-responsive"><table data-mobile-cards class="table table-bordered align-middle">
         <thead><tr><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Tồn hệ thống</th><th>Tồn thực tế</th><th>Chênh lệch</th><th>Ghi chú</th></tr></thead>
         <tbody id="count-rows">
@@ -45,16 +45,17 @@
                     cell.textContent = (difference > 0 ? '+' : '') + formatter.format(difference);
                     if (difference !== 0) cell.classList.add(difference > 0 ? 'text-success' : 'text-danger');
                 });
-                document.getElementById('count-summary').textContent = `Đã nhập ${checked} sản phẩm · ${changed} sản phẩm chênh lệch. Các số đã nhập vẫn được lưu khi lọc tìm kiếm.`;
+                document.getElementById('count-summary').textContent = `Đã nhập ${checked} sản phẩm · ${changed} sản phẩm chênh lệch. Lưu trang hiện tại trước khi chuyển trang.`;
             }
             document.getElementById('count-rows').addEventListener('input', calculate);
-            document.getElementById('count-search').addEventListener('input', e => {
-                const keyword = e.target.value.toLocaleLowerCase('vi-VN').trim();
-                rows.forEach(row => row.hidden = !row.dataset.search.toLocaleLowerCase('vi-VN').includes(keyword));
-            });
+
             document.getElementById('stock-count-form').addEventListener('submit', e => {
                 if (!window.confirm('Cân tồn kho theo các số lượng thực tế đã nhập và lưu lịch sử điều chỉnh?')) e.preventDefault();
             });
+            let dirty = false;
+            document.getElementById('stock-count-form').addEventListener('input', () => dirty = true);
+            window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+            document.getElementById('stock-count-form').addEventListener('submit', e => { if (!e.defaultPrevented) dirty = false; });
             calculate();
         })();
     </script>

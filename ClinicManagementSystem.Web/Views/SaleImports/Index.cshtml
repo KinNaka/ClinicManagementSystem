@@ -1,3 +1,6 @@
+@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(Model.Invoices.Where(i => i.Errors.Count > 0)).ToList(); }
+@using ClinicManagementSystem.Web.Services
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Invoices).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleImportViewModel
 @{
     ViewData["Title"] = "Nhập hóa đơn KiotViet";
@@ -38,15 +41,15 @@
     }
     @if (Model.ErrorCount > 0)
     {
-        <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>File / dòng</th><th>Mã hóa đơn</th><th>Lỗi</th></tr></thead><tbody>
-        @foreach (var invoice in Model.Invoices.Where(i => i.Errors.Count > 0))
+        <partial name="_ListPaging" model="errorsPaging" /><div class="table-responsive"><table class="table table-bordered"><thead><tr><th>File / dòng</th><th>Mã hóa đơn</th><th>Lỗi</th></tr></thead><tbody>
+        @foreach (var invoice in errorRows)
         { <tr><td>@invoice.FileName / @invoice.RowNumber</td><td>@invoice.Sale.SaleCode</td><td>@string.Join(" ", invoice.Errors)</td></tr> }
         </tbody></table></div>
     }
-    <p class="text-muted small">100 hóa đơn đầu. Tất cả hóa đơn trong các file được kiểm tra trước khi nhập.</p>
+    <p class="text-muted small">Hiển thị 10 hóa đơn mỗi trang. Tất cả hóa đơn trong các file được kiểm tra trước khi nhập.</p>
     <div class="table-responsive"><table class="table table-bordered align-middle">
         <thead><tr><th>Mã hóa đơn</th><th>Ngày mua</th><th>Mã KH / họ tên</th><th>Số dòng hàng</th><th>Tổng tiền</th><th>Kết quả</th></tr></thead><tbody>
-        @foreach (var invoice in Model.Invoices.Take(100))
+        @foreach (var invoice in visibleRows)
         {
             <tr><td>@invoice.Sale.SaleCode</td><td>@invoice.Sale.SaleDate.ToString("dd/MM/yyyy HH:mm")</td><td>@(invoice.PatientCode.Length == 0 ? "Khách lẻ" : invoice.PatientCode)<br />@invoice.PatientName</td><td>@invoice.Sale.Details.Count</td><td>@invoice.Sale.TotalAmount.ToString("N2", culture) ₫</td><td>@(invoice.Errors.Count > 0 ? "Có lỗi" : invoice.Exists ? "Bỏ qua" : "Sẽ nhập")
                 @foreach (var warning in invoice.Warnings) { <div class="small text-muted">@warning</div> }
@@ -59,3 +62,5 @@
         <span class="text-muted small ms-2">Bản xem trước có hiệu lực 30 phút. Đợt nhập sẽ lưu toàn bộ hoặc không lưu nếu có lỗi.</span>
     </form>
 }
+
+<partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" />

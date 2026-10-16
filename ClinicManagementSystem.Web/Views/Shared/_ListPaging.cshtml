@@ -1,0 +1,28 @@
+@using ClinicManagementSystem.Web.Services
+@model ListPaging
+@if ((Model ?? ViewData["Paging"]) is ListPaging paging)
+{
+    var values = Context.Request.Query.ToDictionary(q => q.Key, q => (string?)q.Value.ToString());
+    string PageUrl(int page)
+    {
+        values[paging.PageKey] = page.ToString();
+        if (ViewData["PagingToken"] is string token) values["token"] = token;
+        var path = ViewData["PagingToken"] is string ? Url.Action("Index") : Context.Request.Path.ToString();
+        return path + Microsoft.AspNetCore.Http.QueryString.Create(values).ToString();
+    }
+    <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3" aria-label="Phân trang danh sách">
+        <span class="text-muted">@paging.TotalCount dòng · Trang @paging.Page / @paging.TotalPages · 10 dòng/trang</span>
+        <div class="btn-group">
+            @if (paging.Page > 1)
+            {
+                <a class="btn btn-outline-primary" href="@PageUrl(1)">Đầu</a>
+                <a class="btn btn-outline-primary" href="@PageUrl(paging.Page - 1)">Trước</a>
+            }
+            @if (paging.Page < paging.TotalPages)
+            {
+                <a class="btn btn-outline-primary" href="@PageUrl(paging.Page + 1)">Sau</a>
+                <a class="btn btn-outline-primary" href="@PageUrl(paging.TotalPages)">Cuối</a>
+            }
+        </div>
+    </nav>
+}

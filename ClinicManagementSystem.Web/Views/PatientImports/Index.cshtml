@@ -1,3 +1,7 @@
+@{ var warningsPaging = new ListPaging(int.TryParse(Context.Request.Query["warningsPage"], out var warningsPage) ? warningsPage : 1, "warningsPage"); var warningRows = warningsPaging.Slice(Model.Rows.Where(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ")))).ToList(); }
+@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(Model.Rows.Where(r => r.Errors.Count > 0)).ToList(); }
+@using ClinicManagementSystem.Web.Services
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Rows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientImportViewModel
 @{
     ViewData["Title"] = "Nhập khách hàng từ KiotViet";
@@ -27,18 +31,18 @@
     @if (Model.ErrorCount > 0)
     {
         <div class="alert alert-danger">Chưa thể nhập vì file còn lỗi. Sửa các dòng bên dưới và tải lại file.</div>
-        <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Dòng Excel</th><th>Mã KH</th><th>Lỗi</th></tr></thead><tbody>
-        @foreach (var row in Model.Rows.Where(r => r.Errors.Count > 0))
+        <partial name="_ListPaging" model="errorsPaging" /><div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Dòng Excel</th><th>Mã KH</th><th>Lỗi</th></tr></thead><tbody>
+        @foreach (var row in errorRows)
         {
             <tr><td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@string.Join(" ", row.Errors)</td></tr>
         }
         </tbody></table></div>
     }
-    <p class="text-muted small">Hiển thị 50 dòng đầu. Có @Model.Rows.Count(r => r.Warnings.Count > 0).ToString("N0", culture) dòng cần lưu ý về dữ liệu.</p>
+    <p class="text-muted small">Hiển thị 10 dòng mỗi trang. Có @Model.Rows.Count(r => r.Warnings.Count > 0).ToString("N0", culture) dòng cần lưu ý về dữ liệu.</p>
     <div class="table-responsive"><table class="table table-bordered align-middle">
         <thead><tr><th>Dòng</th><th>Mã KH</th><th>Họ tên</th><th>Điện thoại</th><th>Địa chỉ</th><th class="text-end">Tổng bán cũ</th><th>Kết quả</th></tr></thead>
         <tbody>
-        @foreach (var row in Model.Rows.Take(50))
+        @foreach (var row in visibleRows)
         {
             <tr>
                 <td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@row.Patient.FullName</td><td>@row.Patient.PhoneNumber</td>
@@ -55,10 +59,10 @@
     {
         <details class="mb-3">
             <summary>Xem các dòng cần kiểm tra điện thoại, ngày sinh hoặc giới tính</summary>
-            <div class="table-responsive mt-2"><table class="table table-bordered">
+            <partial name="_ListPaging" model="warningsPaging" /><div class="table-responsive mt-2"><table class="table table-bordered">
                 <thead><tr><th>Dòng Excel</th><th>Mã KH</th><th>Điện thoại sẽ lưu</th><th>Ghi chú sẽ lưu</th><th>Lưu ý</th></tr></thead>
                 <tbody>
-                @foreach (var row in Model.Rows.Where(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ"))))
+                @foreach (var row in warningRows)
                 {
                     <tr><td>@row.RowNumber</td><td>@row.Patient.PatientCode</td><td>@(row.Patient.PhoneNumber ?? "—")</td><td style="white-space:pre-wrap">@row.Patient.Notes</td><td>@string.Join(" ", row.Warnings.Where(w => !w.StartsWith("Địa chỉ cũ")))</td></tr>
                 }
@@ -72,3 +76,5 @@
         <span class="text-muted small ms-2">Bản xem trước có hiệu lực 20 phút.</span>
     </form>
 }
+
+<partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" />

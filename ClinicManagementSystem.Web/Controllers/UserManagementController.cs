@@ -19,11 +19,11 @@ public class UserManagementController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1)
+    public async Task<IActionResult> Index(int page = 1, string? sort = null)
     {
         var paging = new ListPaging(page);
         ViewData["Paging"] = paging;
-        var query = await paging.ApplyAsync(_userManager.Users.AsNoTracking().OrderBy(u => u.FullName).ThenBy(u => u.Id));
+        var query = await paging.ApplyAsync(ListSorting.Apply(_userManager.Users.AsNoTracking(), sort, u => u.CreatedAt, u => u.FullName, u => u.Id));
         var users = await query
             .AsNoTracking()
             .ToListAsync();

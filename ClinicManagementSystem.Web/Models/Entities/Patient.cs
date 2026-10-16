@@ -16,6 +16,11 @@ namespace ClinicManagementSystem.Web.Models.Entities
 
         public DateOnly? DateOfBirth { get; set; }
 
+        [MaxLength(12)]
+        public string? CitizenIdNumber { get; set; }
+
+        public DateOnly? CitizenIdIssueDate { get; set; }
+
         [MaxLength(20)]
         public string? Gender { get; set; }
 

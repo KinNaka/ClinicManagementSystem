@@ -11,6 +11,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
+SortingTests.Run();
+if (args.Contains("--sorting")) return;
+CitizenIdentityTests.Run();
+if (args.Contains("--citizen-identity")) return;
 PagingTests.Run();
 if (args.Contains("--paging")) return;
 SalePricingTests.Run();
@@ -206,14 +210,29 @@ if (args.FirstOrDefault() == "--integration")
         Check(details!.TotalSales == 22m && details.LegacyTotalSales == 15m && details.CurrentTotalSales == 7m, "Details totals are incorrect.");
         var edit = await service.GetByIdAsync(imported.Id);
         edit!.FullName = "Edited";
+        edit.CitizenIdNumber = "001234567890";
+        edit.CitizenIdIssueDate = new DateOnly(2022, 3, 15);
         Check((await service.UpdateAsync(imported.Id, edit)).Success, "Imported customer edit failed.");
         context.ChangeTracker.Clear();
         imported = await context.Patients.SingleAsync(p => p.Id == imported.Id);
         Check(imported.PatientCode == "kh006962" && imported.LegacyTotalSales == 15m, "Editing changed the original code or old sales.");
+        var identity = (await service.GetDetailsAsync(imported.Id))!.Patient;
+        Check(identity.CitizenIdNumber == "001234567890" && identity.CitizenIdIssueDate == new DateOnly(2022, 3, 15), "Citizen identity was not retained through edit and details.");
+        identity.CitizenIdNumber = null;
+        identity.CitizenIdIssueDate = null;
+        Check((await service.UpdateAsync(imported.Id, identity)).Success, "Clearing optional citizen identity failed.");
+        context.ChangeTracker.Clear();
+        Check((await service.GetByIdAsync(imported.Id))!.CitizenIdNumber == null, "Cleared citizen identity reappeared.");
         Check(await service.GeneratePatientCodeAsync() == "LT000011", "New codes continued the KiotViet sequence.");
         using var invalid = Workbook(new[] { headers, new[] { "KH_BAD", "An", "", "-1", "", "", "", "1", "" } });
         var badPreview = await importer.PreviewAsync(invalid, "bad.xlsx", "owner");
         Check(!(await importer.ImportAsync(badPreview.Token!, "owner")).Success && await context.Patients.CountAsync() == 2, "Invalid preview partially imported records.");
+        var identityCreate = new ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientFormViewModel { PatientCode = "LT000011", FullName = "Identity test", CitizenIdNumber = "009876543210", CitizenIdIssueDate = new DateOnly(2023, 5, 20) };
+        Check((await service.CreateAsync(identityCreate)).Success, "Creating citizen identity failed.");
+        context.ChangeTracker.Clear();
+        var createdIdentity = await context.Patients.AsNoTracking().SingleAsync(p => p.PatientCode == "LT000011");
+        var createdForm = await service.GetByIdAsync(createdIdentity.Id);
+        Check(createdForm!.CitizenIdNumber == "009876543210" && createdForm.CitizenIdIssueDate == new DateOnly(2023, 5, 20), "Citizen identity create/read round trip failed.");
         Console.WriteLine("Passed LocalDB integration: preview has no writes, ownership, duplicate/repeat import, unchanged original profiles, replay protection, exact totals excluding drafts, edits retain code and historical total, new LT sequence, invalid-file atomicity.");
     }
     finally

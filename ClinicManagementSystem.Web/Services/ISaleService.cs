@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Models.ViewModels.Sales;
 
 namespace ClinicManagementSystem.Web.Services
@@ -6,7 +6,7 @@ namespace ClinicManagementSystem.Web.Services
     public interface ISaleService
     {
         Task<SaleIndexViewModel> GetAllAsync(
-            string? searchTerm, string? statusFilter, int page = 1);
+            string? searchTerm, string? statusFilter, int page = 1, string? sort = null);
 
         Task<SaleDetailsViewModel?> GetByIdAsync(long id);
         Task<SaleFormViewModel?> PrepareCopyAsync(long id);

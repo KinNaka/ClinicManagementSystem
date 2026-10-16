@@ -17,7 +17,7 @@ namespace ClinicManagementSystem.Web.Services
 
         public async Task<List<PatientListViewModel>> GetAllAsync(
             string? searchTerm,
-            string? status, ListPaging? paging = null)
+            string? status, ListPaging? paging = null, string? sort = null)
         {
             var query = _context.Patients.AsNoTracking();
 
@@ -37,7 +37,7 @@ namespace ClinicManagementSystem.Web.Services
                 query = query.Where(p => p.Status == status);
             }
 
-            query = query.OrderBy(p => p.FullName).ThenBy(p => p.Id);
+            query = ListSorting.Apply(query, sort, p => p.CreatedAt, p => p.FullName, p => p.Id);
             if (paging != null) query = await paging.ApplyAsync(query);
             return await query
                 .Select(p => new PatientListViewModel
@@ -70,6 +70,8 @@ namespace ClinicManagementSystem.Web.Services
                     PhoneNumber = p.PhoneNumber,
                     SharedPhoneWithPatientId = p.SharedPhoneWithPatientId,
                     SharedPhoneRelationship = p.SharedPhoneRelationship,
+                    CitizenIdNumber = p.CitizenIdNumber,
+                    CitizenIdIssueDate = p.CitizenIdIssueDate,
                     SharedPhoneOwnerName = p.SharedPhoneWithPatient == null ? null : p.SharedPhoneWithPatient.FullName,
                     Address = p.Address,
                     ProvinceCode = p.ProvinceCode,
@@ -83,17 +85,16 @@ namespace ClinicManagementSystem.Web.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1)
+        public async Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1, string? sort = null)
         {
             var patient = await GetByIdAsync(id);
             if (patient == null) return null;
 
             // Include drafts with their status; fetch only the requested ten invoices.
             var query = _context.Sales.AsNoTracking().Where(s => s.PatientId == id);
+            query = ListSorting.Apply(query, sort, s => s.SaleDate, s => s.SaleCode, s => s.Id);
             var history = new PatientPurchaseHistoryViewModel(await query.CountAsync(), page);
             history.Sales = await query
-                .OrderByDescending(s => s.SaleDate)
-                .ThenByDescending(s => s.Id)
                 .Skip(history.Offset)
                 .Take(PatientPurchaseHistoryViewModel.PageSize)
                 .Select(s => new SaleListViewModel
@@ -160,6 +161,8 @@ namespace ClinicManagementSystem.Web.Services
                 PatientCode = code,
                 FullName = model.FullName.Trim(),
                 DateOfBirth = model.DateOfBirth,
+                CitizenIdNumber = NormalizeOptional(model.CitizenIdNumber),
+                CitizenIdIssueDate = model.CitizenIdIssueDate,
                 Gender = NormalizeOptional(model.Gender),
                 PhoneNumber = phoneNumber,
                 SharedPhoneWithPatientId = model.SharedPhoneWithPatientId,
@@ -225,6 +228,8 @@ namespace ClinicManagementSystem.Web.Services
             patient.PatientCode = code;
             patient.FullName = model.FullName.Trim();
             patient.DateOfBirth = model.DateOfBirth;
+            patient.CitizenIdNumber = NormalizeOptional(model.CitizenIdNumber);
+            patient.CitizenIdIssueDate = model.CitizenIdIssueDate;
             patient.Gender = NormalizeOptional(model.Gender);
             patient.PhoneNumber = phoneNumber;
             patient.SharedPhoneWithPatientId = model.SharedPhoneWithPatientId;
@@ -302,7 +307,7 @@ namespace ClinicManagementSystem.Web.Services
             return null;
         }
 
-        private static bool IsValidStatus(string? status, ListPaging? paging = null)
+        private static bool IsValidStatus(string? status, ListPaging? paging = null, string? sort = null)
         {
             return status is "Active" or "Inactive";
         }

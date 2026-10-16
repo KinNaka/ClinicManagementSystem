@@ -13,7 +13,7 @@
     </div>
 }
 
-<form method="get" data-live-filter data-results-id="filter-results" asp-action="Index" class="row g-2 mb-3">
+<form method="get" data-live-filter data-results-id="filter-results" asp-action="Index" class="row g-2 align-items-end mb-3">
     <div class="col-md-5">
         <input type="text"
                name="searchTerm"
@@ -28,6 +28,7 @@
             <option value="true" selected="@((bool)(ViewBag.LowStockOnly ?? false))">Sắp hết hàng (tồn ≤ tối thiểu)</option>
         </select>
     </div>
+    <partial name="_ListSort" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Tên"))" />
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
         <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Đặt lại</a>

@@ -9,6 +9,7 @@
 
 <a asp-action="Index" class="btn btn-secondary mb-3">Quay lại kho</a>
 
+<partial name="_ListSortForm" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Mã phiếu"))" />
 <div class="table-responsive">
     <table class="table table-bordered table-hover">
         <thead class="table-light">
@@ -37,8 +38,9 @@
                 <td>@transaction.Reason</td>
                 <td>@transaction.CreatedBy</td>
                 <td><details><summary>@transaction.Details.Count mặt hàng</summary>
+                    <partial name="_ListSortForm" model="@(new ListSortOptions(Key: "detailsSort" + transaction.Id, NameLabel: "Tên hàng", HasDates: false))" />
                     <table class="table table-sm mt-2"><thead><tr><th>Hàng hóa</th><th>Số lượng / chênh lệch</th><th>Ghi chú</th></tr></thead><tbody>
-                    @{ var key = "detailsPage" + transaction.Id; var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query[key], out var requested) ? requested : 1, key); var visibleDetails = detailsPaging.Slice(transaction.Details.OrderBy(d => d.Id)).ToList(); }
+                    @{ var key = "detailsPage" + transaction.Id; var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query[key], out var requested) ? requested : 1, key); var visibleDetails = detailsPaging.Slice(ListSorting.Apply(transaction.Details.AsQueryable(), Context.Request.Query["detailsSort" + transaction.Id], d => d.Id, d => d.Product.Name, d => d.Id)).ToList(); }
                     @foreach (var detail in visibleDetails)
                     {
                         <tr><td>@detail.Product.ProductCode — @detail.Product.Name</td><td>@detail.Quantity.ToString("0.###")</td><td>@detail.Note</td></tr>

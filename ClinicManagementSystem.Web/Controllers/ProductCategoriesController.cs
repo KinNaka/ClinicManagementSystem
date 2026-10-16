@@ -14,11 +14,11 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         //GET : /ProductCategories
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(int page = 1, string? sort = null)
         {
             var paging = new ListPaging(page);
             ViewData["Paging"] = paging;
-            var categories = await _service.GetAllAsync(paging);
+            var categories = await _service.GetAllAsync(paging, sort);
             return View(categories);
         }
 

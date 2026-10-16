@@ -15,7 +15,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<List<InventoryIndexViewModel>>
-            GetStockAsync(string? searchTerm, bool lowStockOnly = false, ListPaging? paging = null)
+            GetStockAsync(string? searchTerm, bool lowStockOnly = false, ListPaging? paging = null, string? sort = null)
         {
             var query = _context.Products
                 .AsNoTracking()
@@ -32,7 +32,7 @@ namespace ClinicManagementSystem.Web.Services
                     p.ProductCode.Contains(keyword));
             }
 
-            query = query.OrderBy(p => p.Name).ThenBy(p => p.Id);
+            query = ListSorting.Apply(query, sort, p => p.CreatedAt, p => p.Name, p => p.Id);
             if (paging != null) query = await paging.ApplyAsync(query);
             return await query
                 .Select(p => new InventoryIndexViewModel
@@ -202,9 +202,9 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<List<InventoryTransaction>>
-            GetTransactionsAsync(ListPaging? paging = null)
+            GetTransactionsAsync(ListPaging? paging = null, string? sort = null)
         {
-            var query = _context.InventoryTransactions.AsNoTracking().OrderByDescending(t => t.TransactionDate).ThenByDescending(t => t.Id).AsQueryable();
+            var query = ListSorting.Apply(_context.InventoryTransactions.AsNoTracking(), sort, t => t.TransactionDate, t => t.TransactionCode, t => t.Id).AsQueryable();
             if (paging != null) query = await paging.ApplyAsync(query);
             return await query
                 .AsNoTracking()
@@ -213,7 +213,7 @@ namespace ClinicManagementSystem.Web.Services
                 .ToListAsync();
         }
 
-        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null)
+        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null, string? sort = null)
         {
             var query = _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService);
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -221,7 +221,7 @@ namespace ClinicManagementSystem.Web.Services
                 var term = searchTerm.Trim();
                 query = query.Where(p => p.ProductCode.Contains(term) || p.Name.Contains(term));
             }
-            query = query.OrderBy(p => p.Name).ThenBy(p => p.Id);
+            query = ListSorting.Apply(query, sort, p => p.CreatedAt, p => p.Name, p => p.Id);
             if (paging != null) query = await paging.ApplyAsync(query);
             return new() { Details = await query
                 .Select(p => new ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockCountRow {

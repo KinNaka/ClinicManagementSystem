@@ -18,6 +18,7 @@
     <div class="alert alert-danger">@error</div>
 }
 
+<partial name="_ListSortForm" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Tên"))" />
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-light">

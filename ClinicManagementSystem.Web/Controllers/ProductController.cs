@@ -27,12 +27,12 @@ public class ProductsController : Controller
     public async Task<IActionResult> Index(
      string? searchTerm,
      long? categoryId,
-     string? statusFilter, int page = 1)
+     string? statusFilter, int page = 1, string? sort = null)
     {
             var paging = new ListPaging(page);
             ViewData["Paging"] = paging;
         var products = await _productService.GetAllAsync(
-            searchTerm, categoryId, statusFilter, paging);
+            searchTerm, categoryId, statusFilter, paging, sort);
 
         var categories = await _categoryService.GetAllAsync();
 

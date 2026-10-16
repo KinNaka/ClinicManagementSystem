@@ -52,6 +52,17 @@
 <partial name="_SharedPhonePopup" />
 
 <div class="mb-3">
+    <label asp-for="CitizenIdNumber" class="form-label"></label>
+    <input asp-for="CitizenIdNumber" type="text" inputmode="numeric" maxlength="12" class="form-control" placeholder="Nhập 12 chữ số" />
+    <span asp-validation-for="CitizenIdNumber" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="CitizenIdIssueDate" class="form-label"></label>
+    <input asp-for="CitizenIdIssueDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+    <span asp-validation-for="CitizenIdIssueDate" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
     <label asp-for="Address" class="form-label">Địa chỉ</label>
     <input asp-for="Address" class="form-control" placeholder="Số nhà, đường, thôn/ấp…" />
     <span asp-validation-for="Address" class="text-danger"></span>

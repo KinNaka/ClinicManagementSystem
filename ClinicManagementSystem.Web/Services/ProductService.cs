@@ -20,7 +20,7 @@ public class ProductService : IProductService
     public async Task<List<ProductListViewModel>> GetAllAsync(
         string? searchTerm,
         long? categoryId,
-        string? statusFilter, ListPaging? paging = null)
+        string? statusFilter, ListPaging? paging = null, string? sort = null)
     {
         var query = _context.Products
             .AsNoTracking()
@@ -48,7 +48,7 @@ public class ProductService : IProductService
             query = query.Where(x => x.Status == statusFilter);
         }
 
-        query = query.OrderBy(x => x.Name).ThenBy(x => x.Id);
+        query = ListSorting.Apply(query, sort, x => x.CreatedAt, x => x.Name, x => x.Id);
         if (paging != null) query = await paging.ApplyAsync(query);
         return await query
             .Select(x => new ProductListViewModel

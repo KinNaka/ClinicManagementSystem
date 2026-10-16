@@ -1,5 +1,5 @@
 @using ClinicManagementSystem.Web.Services
-@{ var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var detailsPage) ? detailsPage : 1); var visibleDetails = detailsPaging.Slice(Model.Details).ToList(); }
+@{ var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var detailsPage) ? detailsPage : 1); var visibleDetails = detailsPaging.Slice(ListSorting.Apply(Model.Details.AsQueryable(), Context.Request.Query["sort"], d => d.Id, d => d.ProductName, d => d.Id)).ToList(); }
 
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
 
@@ -110,6 +110,7 @@
             </div>
         </div>
 
+        <partial name="_ListSortForm" model="@(new ListSortOptions(NameLabel: "Tên hàng", HasDates: false))" />
         <div class="table-responsive">
             <table class="table table-bordered align-middle">
                 <thead class="table-light">
@@ -126,7 +127,7 @@
 
                 <tbody>
                     @{
-                        var index = 1;
+                        var index = (detailsPaging.Page - 1) * ListPaging.PageSize + 1;
                     }
 
                     @foreach (var detail in visibleDetails)

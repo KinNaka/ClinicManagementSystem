@@ -18,7 +18,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<SaleIndexViewModel> GetAllAsync(
-            string? searchTerm, string? statusFilter, int page = 1)
+            string? searchTerm, string? statusFilter, int page = 1, string? sort = null)
         {
             var query = _context.Sales
                 .AsNoTracking()
@@ -40,11 +40,10 @@ namespace ClinicManagementSystem.Web.Services
                     s.Status == statusFilter);
             }
 
+            query = ListSorting.Apply(query, sort, s => s.SaleDate, s => s.SaleCode, s => s.Id);
             var totalCount = await query.CountAsync();
             page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalCount / (double)SaleIndexViewModel.PageSize)));
             var sales = await query
-                .OrderByDescending(s => s.SaleDate)
-                .ThenByDescending(s => s.Id)
                 .Skip((page - 1) * SaleIndexViewModel.PageSize)
                 .Take(SaleIndexViewModel.PageSize)
                 .Select(s => new SaleListViewModel
@@ -96,6 +95,7 @@ namespace ClinicManagementSystem.Web.Services
                     Details = s.Details.Select(d =>
                         new SaleDetailDisplayViewModel
                         {
+                            Id = d.Id,
                             IsService = d.Product.IsService,
                             ProductCode = d.SourceProductCode ?? d.Product.ProductCode,
                             Notes = d.Notes,

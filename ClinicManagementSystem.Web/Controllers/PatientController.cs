@@ -18,7 +18,7 @@ namespace ClinicManagementSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
-            string? status, int page = 1)
+            string? status, int page = 1, string? sort = null)
         {
             var paging = new ListPaging(page);
             ViewData["Paging"] = paging;
@@ -27,7 +27,7 @@ namespace ClinicManagementSystem.Web.Controllers
                 SearchTerm = searchTerm,
                 Status = status,
                 Patients = await _patientService.GetAllAsync(
-                    searchTerm, status, paging)
+                    searchTerm, status, paging, sort)
             };
 
             return View(model);
@@ -144,9 +144,9 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(long id, int page = 1)
+        public async Task<IActionResult> Details(long id, int page = 1, string? sort = null)
         {
-            var patient = await _patientService.GetDetailsAsync(id, page);
+            var patient = await _patientService.GetDetailsAsync(id, page, sort);
 
             if (patient == null)
                 return NotFound();

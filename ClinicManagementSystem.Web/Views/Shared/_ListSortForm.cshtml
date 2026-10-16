@@ -1,0 +1,21 @@
+@using ClinicManagementSystem.Web.Services
+@model ListSortOptions
+@{
+    var path = ViewData["PagingToken"] is string ? Url.Action("Index") : Context.Request.Path.ToString();
+}
+<form action="@path" method="get" class="row g-2 align-items-end mb-3">
+    @foreach (var query in Context.Request.Query)
+    {
+        if (query.Key == Model.Key || query.Key.Contains("page", StringComparison.OrdinalIgnoreCase) || query.Key == "token") continue;
+        foreach (var value in query.Value)
+        {
+            <input type="hidden" name="@query.Key" value="@value" />
+        }
+    }
+    @if ((ViewData["PagingToken"] as string ?? Context.Request.Query["token"].ToString()) is string token && !string.IsNullOrEmpty(token))
+    {
+        <input type="hidden" name="token" value="@token" />
+    }
+    <partial name="_ListSort" model="Model" />
+    <div class="col-auto"><button type="submit" class="btn btn-outline-primary">Áp dụng</button></div>
+</form>

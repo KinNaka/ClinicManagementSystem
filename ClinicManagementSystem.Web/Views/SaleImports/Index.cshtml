@@ -1,7 +1,8 @@
-@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(Model.Invoices.Where(i => i.Errors.Count > 0)).ToList(); }
-@using ClinicManagementSystem.Web.Services
-@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Invoices).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleImportViewModel
+@using ClinicManagementSystem.Web.Services
+@{ var sortedRows = ListSorting.Apply(Model.Invoices.AsQueryable(), Context.Request.Query["sort"], r => r.Sale.SaleDate, r => r.Sale.SaleCode, r => r.FileName + "|" + r.RowNumber).ToList(); }
+@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(sortedRows.Where(i => i.Errors.Count > 0)).ToList(); }
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(sortedRows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @{
     ViewData["Title"] = "Nhập hóa đơn KiotViet";
     var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
@@ -23,6 +24,8 @@
     <button type="submit" class="btn btn-primary">Xem trước và đối chiếu</button>
     <a asp-controller="Sales" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
 </form>
+@if (!string.IsNullOrEmpty(Model.Token)) { <partial name="_ListSortForm" model="@(new ListSortOptions(NameLabel: "Mã hóa đơn", HasDates: true))" /> }
+
 @if (Model.Token != null)
 {
     <h3>Kết quả đối chiếu</h3>

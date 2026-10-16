@@ -1,4 +1,4 @@
-﻿
+
 namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 {
     public class SaleDetailsViewModel
@@ -37,6 +37,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
     public class SaleDetailDisplayViewModel
     {
+        public long Id { get; set; }
         public bool IsService { get; set; }
         public string? Notes { get; set; }
 

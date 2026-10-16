@@ -8,11 +8,11 @@ namespace ClinicManagementSystem.Web.Services
         Task<List<PhoneMatchViewModel>> FindByPhoneAsync(string? phoneNumber, long? excludeId = null);
         Task<List<PatientListViewModel>> GetAllAsync(
             string? searchTerm,
-            string? status, ListPaging? paging = null);
+            string? status, ListPaging? paging = null, string? sort = null);
 
         Task<PatientFormViewModel?> GetByIdAsync(long id);
 
-        Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1);
+        Task<PatientDetailsViewModel?> GetDetailsAsync(long id, int page = 1, string? sort = null);
 
         Task<bool> ExistsCodeAsync(
             string patientCode,

@@ -1,0 +1,12 @@
+@using ClinicManagementSystem.Web.Services
+@model ListSortOptions
+@{ var selected = ListSorting.Normalize(Context.Request.Query[Model.Key]); }
+<div class="col-auto">
+    <label for="@Model.Key" class="form-label">Sắp xếp</label>
+    <select id="@Model.Key" name="@Model.Key" class="form-select" data-default-value="newest">
+        <option value="newest" selected="@(selected == "newest")">@(Model.HasDates ? "Mới nhất trước" : "Dòng cuối trước")</option>
+        <option value="oldest" selected="@(selected == "oldest")">@(Model.HasDates ? "Cũ nhất trước" : "Dòng đầu trước")</option>
+        <option value="name_asc" selected="@(selected == "name_asc")">@Model.NameLabel: A → Z</option>
+        <option value="name_desc" selected="@(selected == "name_desc")">@Model.NameLabel: Z → A</option>
+    </select>
+</div>

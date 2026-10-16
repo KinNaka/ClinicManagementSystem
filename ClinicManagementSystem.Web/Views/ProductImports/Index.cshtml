@@ -1,6 +1,7 @@
-@using ClinicManagementSystem.Web.Services
-@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Rows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Products.ProductImportViewModel
+@using ClinicManagementSystem.Web.Services
+@{ var sortedRows = ListSorting.Apply(Model.Rows.AsQueryable(), Context.Request.Query["sort"], r => r.RowNumber, r => r.Product.Name, r => r.RowNumber).ToList(); }
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(sortedRows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @{
     ViewData["Title"] = "Nhập hàng hóa từ KiotViet";
     var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
@@ -22,6 +23,8 @@
     <button type="submit" class="btn btn-primary">Xem trước file</button>
     <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
 </form>
+@if (!string.IsNullOrEmpty(Model.Token)) { <partial name="_ListSortForm" model="@(new ListSortOptions(NameLabel: "Tên", HasDates: false))" /> }
+
 @if (Model.Token != null)
 {
     <h3>Kết quả: @Model.FileName</h3>

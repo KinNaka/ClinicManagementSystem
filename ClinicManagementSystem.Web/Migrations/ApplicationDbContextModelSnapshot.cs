@@ -135,6 +135,13 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<DateOnly?>("CitizenIdIssueDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("CitizenIdNumber")
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 

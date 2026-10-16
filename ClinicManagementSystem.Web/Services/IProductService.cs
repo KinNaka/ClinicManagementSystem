@@ -8,7 +8,7 @@ public interface IProductService
     Task<List<ProductListViewModel>> GetAllAsync(
     string? searchTerm,
     long? categoryId,
-    string? statusFilter, ListPaging? paging = null);
+    string? statusFilter, ListPaging? paging = null, string? sort = null);
 
     Task<ProductFormViewModel?> GetByIdAsync(long id);
 

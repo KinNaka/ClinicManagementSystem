@@ -30,7 +30,8 @@
         </div>
     }
 
-    <table class="table table-bordered table-hover">
+    <partial name="_ListSortForm" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Tên"))" />
+<table class="table table-bordered table-hover">
         <thead>
             <tr>
                 <th>Mã danh mục</th>

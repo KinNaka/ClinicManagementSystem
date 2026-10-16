@@ -18,6 +18,15 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Patients
         [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType = typeof(ClinicManagementSystem.Web.Models.Binding.DayMonthYearDateBinder))]
         public DateOnly? DateOfBirth { get; set; }
 
+        [Display(Name = "Số căn cước công dân")]
+        [StringLength(12)]
+        [RegularExpression(@"^[0-9]{12}$", ErrorMessage = "Số căn cước công dân phải gồm 12 chữ số.")]
+        public string? CitizenIdNumber { get; set; }
+
+        [Display(Name = "Ngày cấp căn cước công dân")]
+        [DataType(DataType.Date)]
+        public DateOnly? CitizenIdIssueDate { get; set; }
+
         [StringLength(20)]
         public string? Gender { get; set; }
 

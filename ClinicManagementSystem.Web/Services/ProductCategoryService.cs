@@ -31,9 +31,9 @@ namespace ClinicManagementSystem.Web.Services
 
             return true;
         }
-        public async Task<List<ProductCategoryListViewModel>> GetAllAsync(ListPaging? paging = null)
+        public async Task<List<ProductCategoryListViewModel>> GetAllAsync(ListPaging? paging = null, string? sort = null)
         {
-            var query = _context.ProductCategories.AsNoTracking().OrderBy(x => x.Name).ThenBy(x => x.Id).AsQueryable();
+            var query = ListSorting.Apply(_context.ProductCategories.AsNoTracking(), sort, x => x.CreateAt, x => x.Name, x => x.Id).AsQueryable();
             if (paging != null) query = await paging.ApplyAsync(query);
             return await query
                 .Select(x => new ProductCategoryListViewModel{ 

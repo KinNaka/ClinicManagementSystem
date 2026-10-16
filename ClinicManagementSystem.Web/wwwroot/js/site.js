@@ -92,7 +92,7 @@
                 event.preventDefault();
                 form.querySelectorAll("input:not([type=hidden]), select, textarea").forEach(field => {
                     if (field.type === "checkbox" || field.type === "radio") field.checked = false;
-                    else field.value = "";
+                    else field.value = field.dataset.defaultValue ?? "";
                 });
                 schedule();
             });

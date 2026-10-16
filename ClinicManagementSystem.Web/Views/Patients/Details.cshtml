@@ -45,6 +45,12 @@
         </dd>
     }
 
+    <dt class="col-sm-3">Số căn cước công dân</dt>
+    <dd class="col-sm-9">@(Model.Patient.CitizenIdNumber ?? "—")</dd>
+
+    <dt class="col-sm-3">Ngày cấp căn cước công dân</dt>
+    <dd class="col-sm-9">@(Model.Patient.CitizenIdIssueDate?.ToString("dd/MM/yyyy") ?? "—")</dd>
+
     <dt class="col-sm-3">Địa chỉ</dt>
     <dd class="col-sm-9">@(string.Join(", ", new[] { Model.Patient.Address, Model.Patient.WardName, Model.Patient.ProvinceName }.Where(s => !string.IsNullOrWhiteSpace(s))) is var address && address.Length > 0 ? address : "—")</dd>
 
@@ -74,10 +80,11 @@
 }
 <section id="purchase-history" class="card mt-4" aria-labelledby="purchase-history-title">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div><h2 id="purchase-history-title" class="history-title">Lịch sử mua hàng</h2><p class="text-muted small mt-1">Hóa đơn mới nhất trước · 10 hóa đơn mỗi trang</p></div>
+        <div><h2 id="purchase-history-title" class="history-title">Lịch sử mua hàng</h2><p class="text-muted small mt-1">10 hóa đơn mỗi trang</p></div>
         <span class="badge bg-primary">@history.TotalCount.ToString("N0", culture) hóa đơn</span>
     </div>
     <div class="card-body">
+        <partial name="_ListSortForm" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Mã hóa đơn"))" />
         <p class="text-muted small mb-3">Bao gồm hóa đơn nháp, đã xác nhận và lịch sử KiotViet. Hóa đơn nháp chưa phải giao dịch hoàn tất.</p>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -119,27 +126,27 @@
                     <nav aria-label="Phân trang lịch sử mua hàng"><ul class="pagination mb-0">
                         @if (history.Page > 1)
                         {
-                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@(history.Page - 1)" asp-fragment="purchase-history" aria-label="Trang trước">‹</a></li>
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@(history.Page - 1)" asp-fragment="purchase-history" aria-label="Trang trước">‹</a></li>
                         }
                         else { <li class="page-item disabled"><span class="page-link" aria-disabled="true" aria-label="Trang trước">‹</span></li> }
                         @if (firstPage > 1)
                         {
-                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="1" asp-fragment="purchase-history" aria-label="Trang 1">1</a></li>
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="1" asp-fragment="purchase-history" aria-label="Trang 1">1</a></li>
                             @if (firstPage > 2) { <li class="page-item disabled"><span class="page-link">…</span></li> }
                         }
                         @for (var pageNumber = firstPage; pageNumber <= lastPage; pageNumber++)
                         {
                             @if (pageNumber == history.Page) { <li class="page-item active"><span class="page-link" aria-current="page">@pageNumber</span></li> }
-                            else { <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@pageNumber" asp-fragment="purchase-history" aria-label="Trang @pageNumber">@pageNumber</a></li> }
+                            else { <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@pageNumber" asp-fragment="purchase-history" aria-label="Trang @pageNumber">@pageNumber</a></li> }
                         }
                         @if (lastPage < history.TotalPages)
                         {
                             @if (lastPage < history.TotalPages - 1) { <li class="page-item disabled"><span class="page-link">…</span></li> }
-                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@history.TotalPages" asp-fragment="purchase-history" aria-label="Trang @history.TotalPages">@history.TotalPages</a></li>
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@history.TotalPages" asp-fragment="purchase-history" aria-label="Trang @history.TotalPages">@history.TotalPages</a></li>
                         }
                         @if (history.Page < history.TotalPages)
                         {
-                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-page="@(history.Page + 1)" asp-fragment="purchase-history" aria-label="Trang tiếp theo">›</a></li>
+                            <li class="page-item"><a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@(history.Page + 1)" asp-fragment="purchase-history" aria-label="Trang tiếp theo">›</a></li>
                         }
                         else { <li class="page-item disabled"><span class="page-link" aria-disabled="true" aria-label="Trang tiếp theo">›</span></li> }
                     </ul></nav>

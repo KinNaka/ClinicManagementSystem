@@ -29,7 +29,7 @@
 <form asp-controller="Sales"
       asp-action="Index"
       method="get" data-live-filter data-results-id="filter-results"
-      class="row g-2 mb-3">
+      class="row g-2 align-items-end mb-3">
 
     <div class="col-md-5">
         <input type="text"
@@ -54,6 +54,7 @@
         </select>
     </div>
 
+    <partial name="_ListSort" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Mã hóa đơn"))" />
     <div class="col-md-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary">
             Tìm kiếm
@@ -162,15 +163,15 @@
     <nav aria-label="Phân trang hóa đơn"><ul class="pagination mb-0">
         @if (Model.Page > 1)
         {
-            <li class="page-item"><a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">Trước</a></li>
+            <li class="page-item"><a class="page-link" asp-action="Index" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@(Model.Page - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">Trước</a></li>
         }
         @for (var pageNumber = Math.Max(1, Model.Page - 2); pageNumber <= Math.Min(Model.TotalPages, Model.Page + 2); pageNumber++)
         {
-            <li class="page-item @(pageNumber == Model.Page ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-page="@pageNumber" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">@pageNumber</a></li>
+            <li class="page-item @(pageNumber == Model.Page ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@pageNumber" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">@pageNumber</a></li>
         }
         @if (Model.Page < Model.TotalPages)
         {
-            <li class="page-item"><a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">Sau</a></li>
+            <li class="page-item"><a class="page-link" asp-action="Index" asp-route-sort="@Context.Request.Query["sort"]" asp-route-page="@(Model.Page + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-statusFilter="@Model.StatusFilter">Sau</a></li>
         }
     </ul></nav>
 </div>

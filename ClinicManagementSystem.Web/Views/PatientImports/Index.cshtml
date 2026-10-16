@@ -1,8 +1,9 @@
-@{ var warningsPaging = new ListPaging(int.TryParse(Context.Request.Query["warningsPage"], out var warningsPage) ? warningsPage : 1, "warningsPage"); var warningRows = warningsPaging.Slice(Model.Rows.Where(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ")))).ToList(); }
-@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(Model.Rows.Where(r => r.Errors.Count > 0)).ToList(); }
-@using ClinicManagementSystem.Web.Services
-@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(Model.Rows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientImportViewModel
+@using ClinicManagementSystem.Web.Services
+@{ var sortedRows = ListSorting.Apply(Model.Rows.AsQueryable(), Context.Request.Query["sort"], r => r.RowNumber, r => r.Patient.FullName, r => r.RowNumber).ToList(); }
+@{ var warningsPaging = new ListPaging(int.TryParse(Context.Request.Query["warningsPage"], out var warningsPage) ? warningsPage : 1, "warningsPage"); var warningRows = warningsPaging.Slice(sortedRows.Where(r => r.Warnings.Any(w => !w.StartsWith("Địa chỉ cũ")))).ToList(); }
+@{ var errorsPaging = new ListPaging(int.TryParse(Context.Request.Query["errorsPage"], out var errorsPage) ? errorsPage : 1, "errorsPage"); var errorRows = errorsPaging.Slice(sortedRows.Where(r => r.Errors.Count > 0)).ToList(); }
+@{ var paging = new ListPaging(int.TryParse(Context.Request.Query["page"], out var requestedPage) ? requestedPage : 1); var visibleRows = paging.Slice(sortedRows).ToList(); ViewData["Paging"] = paging; ViewData["PagingToken"] = Model.Token; }
 @{
     ViewData["Title"] = "Nhập khách hàng từ KiotViet";
     var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
@@ -23,6 +24,8 @@
     <button type="submit" class="btn btn-primary">Xem trước file</button>
     <a asp-controller="Patients" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
 </form>
+@if (!string.IsNullOrEmpty(Model.Token)) { <partial name="_ListSortForm" model="@(new ListSortOptions(NameLabel: "Tên", HasDates: false))" /> }
+
 @if (Model.Token != null)
 {
     <h3>Kết quả kiểm tra: @Model.FileName</h3>

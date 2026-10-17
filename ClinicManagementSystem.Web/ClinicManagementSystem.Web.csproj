@@ -30,4 +30,5 @@
 <ItemGroup>
   <Content Update="Data\vietnam-addresses.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   <None Update="Chay-PhongKham.cmd" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  <None Update="startmvc.vbs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
 </ItemGroup></Project>

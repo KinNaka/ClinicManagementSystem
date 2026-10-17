@@ -128,7 +128,7 @@ namespace ClinicManagementSystem.Web.Services
             var sourceId = model.Id > 0 ? model.Id : model.CopyFromId;
             var source = sourceId.HasValue ? await _context.Sales.AsNoTracking().Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == sourceId) : null;
             model.CopyFromCode = model.CopyFromId.HasValue ? source?.SaleCode : null;
-            if (model.DiscountType == null) { model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
+            if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
             foreach (var item in model.Details)
             {
                 var original = source?.Details.FirstOrDefault(d => d.Id == item.SourceDetailId && d.ProductId == item.ProductId);
@@ -361,7 +361,9 @@ namespace ClinicManagementSystem.Web.Services
                     "Chỉ được sửa hóa đơn nháp.");
             await ValidatePatientAsync(model.PatientId, sale.PatientId == model.PatientId);
             var details = await BuildDetailsAsync(model, sale);
-            var total = details.Sum(d => d.LineTotal) - sale.ImportedDiscount + sale.ImportedSurcharge;
+            if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = sale.ImportedDiscount; model.Surcharge = sale.ImportedSurcharge; }
+            var pricing = SalePricing.Calculate(details.Sum(d => d.LineTotal), model);
+            var total = pricing.Total;
             if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
 
             // Chặn việc xác nhận đồng thời trong lúc sửa.
@@ -381,6 +383,8 @@ namespace ClinicManagementSystem.Web.Services
             sale.Notes = model.Notes;
             sale.TotalAmount = total;
             sale.ImportedGoodsTotal = details.Sum(d => d.LineTotal);
+            sale.ImportedDiscount = pricing.Discount;
+            sale.ImportedSurcharge = decimal.Round(model.Surcharge, 2, MidpointRounding.AwayFromZero);
             sale.UpdatedAt = DateTime.Now;
             sale.Details = details;
 

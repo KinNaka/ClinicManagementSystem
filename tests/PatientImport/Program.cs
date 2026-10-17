@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
+if (args.Contains("--combo")) { await ComboTests.RunAsync(); return; }
 if (args.Contains("--appointments")) { await AppointmentTests.RunAsync(); await AppointmentViewTests.RunAsync(); return; }
 if (args.Contains("--staff-draft-deletion")) { await StaffDraftDeletionTests.RunAsync(); return; }
 SortingTests.Run();

@@ -278,6 +278,7 @@ namespace ClinicManagementSystem.Web.Services
             if (model.CopyFromId.HasValue && source == null) throw new InvalidOperationException("Hóa đơn gốc không còn tồn tại.");
             await ValidatePatientAsync(model.PatientId, source?.PatientId == model.PatientId);
             var details = await BuildDetailsAsync(model, source);
+            await ValidateStockAsync(details);
             if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
             var pricing = SalePricing.Calculate(details.Sum(d => d.LineTotal), model);
             var total = pricing.Total;
@@ -387,6 +388,51 @@ namespace ClinicManagementSystem.Web.Services
             await transaction.CommitAsync();
         }
 
+        private async Task<Dictionary<long, decimal>> ValidateStockAsync(IEnumerable<SaleDetail> details)
+        {
+            var soldIds = details.Select(d => d.ProductId).Distinct().ToList();
+            var soldProducts = await _context.Products.AsNoTracking().Include(p => p.Components)
+                .Where(p => soldIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+            var required = new Dictionary<long, decimal>();
+            foreach (var detail in details)
+            {
+                if (detail.Quantity <= 0 || detail.Quantity != decimal.Truncate(detail.Quantity))
+                    throw new InvalidOperationException(
+                        "Số lượng hóa đơn không hợp lệ.");
+                if (!soldProducts.TryGetValue(detail.ProductId, out var sold) || sold.Status is not ("Active" or "ACTIVE"))
+                    throw new InvalidOperationException("Hàng bán không tồn tại hoặc đã ngừng hoạt động.");
+                if (sold.IsService) continue;
+                if (sold.IsCombo && sold.Components.Count == 0)
+                    throw new InvalidOperationException($"Combo {sold.Name} chưa có thành phần.");
+                if (sold.IsCombo)
+                {
+                    foreach (var component in sold.Components)
+                    {
+                        if (component.Quantity <= 0 || component.Quantity != decimal.Truncate(component.Quantity)) throw new InvalidOperationException("Cấu hình thành phần combo không hợp lệ.");
+                        required[component.ComponentProductId] = required.GetValueOrDefault(component.ComponentProductId) + detail.Quantity * component.Quantity;
+                    }
+                }
+                else required[detail.ProductId] = required.GetValueOrDefault(detail.ProductId) + detail.Quantity;
+            }
+
+            var requiredIds = required.Keys.ToList();
+            var stockProducts = await _context.Products.AsNoTracking()
+                .Where(p => requiredIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+            var shortages = new List<string>();
+            foreach (var item in required.OrderBy(r => r.Key))
+            {
+                if (!stockProducts.TryGetValue(item.Key, out var product))
+                    throw new InvalidOperationException($"Không tìm thấy hàng hóa có ID {item.Key}. Vui lòng kiểm tra lại danh mục hàng.");
+                if (product.IsCombo || product.IsService || product.Status is not ("Active" or "ACTIVE"))
+                    throw new InvalidOperationException($"Hàng {product.ProductCode} - {product.Name} không còn cho phép xuất kho. Vui lòng kiểm tra lại danh mục hàng.");
+                if (product.CurrentStock < item.Value)
+                    shortages.Add($"{product.ProductCode} - {product.Name}: cần {item.Value:N0}, tồn kho {product.CurrentStock:N0}, thiếu {item.Value - product.CurrentStock:N0} {product.Unit}");
+            }
+            if (shortages.Count > 0)
+                throw new InvalidOperationException("Không đủ tồn kho. Vui lòng kiểm tra kho: " + string.Join("; ", shortages) + ".");
+            return required;
+        }
+
         public async Task ConfirmAsync(long id)
         {
             await using var transaction =
@@ -429,30 +475,7 @@ namespace ClinicManagementSystem.Web.Services
                 CreatedAt = now
             };
 
-            var soldIds = sale.Details.Select(d => d.ProductId).Distinct().ToList();
-            var soldProducts = await _context.Products.AsNoTracking().Include(p => p.Components)
-                .Where(p => soldIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
-            var required = new Dictionary<long, decimal>();
-            foreach (var detail in sale.Details)
-            {
-                if (detail.Quantity <= 0 || detail.Quantity != decimal.Truncate(detail.Quantity))
-                    throw new InvalidOperationException(
-                        "Số lượng hóa đơn không hợp lệ.");
-                if (!soldProducts.TryGetValue(detail.ProductId, out var sold) || sold.Status is not ("Active" or "ACTIVE"))
-                    throw new InvalidOperationException("Hàng bán không tồn tại hoặc đã ngừng hoạt động.");
-                if (sold.IsService) continue;
-                if (sold.IsCombo && sold.Components.Count == 0)
-                    throw new InvalidOperationException($"Combo {sold.Name} chưa có thành phần.");
-                if (sold.IsCombo)
-                {
-                    foreach (var component in sold.Components)
-                    {
-                        if (component.Quantity <= 0 || component.Quantity != decimal.Truncate(component.Quantity)) throw new InvalidOperationException("Cấu hình thành phần combo không hợp lệ.");
-                        required[component.ComponentProductId] = required.GetValueOrDefault(component.ComponentProductId) + detail.Quantity * component.Quantity;
-                    }
-                }
-                else required[detail.ProductId] = required.GetValueOrDefault(detail.ProductId) + detail.Quantity;
-            }
+            var required = await ValidateStockAsync(sale.Details);
 
             foreach (var item in required.OrderBy(r => r.Key))
             {
@@ -469,8 +492,16 @@ namespace ClinicManagementSystem.Web.Services
                         .SetProperty(p => p.UpdatedAt, now));
 
                 if (affected != 1)
+                {
+                    var product = await _context.Products.AsNoTracking()
+                        .Where(p => p.Id == item.Key)
+                        .Select(p => new { p.ProductCode, p.Name, p.CurrentStock, p.Unit })
+                        .SingleOrDefaultAsync();
                     throw new InvalidOperationException(
-                        "Không đủ tồn kho hoặc sản phẩm không tồn tại.");
+                        product == null
+                            ? $"Không tìm thấy hàng hóa có ID {item.Key}. Vui lòng kiểm tra lại danh mục hàng."
+                            : $"Không thể xuất kho {product.ProductCode} - {product.Name}: cần {item.Value:N0}, tồn kho {product.CurrentStock:N0} {product.Unit}. Vui lòng kiểm tra kho và trạng thái hàng.");
+                }
 
                 var costPrice = await _context.Products
                     .AsNoTracking()

@@ -46,11 +46,32 @@ static class ComboTests
             Check(await productService.UpdateAsync(combo.Id, edit), "Replacing combo components failed.");
             db.ChangeTracker.Clear();
             var insufficient = await Draft((combo.Id, 1));
-            try { await saleService.ConfirmAsync(insufficient.Id); throw new Exception("Insufficient component accepted."); } catch (InvalidOperationException) { }
+            try { await saleService.ConfirmAsync(insufficient.Id); throw new Exception("Insufficient component accepted."); }
+            catch (InvalidOperationException ex) { Check(ex.Message.Contains("OTHER - Other: cần 2, tồn kho 1, thiếu 1"), "Confirmation must identify the insufficient component and quantities."); }
             db.ChangeTracker.Clear();
             Check((await db.Sales.SingleAsync(s => s.Id == insufficient.Id)).Status == "Draft", "Failed confirmation changed invoice status.");
             Check((await db.Products.SingleAsync(p => p.Id == rabies.Id)).CurrentStock == 17 && (await db.Products.SingleAsync(p => p.Id == other.Id)).CurrentStock == 1, "Failed confirmation partially deducted inventory.");
             Check(await db.InventoryTransactions.CountAsync() == 1, "Failed confirmation left audit records.");
+            var saleCount = await db.Sales.CountAsync();
+            var newInvoice = new ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel {
+                PatientId = patient.Id,
+                Details = new() { new() { ProductId = combo.Id, Quantity = 4 }, new() { ProductId = rabies.Id, Quantity = 1 } }
+            };
+            try { await saleService.CreateAsync(newInvoice); throw new Exception("Insufficient new invoice accepted."); }
+            catch (InvalidOperationException ex)
+            {
+                Check(ex.Message.Contains("RABIES - Dại: cần 21, tồn kho 17, thiếu 4") &&
+                    ex.Message.Contains("OTHER - Other: cần 8, tồn kho 1, thiếu 7"),
+                    "Creation must list all shortages and aggregate retail plus combo components.");
+            }
+            Check(await db.Sales.CountAsync() == saleCount, "Insufficient creation saved an invoice.");
+            var exactStockInvoice = new ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleFormViewModel {
+                PatientId = patient.Id, Details = new() { new() { ProductId = other.Id, Quantity = 1 } }
+            };
+            var exactStockId = await saleService.CreateAsync(exactStockInvoice);
+            Check((await db.Sales.AsNoTracking().SingleAsync(s => s.Id == exactStockId)).Status == "Draft" &&
+                (await db.Products.AsNoTracking().SingleAsync(p => p.Id == other.Id)).CurrentStock == 1,
+                "Exact stock must allow a draft without consuming inventory.");
             var inventory = new InventoryService(db);
             Check(!await inventory.StockInAsync(new ClinicManagementSystem.Web.ViewModels.Inventory.StockInViewModel {
                 Details = new() { new() { ProductId = combo.Id, Quantity = 1, UnitPrice = 0 } }

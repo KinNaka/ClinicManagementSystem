@@ -1,67 +1,15 @@
 @model ClinicManagementSystem.Web.ViewModels.Inventory.StockInViewModel
-
-@{
-    ViewData["Title"] = "Nhập kho";
-}
-
+@{ ViewData["Title"] = "Nhập kho"; }
 <h2>Nhập kho</h2>
-
-<form asp-action="StockIn" method="post">
-    @Html.AntiForgeryToken()
-
+<a asp-action="Receipts" class="btn btn-outline-success mb-3">Danh sách phiếu nhập</a>
+<form asp-action="StockIn" method="post" data-stock-form>
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
-
-    <div class="mb-3">
-        <label asp-for="ReferenceNumber" class="form-label">
-            Số hóa đơn / chứng từ
-        </label>
-        <input asp-for="ReferenceNumber" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Reason" class="form-label">Lý do nhập</label>
-        <input asp-for="Reason" class="form-control" />
-        <span asp-validation-for="Reason" class="text-danger"></span>
-    </div>
-
-    <h5>Chi tiết hàng nhập</h5>
-
-    <div class="mb-3">
-        <label class="form-label">Sản phẩm</label>
-        <select asp-for="Details[0].ProductId"
-                asp-items="Model.Products"
-                class="form-select">
-            <option value="">-- Chọn sản phẩm --</option>
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Số lượng nhập</label>
-        <input asp-for="Details[0].Quantity" asp-format="{0:0.############################}"
-               type="number"
-               min="1"
-               step="1"
-               class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Đơn giá nhập</label>
-        <input asp-for="Details[0].UnitPrice"
-               type="number"
-               min="0"
-               step="0.01"
-               class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Ghi chú</label>
-        <input asp-for="Details[0].Note" class="form-control" />
-    </div>
-
+    <label asp-for="ReferenceNumber" class="form-label">Số hóa đơn / chứng từ</label>
+    <input asp-for="ReferenceNumber" class="form-control mb-3" />
+    <label asp-for="Reason" class="form-label">Lý do nhập</label>
+    <input asp-for="Reason" class="form-control mb-3" />
+    <partial name="_StockRows" model="@((Model.Details, Model.Products, true))" />
     <button type="submit" class="btn btn-success">Lưu phiếu nhập</button>
-    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+    <a asp-action="Receipts" class="btn btn-secondary">Hủy</a>
 </form>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/search-picker.js" asp-append-version="true"></script><script src="~/js/stock-form.js" asp-append-version="true"></script> }

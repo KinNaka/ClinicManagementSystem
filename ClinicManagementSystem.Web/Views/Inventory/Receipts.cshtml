@@ -1,0 +1,59 @@
+@using ClinicManagementSystem.Web.Services
+@model List<ClinicManagementSystem.Web.Entities.InventoryTransaction>
+@{ ViewData["Title"] = "Danh sách phiếu nhập"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2>Danh sách phiếu nhập kho</h2>
+    <div class="d-flex gap-2"><a asp-action="StockIn" class="btn btn-success">+ Tạo phiếu nhập</a><a asp-action="Index" class="btn btn-outline-secondary">Quay lại kho</a></div>
+</div>
+@if (TempData["Success"] is string success) { <div class="alert alert-success">@success</div> }
+@if (TempData["Error"] is string error) { <div class="alert alert-danger">@error</div> }
+<form asp-action="Receipts" method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4"><label class="form-label" for="receiptSearch">Tìm phiếu nhập</label><input id="receiptSearch" name="searchTerm" value="@Context.Request.Query["searchTerm"]" class="form-control" placeholder="Mã phiếu, chứng từ, mã hoặc tên sản phẩm..." /></div>
+    <partial name="_DatePeriod" />
+    <div class="col-md-3"><label class="form-label" for="payment">Thanh toán</label><select id="payment" name="payment" class="form-select"><option value="">Tất cả</option><option value="unpaid" selected="@(Context.Request.Query["payment"] == "unpaid")">Chờ thanh toán</option><option value="paid" selected="@(Context.Request.Query["payment"] == "paid")">Đã thanh toán</option></select></div>
+    <partial name="_ListSort" model="@(new ListSortOptions(NameLabel: "Mã phiếu"))" />
+    <div class="col-12"><button class="btn btn-primary">Lọc phiếu</button> <a asp-action="Receipts" class="btn btn-outline-secondary">Xóa lọc</a></div>
+</form>
+<div class="table-responsive">
+<table data-mobile-cards class="table table-bordered table-hover align-middle">
+    <thead class="table-light"><tr><th>Mã phiếu</th><th>Ngày nhập</th><th>Chứng từ / Lý do</th><th>Sản phẩm</th><th class="text-end">Tổng tiền</th><th>Thanh toán</th><th>Thao tác</th></tr></thead>
+    <tbody>
+    @if (Model.Count == 0) { <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy phiếu nhập.</td></tr> }
+    @foreach (var receipt in Model)
+    {
+        <tr>
+            <td>@receipt.TransactionCode</td>
+            <td>@receipt.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
+            <td><div>@receipt.ReferenceNumber</div><div>@receipt.Reason</div></td>
+            <td><details><summary>@receipt.Details.Count sản phẩm</summary>
+                <div class="table-responsive"><table class="table table-sm mt-2"><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th><th>Ghi chú</th></tr></thead><tbody>
+                @foreach (var detail in receipt.Details.OrderBy(d => d.Id))
+                {
+                    <tr><td>@detail.Product.ProductCode — @detail.Product.Name</td><td>@detail.Quantity.ToString("0.###") @detail.Product.Unit</td><td>@detail.UnitPrice.ToString("N0")</td><td>@((detail.Quantity * detail.UnitPrice).ToString("N0"))</td><td>@detail.Note</td></tr>
+                }
+                </tbody></table></div>
+            </details></td>
+            <td class="text-end">@receipt.Details.Sum(d => d.Quantity * d.UnitPrice).ToString("N0") đ</td>
+            <td>
+                @if (receipt.PaidAt.HasValue) { <span class="badge bg-success">Đã thanh toán</span><div>@receipt.PaidAt.Value.ToString("dd/MM/yyyy HH:mm")</div><small>@receipt.PaidBy</small> }
+                else { <span class="badge bg-warning text-dark">Chờ thanh toán</span> }
+            </td>
+            <td>
+                @if (User.IsInRole("Admin"))
+                {
+                    if (receipt.PaidAt.HasValue)
+                    {
+                        <form asp-action="DeleteReceipt" asp-route-id="@receipt.Id" method="post" onsubmit="return confirm('Xóa vĩnh viễn phiếu nhập và chi tiết phiếu? Tồn kho giữ nguyên.');"><button class="btn btn-sm btn-outline-danger">Xóa phiếu</button></form>
+                    }
+                    else
+                    {
+                        <form asp-action="MarkPaid" asp-route-id="@receipt.Id" method="post"><button class="btn btn-sm btn-success">Đã thanh toán</button></form>
+                    }
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>
+<partial name="_ListPaging" model="@((ListPaging?)ViewData["Paging"])" />

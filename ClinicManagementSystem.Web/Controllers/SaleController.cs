@@ -18,10 +18,10 @@ namespace ClinicManagementSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
-            string? statusFilter, int page = 1, string? sort = null)
+            string? statusFilter, int page = 1, string? sort = null, string? period = null)
         {
             var model = await _saleService.GetAllAsync(
-                searchTerm, statusFilter, page, sort);
+                searchTerm, statusFilter, page, sort, period);
 
             return View(model);
         }

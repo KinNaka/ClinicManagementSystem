@@ -129,6 +129,7 @@ namespace ClinicManagementSystem.Web.Services
                 d.ProductId <= 0 || d.Quantity <= 0 || d.Quantity > 999999999 || d.Quantity != decimal.Truncate(d.Quantity)))
                 return false;
 
+            if (model.PatientId.HasValue && !await _context.Patients.AnyAsync(p => p.Id == model.PatientId)) return false;
             // Gộp các dòng trùng sản phẩm để kiểm tra đủ tồn.
             var requested = model.Details
                 .GroupBy(d => d.ProductId)
@@ -166,6 +167,7 @@ namespace ClinicManagementSystem.Web.Services
                     TransactionType = "StockOut",
                     TransactionDate = DateTime.Now,
                     Reason = model.Reason,
+                    PatientId = model.PatientId,
                     CreatedAt = DateTime.Now
                 };
 

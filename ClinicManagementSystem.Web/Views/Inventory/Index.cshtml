@@ -38,6 +38,7 @@
 <div class="mb-3">
     @if (User.IsInRole("Admin")) { <a asp-action="StockCount" class="btn btn-primary">Kiểm kho / Cân kho</a> }
     <a asp-action="StockIn" class="btn btn-success">Nhập kho</a>
+    <a asp-action="Receipts" class="btn btn-outline-success">Danh sách phiếu nhập</a>
     <a asp-action="StockOut" class="btn btn-warning">Xuất kho</a>
     <a asp-action="Transactions" class="btn btn-outline-primary">
         Lịch sử giao dịch

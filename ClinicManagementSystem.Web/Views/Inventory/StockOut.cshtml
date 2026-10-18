@@ -1,56 +1,15 @@
 @model ClinicManagementSystem.Web.ViewModels.Inventory.StockOutViewModel
-
-@{
-    ViewData["Title"] = "Xuất kho";
-}
-
+@{ ViewData["Title"] = "Xuất kho"; }
 <h2>Xuất kho</h2>
-
-<form asp-action="StockOut" method="post">
-    @Html.AntiForgeryToken()
-
+<form asp-action="StockOut" method="post" data-stock-form>
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
-
-    <div class="mb-3">
-        <label asp-for="Reason" class="form-label">Lý do xuất</label>
-        <select asp-for="Reason" class="form-select">
-            <option value="Xuất sử dụng">Xuất sử dụng tại phòng khám</option>
-            <option value="Xuất hủy">Xuất hủy</option>
-            <option value="Xuất trả nhà cung cấp">Xuất trả nhà cung cấp</option>
-            <option value="Khác">Khác</option>
-        </select>
-        <span asp-validation-for="Reason" class="text-danger"></span>
-    </div>
-
-    <h5>Chi tiết hàng xuất</h5>
-
-    <div class="mb-3">
-        <label class="form-label">Sản phẩm</label>
-        <select asp-for="Details[0].ProductId"
-                asp-items="Model.Products"
-                class="form-select">
-            <option value="">-- Chọn sản phẩm --</option>
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Số lượng xuất</label>
-        <input asp-for="Details[0].Quantity" asp-format="{0:0.############################}"
-               type="number"
-               min="1"
-               step="1"
-               class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Ghi chú</label>
-        <input asp-for="Details[0].Note" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-warning">Lưu phiếu xuất</button>
+    <label asp-for="Reason" class="form-label">Lý do xuất</label>
+    <select asp-for="Reason" class="form-select mb-3"><option>Xuất sử dụng</option><option>Xuất hủy</option><option>Xuất trả nhà cung cấp</option><option>Khác</option></select>
+    <label asp-for="PatientId" class="form-label">Sử dụng cho bệnh nhân (nếu có)</label>
+    <select asp-for="PatientId" asp-items="Model.Patients" data-search-picker="Bệnh nhân" data-optional="true" class="form-select mb-3"><option value="">Không gắn bệnh nhân</option></select>
+    <p class="text-muted">Chọn bệnh nhân để lưu người sử dụng và thời gian xuất trên phiếu kho.</p>
+    <partial name="_StockRows" model="@((Model.Details, Model.Products, false))" />
+    <button class="btn btn-warning" type="submit">Lưu phiếu xuất</button>
     <a asp-action="Index" class="btn btn-secondary">Hủy</a>
 </form>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/search-picker.js" asp-append-version="true"></script><script src="~/js/stock-form.js" asp-append-version="true"></script> }

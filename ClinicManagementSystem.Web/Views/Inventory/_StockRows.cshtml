@@ -1,0 +1,20 @@
+@model (List<ClinicManagementSystem.Web.ViewModels.Inventory.StockInDetailViewModel> Details, List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> Products, bool IsIn)
+<div data-stock-rows>
+@for (var i = 0; i < Math.Max(1, Model.Details.Count); i++)
+{
+    var row = i < Model.Details.Count ? Model.Details[i] : new ClinicManagementSystem.Web.ViewModels.Inventory.StockInDetailViewModel();
+    <div data-stock-row class="border rounded p-3 mb-3">
+        <label class="form-label">Sản phẩm</label>
+        <select name="Details[@i].ProductId" data-search-picker="Sản phẩm" class="form-select"><option value="">Tìm sản phẩm</option>
+        @foreach (var product in Model.Products) { <option value="@product.Value" selected="@(product.Value == row.ProductId.ToString())">@product.Text</option> }
+        </select>
+        <div class="row g-2 mt-1">
+            <div class="col-md-3"><label class="form-label">Số lượng</label><input aria-label="Số lượng" name="Details[@i].Quantity" value="@row.Quantity.ToString("0.################", System.Globalization.CultureInfo.InvariantCulture)" type="number" min="1" max="999999999" step="1" required class="form-control" /></div>
+            @if (Model.IsIn) { <div class="col-md-3"><label class="form-label">Đơn giá nhập</label><input aria-label="Đơn giá nhập" name="Details[@i].UnitPrice" value="@row.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" min="0" max="999999999" step="0.01" required class="form-control" /></div> }
+            <div class="col-md-4"><label class="form-label">Ghi chú</label><input aria-label="Ghi chú" name="Details[@i].Note" value="@row.Note" class="form-control" /></div>
+            <div class="col-md-2 align-self-end"><button type="button" data-remove-row class="btn btn-outline-danger">Xóa dòng</button></div>
+        </div>
+    </div>
+}
+</div>
+<button type="button" data-add-row class="btn btn-outline-primary mb-3">+ Thêm sản phẩm</button>

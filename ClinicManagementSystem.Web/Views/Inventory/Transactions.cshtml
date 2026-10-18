@@ -7,9 +7,17 @@
 
 <h2>Lịch sử giao dịch kho</h2>
 
-<a asp-action="Index" class="btn btn-secondary mb-3">Quay lại kho</a>
+<a asp-action="Index" class="btn btn-secondary mb-3">Quay lại kho</a> <a asp-action="Receipts" class="btn btn-outline-success mb-3">Danh sách phiếu nhập</a>
 
-<partial name="_ListSortForm" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Mã phiếu"))" />
+@if (TempData["Success"] is string success) { <div class="alert alert-success">@success</div> }
+<form method="get" class="row g-2 align-items-end mb-3">
+<div class="col-md-4"><label class="form-label">Tìm phiếu / sản phẩm / bệnh nhân</label><input name="searchTerm" value="@Context.Request.Query["searchTerm"]" class="form-control" placeholder="Mã hoặc tên sản phẩm, bệnh nhân, mã phiếu..." /></div>
+<partial name="_DatePeriod" />
+<div class="col-md-2"><label class="form-label">Loại phiếu</label><select name="type" class="form-select"><option value="">Tất cả</option>@foreach(var item in new[] { ("StockIn", "Nhập kho"), ("StockOut", "Xuất kho"), ("Adjustment", "Điều chỉnh") }) { <option value="@item.Item1" selected="@(Context.Request.Query["type"] == item.Item1)">@item.Item2</option> }</select></div>
+<div class="col-md-3"><label class="form-label">Thanh toán nhập kho</label><select name="payment" class="form-select"><option value="">Tất cả</option><option value="unpaid" selected="@(Context.Request.Query["payment"] == "unpaid")">Chờ thanh toán</option><option value="paid" selected="@(Context.Request.Query["payment"] == "paid")">Đã thanh toán</option></select></div>
+<partial name="_ListSort" model="@(new ListSortOptions(NameLabel: "Mã phiếu"))" />
+<div class="col-12"><button class="btn btn-primary">Lọc phiếu</button> <a asp-action="Transactions" class="btn btn-outline-secondary">Xóa lọc</a></div>
+</form>
 <div class="table-responsive">
     <table class="table table-bordered table-hover">
         <thead class="table-light">
@@ -19,7 +27,7 @@
                 <th>Ngày giờ</th>
                 <th>Lý do</th>
                 <th>Người thực hiện</th>
-                <th>Số mặt hàng</th>
+                <th>Sử dụng cho / Chứng từ</th><th>Thanh toán</th><th>Số mặt hàng</th>
             </tr>
         </thead>
         <tbody>
@@ -37,13 +45,28 @@
                 <td>@transaction.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@transaction.Reason</td>
                 <td>@transaction.CreatedBy</td>
+                                <td>
+                    @if (transaction.Patient != null) { <a asp-controller="Patients" asp-action="Details" asp-route-id="@transaction.PatientId">@transaction.Patient.PatientCode — @transaction.Patient.FullName</a> }
+                    @{ var linked = (Dictionary<string, ClinicManagementSystem.Web.Models.Entities.Sale>)ViewBag.LinkedSales;
+                       var sale = transaction.ReferenceNumber != null ? linked.GetValueOrDefault(transaction.ReferenceNumber) : null; }
+                    @if (sale != null) { <div><a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id">@sale.SaleCode — @(sale.SourcePatientName ?? sale.Patient.FullName)</a></div> }
+                    else { <div>@transaction.ReferenceNumber</div> }
+                </td>
+                <td>
+                    @if (transaction.TransactionType == "StockIn") {
+                        if (transaction.PaidAt.HasValue) { <span class="badge bg-success">Đã thanh toán</span><div>@transaction.PaidAt.Value.ToString("dd/MM/yyyy HH:mm") — @transaction.PaidBy</div> }
+                        else { <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                            <a asp-action="Receipts" asp-route-searchTerm="@transaction.TransactionCode" class="btn btn-sm btn-outline-success mt-1">Xem phiếu nhập</a>
+                        }
+                    }
+                </td>
                 <td><details><summary>@transaction.Details.Count mặt hàng</summary>
                     <partial name="_ListSortForm" model="@(new ListSortOptions(Key: "detailsSort" + transaction.Id, NameLabel: "Tên hàng", HasDates: false))" />
-                    <table class="table table-sm mt-2"><thead><tr><th>Hàng hóa</th><th>Số lượng / chênh lệch</th><th>Ghi chú</th></tr></thead><tbody>
+                    <table class="table table-sm mt-2"><thead><tr><th>Hàng hóa</th><th>Số lượng / chênh lệch</th><th>Đơn giá</th><th>Thành tiền</th><th>Ghi chú</th></tr></thead><tbody>
                     @{ var key = "detailsPage" + transaction.Id; var detailsPaging = new ListPaging(int.TryParse(Context.Request.Query[key], out var requested) ? requested : 1, key); var visibleDetails = detailsPaging.Slice(ListSorting.Apply(transaction.Details.AsQueryable(), Context.Request.Query["detailsSort" + transaction.Id], d => d.Id, d => d.Product.Name, d => d.Id)).ToList(); }
                     @foreach (var detail in visibleDetails)
                     {
-                        <tr><td>@detail.Product.ProductCode — @detail.Product.Name</td><td>@detail.Quantity.ToString("0.###")</td><td>@detail.Note</td></tr>
+                        <tr><td>@detail.Product.ProductCode — @detail.Product.Name</td><td>@detail.Quantity.ToString("0.###")</td><td>@detail.UnitPrice.ToString("N0")</td><td>@((detail.Quantity * detail.UnitPrice).ToString("N0"))</td><td>@detail.Note</td></tr>
                     }
                     </tbody></table><partial name="_ListPaging" model="detailsPaging" />
                 </details></td>

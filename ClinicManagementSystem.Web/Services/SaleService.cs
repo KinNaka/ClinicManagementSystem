@@ -18,7 +18,7 @@ namespace ClinicManagementSystem.Web.Services
         }
 
         public async Task<SaleIndexViewModel> GetAllAsync(
-            string? searchTerm, string? statusFilter, int page = 1, string? sort = null)
+            string? searchTerm, string? statusFilter, int page = 1, string? sort = null, string? period = null)
         {
             var query = _context.Sales
                 .AsNoTracking()
@@ -29,7 +29,7 @@ namespace ClinicManagementSystem.Web.Services
                 var keyword = searchTerm.Trim();
 
                 query = query.Where(s =>
-                    s.SaleCode.Contains(keyword) ||
+                    s.SaleCode.Contains(keyword) || s.Details.Any(d => d.Product.Name.Contains(keyword) || d.Product.ProductCode.Contains(keyword)) ||
                     s.Patient.PatientCode.Contains(keyword) ||
                     s.Patient.FullName.Contains(keyword) || (s.SourcePatientName != null && s.SourcePatientName.Contains(keyword)));
             }
@@ -40,6 +40,8 @@ namespace ClinicManagementSystem.Web.Services
                     s.Status == statusFilter);
             }
 
+            var (start, end) = DatePeriod.Bounds(period);
+            if (start.HasValue) query = query.Where(s => s.SaleDate >= start.Value && s.SaleDate < end!.Value);
             query = ListSorting.Apply(query, sort, s => s.SaleDate, s => s.SaleCode, s => s.Id);
             var totalCount = await query.CountAsync();
             page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalCount / (double)SaleIndexViewModel.PageSize)));
@@ -476,6 +478,7 @@ namespace ClinicManagementSystem.Web.Services
                 TransactionDate = now,
                 Reason = "Xuất kho bán hàng",
                 ReferenceNumber = sale.SaleCode,
+                PatientId = sale.PatientId,
                 CreatedAt = now
             };
 
@@ -557,7 +560,8 @@ namespace ClinicManagementSystem.Web.Services
                     var reversal = new InventoryTransaction {
                         TransactionCode = "IN-" + Guid.NewGuid().ToString("N").ToUpperInvariant(),
                         TransactionType = "StockIn", TransactionDate = now, CreatedAt = now,
-                        ReferenceNumber = sale.SaleCode, Reason = "Hoàn kho do xóa hóa đơn",
+                        ReferenceNumber = sale.SaleCode,
+                PatientId = sale.PatientId, Reason = "Hoàn kho do xóa hóa đơn",
                         CreatedBy = actor == null ? null : actor[..Math.Min(actor.Length, 100)]
                     };
                     foreach (var group in outgoing.GroupBy(d => d.ProductId).OrderBy(g => g.Key))

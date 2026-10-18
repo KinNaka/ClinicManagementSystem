@@ -1,4 +1,4 @@
-﻿using ClinicManagementSystem.Web.Models.Entities;
+using ClinicManagementSystem.Web.Models.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace ClinicManagementSystem.Web.Entities
@@ -6,6 +6,10 @@ namespace ClinicManagementSystem.Web.Entities
     public class InventoryTransaction
     {
         public long Id { get; set; }
+        public DateTime? PaidAt { get; set; }
+        [MaxLength(100)] public string? PaidBy { get; set; }
+        public long? PatientId { get; set; }
+        public Patient? Patient { get; set; }
 
         [Required]
         [MaxLength(50)]

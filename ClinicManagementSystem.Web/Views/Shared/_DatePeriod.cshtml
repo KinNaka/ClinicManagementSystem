@@ -1,0 +1,10 @@
+<div class="col-md-3">
+    <label class="form-label" for="period">Thời gian</label>
+    <select id="period" name="period" class="form-select">
+        <option value="">Tất cả thời gian</option>
+        @foreach (var item in new[] { ("today", "Hôm nay"), ("yesterday", "Hôm qua"), ("month", "Tháng này"), ("lastMonth", "Tháng trước"), ("year", "Năm này"), ("lastYear", "Năm trước") })
+        {
+            <option value="@item.Item1" selected="@(Context.Request.Query["period"] == item.Item1)">@item.Item2</option>
+        }
+    </select>
+</div>

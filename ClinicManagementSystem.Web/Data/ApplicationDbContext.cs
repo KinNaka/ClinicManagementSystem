@@ -39,6 +39,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<ComboComponent>().HasOne(c => c.ComponentProduct).WithMany()
             .HasForeignKey(c => c.ComponentProductId).OnDelete(DeleteBehavior.Restrict);
         
+        modelBuilder.Entity<InventoryTransaction>().HasOne(t => t.Patient).WithMany().HasForeignKey(t => t.PatientId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         modelBuilder.Entity<InventoryTransaction>()
        .HasIndex(x => x.TransactionCode)

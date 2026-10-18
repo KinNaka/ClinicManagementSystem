@@ -68,7 +68,7 @@
             <tr><td><span>SĐT: @(string.IsNullOrWhiteSpace(Model.PatientPhone) ? "—" : Model.PatientPhone)</span></td></tr>
         </tbody></table>
         <table class="amounts" aria-label="Tổng tiền hóa đơn"><tfoot>
-            <tr><td class="label"><span>Tiền thuốc:</span></td><td class="value"><span>@Money(goods)</span></td></tr>
+            <tr><td class="label"><span>Tổng tiền:</span></td><td class="value"><span>@Money(goods)</span></td></tr>
             @if (Model.ImportedDiscount != 0)
             {
                 <tr><td class="label"><span>Giảm giá:</span></td><td class="value"><span>@Money(Model.ImportedDiscount)</span></td></tr>

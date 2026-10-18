@@ -6,7 +6,7 @@ namespace ClinicManagementSystem.Web.Services
     public interface ISaleService
     {
         Task<SaleIndexViewModel> GetAllAsync(
-            string? searchTerm, string? statusFilter, int page = 1, string? sort = null);
+            string? searchTerm, string? statusFilter, int page = 1, string? sort = null, string? period = null);
 
         Task<SaleDetailsViewModel?> GetByIdAsync(long id);
         Task<SaleFormViewModel?> PrepareCopyAsync(long id);

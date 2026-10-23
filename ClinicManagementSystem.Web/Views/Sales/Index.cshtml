@@ -100,7 +100,7 @@
                     <tr>
                         <td>@sale.SaleCode</td>
                         <td>
-                            @sale.SaleDate.ToString("dd/MM/yyyy HH:mm")
+                            @(sale.SaleDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")
                         </td>
                         <td>@sale.PatientCode</td>
                         <td>@sale.PatientName</td>

@@ -9,6 +9,7 @@
     <p class="text-muted">Cập nhật thông tin thuốc hoặc vật tư y tế.</p>
     <hr />
 
+    <a asp-action="History" asp-route-productId="@Model.Id" class="btn btn-outline-secondary mb-3">Lịch sử chỉnh sửa sản phẩm này</a>
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
         @Html.AntiForgeryToken()
 

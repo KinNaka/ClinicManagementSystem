@@ -44,7 +44,7 @@ public sealed class KiotVietSaleReader
             DateTime Date(string name, bool required)
             {
                 var text = Get(name);
-                if (text.Length == 0 && !required) return sale.SaleDate;
+                if (text.Length == 0 && !required) return sale.SaleDate ?? default;
                 try
                 {
                     var date = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var serial)

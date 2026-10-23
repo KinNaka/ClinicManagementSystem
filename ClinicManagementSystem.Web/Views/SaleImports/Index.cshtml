@@ -54,7 +54,7 @@
         <thead><tr><th>Mã hóa đơn</th><th>Ngày mua</th><th>Mã KH / họ tên</th><th>Số dòng hàng</th><th>Tổng tiền</th><th>Kết quả</th></tr></thead><tbody>
         @foreach (var invoice in visibleRows)
         {
-            <tr><td>@invoice.Sale.SaleCode</td><td>@invoice.Sale.SaleDate.ToString("dd/MM/yyyy HH:mm")</td><td>@(invoice.PatientCode.Length == 0 ? "Khách lẻ" : invoice.PatientCode)<br />@invoice.PatientName</td><td>@invoice.Sale.Details.Count</td><td>@invoice.Sale.TotalAmount.ToString("N2", culture) ₫</td><td>@(invoice.Errors.Count > 0 ? "Có lỗi" : invoice.Exists ? "Bỏ qua" : "Sẽ nhập")
+            <tr><td>@invoice.Sale.SaleCode</td><td>@(invoice.Sale.SaleDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")</td><td>@(invoice.PatientCode.Length == 0 ? "Khách lẻ" : invoice.PatientCode)<br />@invoice.PatientName</td><td>@invoice.Sale.Details.Count</td><td>@invoice.Sale.TotalAmount.ToString("N2", culture) ₫</td><td>@(invoice.Errors.Count > 0 ? "Có lỗi" : invoice.Exists ? "Bỏ qua" : "Sẽ nhập")
                 @foreach (var warning in invoice.Warnings) { <div class="small text-muted">@warning</div> }
             </td></tr>
         }

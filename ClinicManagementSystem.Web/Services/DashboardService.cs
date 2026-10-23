@@ -69,7 +69,7 @@ namespace ClinicManagementSystem.Web.Services
                     s.Status == "Confirmed" &&
                     s.SaleDate >= sevenDaysAgo &&
                     s.SaleDate < tomorrow)
-                .GroupBy(s => s.SaleDate.Date)
+                .GroupBy(s => s.SaleDate!.Value.Date)
                 .Select(g => new
                 {
                     Date = g.Key,
@@ -104,7 +104,7 @@ namespace ClinicManagementSystem.Web.Services
             var weekStart = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
             var daily = await _context.Sales.AsNoTracking()
                 .Where(s => s.Status == "Confirmed" && s.SaleDate >= weekStart && s.SaleDate < tomorrow)
-                .GroupBy(s => s.SaleDate.Date)
+                .GroupBy(s => s.SaleDate!.Value.Date)
                 .Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.TotalAmount) })
                 .ToListAsync();
             return new StaffRevenueViewModel {

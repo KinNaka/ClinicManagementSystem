@@ -15,10 +15,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
+    public DbSet<ProductEditHistory> ProductEditHistories => Set<ProductEditHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ProductEditHistory>().HasIndex(h => new { h.ProductId, h.ChangedAt, h.Id });
         modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => a.SaleId).IsUnique().HasFilter("[SaleId] IS NOT NULL");
         modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => new { a.AppointmentDate, a.Status, a.Id });
         modelBuilder.Entity<FollowUpAppointment>().HasOne(a => a.Patient).WithMany().HasForeignKey(a => a.PatientId).OnDelete(DeleteBehavior.Restrict);

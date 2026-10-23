@@ -19,7 +19,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public string? PatientWardName { get; set; }
         public string? PatientProvinceName { get; set; }
 
-        public DateTime SaleDate { get; set; }
+        public DateTime? SaleDate { get; set; }
 
         public string Status { get; set; } = string.Empty;
 

@@ -1,0 +1,30 @@
+@using ClinicManagementSystem.Web.Services
+@model List<ClinicManagementSystem.Web.Models.Entities.ProductEditHistory>
+@{
+    ViewData["Title"] = "Lịch sử chỉnh sửa sản phẩm";
+    var fields = new Dictionary<string, string> {
+        ["ProductCode"] = "Mã sản phẩm", ["Name"] = "Tên sản phẩm", ["CategoryId"] = "ID danh mục",
+        ["CostPrice"] = "Giá nhập", ["SellingPrice"] = "Giá bán", ["CurrentStock"] = "Tồn kho",
+        ["MinimumStock"] = "Tồn tối thiểu", ["Unit"] = "Đơn vị", ["Status"] = "Trạng thái",
+        ["Strength"] = "Hàm lượng", ["DosageForm"] = "Dạng bào chế", ["Manufacturer"] = "Nhà sản xuất",
+        ["IsCombo"] = "Là combo", ["IsService"] = "Là dịch vụ", ["Components"] = "Thành phần combo (ID: số lượng)", ["KiotVietInfo"] = "Thông tin KiotViet"
+    };
+}
+<h2>Lịch sử chỉnh sửa sản phẩm</h2>
+<a asp-action="Index" class="btn btn-outline-secondary mb-3">Quay lại sản phẩm</a>
+<form asp-action="History" method="get" class="row g-2 align-items-end mb-3">
+    @if (!string.IsNullOrEmpty(Context.Request.Query["productId"])) { <input type="hidden" name="productId" value="@Context.Request.Query["productId"]" /> }
+    <div class="col-md-5"><label for="searchTerm" class="form-label">Tìm sản phẩm / người sửa</label><input id="searchTerm" name="searchTerm" value="@Context.Request.Query["searchTerm"]" class="form-control" /></div>
+    <partial name="_DatePeriod" />
+    <div class="col-auto"><button class="btn btn-primary">Tìm kiếm</button> <a asp-action="History" class="btn btn-outline-secondary">Xóa lọc</a></div>
+</form>
+<p class="text-muted">Lưu các thay đổi từ chức năng sửa sản phẩm và đổi trạng thái kể từ khi bật tính năng này. Giá trị hiển thị theo từng trường đã sửa.</p>
+<div class="table-responsive"><table data-mobile-cards class="table table-bordered table-hover align-middle">
+<thead><tr><th>Thời gian</th><th>Người sửa</th><th>Sản phẩm</th><th>Nội dung</th><th>Giá trị cũ</th><th>Giá trị mới</th></tr></thead>
+<tbody>
+@if (Model.Count == 0) { <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lịch sử chỉnh sửa phù hợp.</td></tr> }
+@foreach (var row in Model) {
+<tr><td>@row.ChangedAt.ToString("dd/MM/yyyy HH:mm:ss")</td><td>@(row.ActorName ?? row.ActorId ?? "Không xác định")</td><td><a asp-action="History" asp-route-productId="@row.ProductId">@row.ProductCode — @row.ProductName</a></td><td>@fields.GetValueOrDefault(row.FieldName, row.FieldName)</td><td style="white-space:pre-wrap">@(string.IsNullOrEmpty(row.OldValue) ? "(Trống)" : row.OldValue)</td><td style="white-space:pre-wrap">@(string.IsNullOrEmpty(row.NewValue) ? "(Trống)" : row.NewValue)</td></tr>
+}
+</tbody></table></div>
+<partial name="_ListPaging" model="@((ListPaging?)ViewData["Paging"])" />

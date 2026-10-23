@@ -35,7 +35,7 @@ static class SaleCopyTests
             var id = await service.CreateAsync(form);
             db.ChangeTracker.Clear();
             var copy = await db.Sales.Include(s => s.Details).SingleAsync(s => s.Id == id);
-            Check(copy.Status == "Draft" && copy.SaleCode != source.SaleCode && copy.SaleDate > source.SaleDate && copy.TotalAmount == 18.11m && copy.ImportedAt == null, "Copy identity/status/total incorrect.");
+            Check(copy.Status == "Draft" && copy.SaleCode != source.SaleCode && copy.SaleDate == null && copy.TotalAmount == 18.11m && copy.ImportedAt == null, "Copy identity/status/total incorrect.");
             Check(copy.Details.OrderBy(d => d.Id).Select(d => (d.Quantity, d.UnitPrice, d.LineTotal, d.Notes)).SequenceEqual(source.Details.Select(d => (d.Quantity, d.UnitPrice, d.LineTotal, d.Notes))), "Copied money or notes changed.");
             Check((await db.Products.SingleAsync()).CurrentStock == 10 && !await db.InventoryTransactions.AnyAsync(), "Saving draft changed stock.");
             db.ChangeTracker.Clear();

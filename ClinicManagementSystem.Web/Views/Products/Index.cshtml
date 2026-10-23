@@ -16,6 +16,7 @@
     @if (User.IsInRole("Admin"))
     {
     <div class="d-flex gap-2">
+    <a asp-action="History" class="btn btn-outline-secondary">Lịch sử chỉnh sửa</a>
     <a asp-controller="ProductImports" asp-action="Index" class="btn btn-outline-primary">Nhập từ KiotViet</a>
     <a asp-action="Create" class="btn btn-primary">
         + Thêm sản phẩm

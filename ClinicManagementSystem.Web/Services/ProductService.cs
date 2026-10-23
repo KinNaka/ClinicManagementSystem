@@ -137,7 +137,7 @@ public class ProductService : IProductService
 
     public async Task<bool> UpdateAsync(
         long id,
-        ProductFormViewModel model)
+        ProductFormViewModel model, string? actorId = null, string? actorName = null)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
         var product = await _context.Products
@@ -161,6 +161,7 @@ public class ProductService : IProductService
         if (!categoryExists)
             return false;
 
+        var before = _context.Entry(product).CurrentValues.Clone();
         product.IsCombo = model.IsCombo; product.IsService = model.IsService;
         if (model.IsCombo || model.IsService) model.CurrentStock = 0;
         var previous = await _context.Set<ComboComponent>().Where(c => c.ComboProductId == id).ToListAsync();
@@ -180,6 +181,28 @@ public class ProductService : IProductService
         product.CurrentStock = model.CurrentStock;
         product.Status = model.Status;
         product.UpdatedAt = DateTime.UtcNow;
+        var changedAt = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
+        var after = _context.Entry(product).CurrentValues;
+        foreach (var property in before.Properties.Where(p => p.Name != nameof(Product.UpdatedAt) && p.Name != nameof(Product.CreatedAt)))
+        {
+            if (Equals(before[property], after[property])) continue;
+            _context.ProductEditHistories.Add(new ProductEditHistory {
+                ProductId = id, ProductCode = product.ProductCode, ProductName = product.Name,
+                ActorId = actorId, ActorName = actorName, ChangedAt = changedAt,
+                FieldName = property.Name,
+                OldValue = Convert.ToString(before[property], System.Globalization.CultureInfo.InvariantCulture),
+                NewValue = Convert.ToString(after[property], System.Globalization.CultureInfo.InvariantCulture)
+            });
+        }
+        static string ComponentsText(IEnumerable<ComboComponent> items) => string.Join("; ", items.OrderBy(c => c.ComponentProductId).Select(c => $"{c.ComponentProductId}: {c.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+        var oldComponents = ComponentsText(previous);
+        var newComponents = ComponentsText(product.Components);
+        if (oldComponents != newComponents)
+            _context.ProductEditHistories.Add(new ProductEditHistory {
+                ProductId = id, ProductCode = product.ProductCode, ProductName = product.Name,
+                ActorId = actorId, ActorName = actorName, ChangedAt = changedAt,
+                FieldName = "Components", OldValue = oldComponents, NewValue = newComponents
+            });
 
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();

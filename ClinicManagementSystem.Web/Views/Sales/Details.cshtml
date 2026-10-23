@@ -75,7 +75,7 @@
 
                 <p class="mb-2">
                     <strong>Ngày lập:</strong>
-                    @Model.SaleDate.ToString("dd/MM/yyyy HH:mm")
+                    @(Model.SaleDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")
                 </p>
 
                 <p class="mb-2">

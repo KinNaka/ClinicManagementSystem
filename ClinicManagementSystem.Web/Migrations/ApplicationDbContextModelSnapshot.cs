@@ -440,6 +440,56 @@ namespace ClinicManagementSystem.Web.Migrations
                     b.ToTable("ProductCategories", (string)null);
                 });
 
+            modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.ProductEditHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FieldName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId", "ChangedAt", "Id");
+
+                    b.ToTable("ProductEditHistories");
+                });
+
             modelBuilder.Entity("ClinicManagementSystem.Web.Models.Entities.Sale", b =>
                 {
                     b.Property<long>("Id")
@@ -482,7 +532,7 @@ namespace ClinicManagementSystem.Web.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("SaleDate")
+                    b.Property<DateTime?>("SaleDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SourcePatientCode")

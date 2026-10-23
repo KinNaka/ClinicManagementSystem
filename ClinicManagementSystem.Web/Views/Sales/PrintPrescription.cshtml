@@ -1,7 +1,7 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Sales.SaleDetailsViewModel
 @{
     Layout = null;
-    var date = DateOnly.FromDateTime(Model.SaleDate);
+    var date = DateOnly.FromDateTime(Model.SaleDate ?? TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time"));
     int? age = Model.PatientDateOfBirth is DateOnly birth && birth <= date
         ? date.Year - birth.Year - (birth.AddYears(date.Year - birth.Year) > date ? 1 : 0) : null;
     var gender = Model.PatientGender switch { "Male" => "Nam", "Female" => "Nữ", _ => Model.PatientGender };
@@ -92,7 +92,7 @@
         </table>
         <table><tbody><tr>
             <td style="width:50%">Lời dặn:<textarea class="editable" aria-label="Lời dặn">@Model.Notes</textarea></td>
-            <td class="signature">Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")<br />BÁC SĨ ĐIỀU TRỊ
+            <td class="signature">Ngày @(Model.SaleDate?.ToString("dd 'tháng' MM 'năm' yyyy") ?? "Chưa xác nhận")<br />BÁC SĨ ĐIỀU TRỊ
                 <div class="doctor"><input class="editable" style="text-align:center" aria-label="Bác sĩ kê đơn" /></div>
             </td>
         </tr></tbody></table>

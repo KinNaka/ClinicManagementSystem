@@ -176,7 +176,7 @@ namespace ClinicManagementSystem.Web.Services
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.ProductCode + " - " + p.Name + " | " + (p.Unit ?? "—") + " | " + p.SellingPrice.ToString("N0") + " đ"
+                    Text = p.ProductCode + " - " + p.Name + " | " + (p.Unit ?? "—") + " | " + p.SellingPrice.ToString("N0") + " đ" + (p.IsService ? " | Dịch vụ" : " | Tồn: " + (p.IsCombo ? (p.Components.Min(c => (decimal?)decimal.Floor(c.ComponentProduct.CurrentStock / c.Quantity)) ?? 0) : p.CurrentStock).ToString("N0") + " " + (p.Unit ?? ""))
                 })
                 .ToListAsync();
 
@@ -291,7 +291,7 @@ namespace ClinicManagementSystem.Web.Services
                 SaleCode = "SALE-" +
                     Guid.NewGuid().ToString("N").ToUpperInvariant(),
                 PatientId = model.PatientId,
-                SaleDate = DateTime.Now,
+                SaleDate = null,
                 Status = "Draft",
                 Notes = model.Notes,
                 TotalAmount = total,
@@ -458,12 +458,13 @@ namespace ClinicManagementSystem.Web.Services
                     "Hóa đơn chưa có sản phẩm.");
 
             // Đổi trạng thái có điều kiện, tránh xác nhận lặp.
-            var now = DateTime.Now;
+            var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
 
             var changed = await _context.Sales
                 .Where(s => s.Id == id && s.Status == "Draft")
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(s => s.Status, "Confirmed")
+                    .SetProperty(s => s.SaleDate, now)
                     .SetProperty(s => s.UpdatedAt, now));
 
             if (changed != 1)
@@ -541,7 +542,7 @@ namespace ClinicManagementSystem.Web.Services
                 throw new UnauthorizedAccessException("Nhân viên chỉ được xóa hóa đơn nháp.");
             if (sale.Status is not ("Draft" or "Confirmed" or "Imported"))
                 throw new InvalidOperationException("Trạng thái hóa đơn không cho phép xóa.");
-            var now = DateTime.Now;
+            var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
             // Lock this invoice before restoring stock; repeated deletion cannot restore twice.
             var locked = await _context.Sales.Where(s => s.Id == id && s.Status == sale.Status)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.Status, "Deleting"));

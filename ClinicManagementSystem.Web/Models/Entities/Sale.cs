@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 
 namespace ClinicManagementSystem.Web.Models.Entities
@@ -13,7 +13,7 @@ namespace ClinicManagementSystem.Web.Models.Entities
 
         public long PatientId { get; set; }
 
-        public DateTime SaleDate { get; set; } = DateTime.Now;
+        public DateTime? SaleDate { get; set; }
 
         [Required]
         [MaxLength(20)]

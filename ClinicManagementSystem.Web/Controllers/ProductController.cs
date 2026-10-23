@@ -107,7 +107,7 @@ public class ProductsController : Controller
         }
 
         bool result;
-        try { result = await _productService.UpdateAsync(id, model); }
+        try { result = await _productService.UpdateAsync(id, model, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, User.Identity?.Name); }
         catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); await LoadCategoriesAsync(model); return View(model); }
 
         if (!result)
@@ -143,6 +143,22 @@ public class ProductsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet, Authorize(Roles = "Admin")]
+    public async Task<IActionResult> History(long? productId, string? searchTerm, string? period, int page = 1)
+    {
+        var query = _context.ProductEditHistories.AsNoTracking().AsQueryable();
+        if (productId.HasValue) query = query.Where(h => h.ProductId == productId);
+        if (!string.IsNullOrWhiteSpace(searchTerm)) {
+            var term = searchTerm.Trim();
+            query = query.Where(h => h.ProductCode.Contains(term) || h.ProductName.Contains(term) || (h.ActorName != null && h.ActorName.Contains(term)));
+        }
+        var (start, end) = DatePeriod.Bounds(period);
+        if (start.HasValue) query = query.Where(h => h.ChangedAt >= start.Value && h.ChangedAt < end!.Value);
+        var paging = new ListPaging(page);
+        ViewData["Paging"] = paging;
+        var rows = await paging.ApplyAsync(query.OrderByDescending(h => h.ChangedAt).ThenByDescending(h => h.Id));
+        return View(await rows.ToListAsync());
+    }
     private async Task LoadCategoriesAsync(ProductFormViewModel model)
     {
         model.ComponentOptions = await _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService && p.Id != model.Id && (p.Status == "Active" || p.Status == "ACTIVE" || model.Components.Select(c => c.ComponentProductId).Contains(p.Id))).OrderBy(p => p.Name).Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.ProductCode + " - " + p.Name + " (" + p.Unit + ")" }).ToListAsync();
@@ -175,7 +191,7 @@ public class ProductsController : Controller
             ? "INACTIVE"
             : "ACTIVE";
 
-        var result = await _productService.UpdateAsync(id, product);
+        var result = await _productService.UpdateAsync(id, product, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, User.Identity?.Name);
 
         if (!result)
         {

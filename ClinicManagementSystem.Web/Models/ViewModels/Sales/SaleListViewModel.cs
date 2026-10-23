@@ -1,4 +1,4 @@
-﻿
+
 namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 {
     public class SaleListViewModel
@@ -13,7 +13,7 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
         public string PatientName { get; set; } = string.Empty;
 
-        public DateTime SaleDate { get; set; }
+        public DateTime? SaleDate { get; set; }
 
         public decimal TotalAmount { get; set; }
 

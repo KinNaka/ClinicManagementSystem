@@ -61,7 +61,7 @@
         <div class="heading"><span><strong>@(Model.Status == "Draft" ? "HÓA ĐƠN TẠM TÍNH" : "HÓA ĐƠN BÁN HÀNG")</strong></span></div>
         <table><tbody>
             <tr><td style="text-align:center"><span>Số HĐ: @Model.SaleCode</span></td></tr>
-            <tr><td style="text-align:center"><span>Ngày @Model.SaleDate.ToString("dd 'tháng' MM 'năm' yyyy")</span></td></tr>
+            <tr><td style="text-align:center"><span>Ngày @(Model.SaleDate?.ToString("dd 'tháng' MM 'năm' yyyy") ?? "Chưa xác nhận")</span></td></tr>
         </tbody></table>
         <table class="customer"><tbody>
             <tr><td><span>Khách hàng: @(string.IsNullOrWhiteSpace(Model.PatientName) ? "Khách lẻ" : Model.PatientName)</span></td></tr>

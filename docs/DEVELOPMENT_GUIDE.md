@@ -204,3 +204,7 @@ Trước triển khai cần xác nhận: SQL instance/catalog/quyền service ac
 Không ghi đè cấu hình/secret riêng máy bằng appsettings rỗng trong source. HTTP nội bộ trong tài liệu cũ không là bằng chứng đã bảo vệ mạng; chính sách triển khai thật: **Chưa xác minh**. Logo lấy ảnh ngoài; catalog địa chỉ dùng file đóng gói, không gọi API địa chỉ khi chạy.
 
 Thiếu thông tin cần chủ dự án cung cấp khi quay lại: máy chủ/cách chạy thực, commit và migrations đang áp dụng, quyền truy cập quản trị, quy trình backup/restore, tài khoản thử/người nghiệm thu, bộ file import đã ẩn danh và yêu cầu roadmap. Không đoán hoặc ghi bí mật vào bộ tài liệu này.
+
+## Kiểm tra bổ sung 27/10/2026 — Lưu trữ sản phẩm
+
+`StockCountTests` mở rộng kiểm tra mặc định Active/ACTIVE và Lưu trữ Inactive/INACTIVE, tồn dương khi kiểm kho lưu trữ, kích hoạt/audit và lịch sử. Chạy bằng `dotnet run --project tests/PatientImport -c Release --no-restore -- --stock-count` chỉ trên LocalDB thử nghiệm; harness sinh DB CodexStockCountTest_<GUID>, cleanup có kiểm tra tên. Lượt này biên dịch được nhưng tích hợp bị chặn bởi LocalDB lỗi 50/automatic instance; không đổi sang DB ứng dụng để vượt lỗi. Build Release, 19 Node test picker/pricing và nhánh --pricing qua; chi tiết tại FEATURE_INVENTORY. Tính năng không cần migration. Kiểm tra browser/HTTP và hồi quy DB hóa đơn cũ/sửa/sao chép: **Chưa xác minh**.

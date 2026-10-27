@@ -100,3 +100,7 @@ Các lệnh được chạy trong lượt bàn giao này; không chạy ứng d�
 | `89a068d` 24/10/2026 | Audit sửa sản phẩm, ngày xác nhận, tồn trong tìm hóa đơn |
 
 Không có căn cứ xác nhận lịch sử Git giải thích đầy đủ mọi quyết định nghiệp vụ. Khi bổ sung tính năng, đọc `git log -- <path>` và `git show <commit> -- <path>` thay vì suy diễn từ tên commit.
+
+## Cập nhật chức năng 27/10/2026
+
+Bổ sung tab Lưu trữ cho sản phẩm ngừng kinh doanh, tìm kiếm/phân trang/tồn và Admin kích hoạt lại; danh sách thao tác sản phẩm/kho và cảnh báo sắp hết mặc định chỉ hàng đang kinh doanh. Admin kiểm/cân hàng lưu trữ còn tồn qua tab riêng. Không đổi schema, lịch sử chứng từ hoặc logic sản phẩm cũ trên hóa đơn. Audit trạng thái nay còn được ghi qua ProductService.ToggleStatusAsync. Chi tiết source và bằng chứng test/LocalDB bị chặn: FEATURE_INVENTORY, mục 27/10/2026. Browser/Production: **Chưa xác minh**.

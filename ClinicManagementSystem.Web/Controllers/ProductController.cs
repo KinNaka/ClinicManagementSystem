@@ -27,8 +27,11 @@ public class ProductsController : Controller
     public async Task<IActionResult> Index(
      string? searchTerm,
      long? categoryId,
-     string? statusFilter, int page = 1, string? sort = null)
+     string? statusFilter, int page = 1, string? sort = null, bool archived = false)
     {
+        archived = archived || statusFilter is "Inactive" or "INACTIVE";
+        statusFilter = archived ? "INACTIVE" : "ACTIVE";
+        ViewBag.Archived = archived;
             var paging = new ListPaging(page);
             ViewData["Paging"] = paging;
         var products = await _productService.GetAllAsync(
@@ -177,33 +180,30 @@ public class ProductsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ToggleStatus(long id)
+    public async Task<IActionResult> ToggleStatus(long id, bool archived = false)
     {
         var product = await _productService.GetByIdAsync(id);
 
         if (product == null)
         {
             TempData["Error"] = "Không tìm thấy sản phẩm.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { archived });
         }
 
-        product.Status = product.Status == "ACTIVE"
-            ? "INACTIVE"
-            : "ACTIVE";
-
-        var result = await _productService.UpdateAsync(id, product, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, User.Identity?.Name);
+        var result = await _productService.ToggleStatusAsync(id,
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, User.Identity?.Name);
 
         if (!result)
         {
             TempData["Error"] = "Không thể thay đổi trạng thái sản phẩm.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { archived });
         }
 
-        TempData["Success"] = product.Status == "ACTIVE"
+        TempData["Success"] = product.Status is not ("Active" or "ACTIVE")
             ? "Đã kích hoạt sản phẩm."
             : "Đã ngừng kinh doanh sản phẩm.";
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { archived });
     }
 
 }

@@ -139,3 +139,11 @@ Không suy ra tài khoản không thuộc role nào bị chặn mọi chức nă
 | KiotVietSheetReader | Đọc XML/ZIP an toàn cho sheet; customer/product reader hiện vẫn có parser riêng, không giả định tất cả dùng chung |
 
 Không đổi đồng loạt tên file/namespace/status/timezone để làm đẹp kiến trúc trong khi xử lý tính năng khác. Các thay đổi này có thể ảnh hưởng import, test, SQL lịch sử và deployment.
+
+## Cập nhật 27/10/2026 — phạm vi sản phẩm
+
+Danh sách thao tác sản phẩm/tồn/kiểm kho mặc định Active/ACTIVE. Lưu trữ là phạm vi Inactive/INACTIVE trên bảng Products hiện có, không phải entity/bảng riêng và không có global query filter. Chứng từ/lịch sử và các sản phẩm đã chọn khi mở hóa đơn vẫn đọc theo hợp đồng hiện tại của SaleService.
+
+`ProductService.ToggleStatusAsync` được dùng riêng bởi POST ToggleStatus chỉ Admin: Serializable, cập nhật Status/UpdatedAt và ghi ProductEditHistory cùng transaction, actor từ claims. Bổ sung này mở rộng nguồn audit ngoài UpdateAsync; không tạo audit toàn hệ thống. Tách thao tác trạng thái để không ghi lại tồn/giá từ ViewModel cũ hoặc bị kiểm tra thành phần combo cản lưu trữ.
+
+StockCount GET/POST chỉ Admin nhận `archived`; true chỉ liệt kê hàng thường lưu trữ còn tồn dương. POST vẫn dùng AdjustStockAsync hiện có, giữ ExpectedStock/update có điều kiện/rollback. Phạm vi danh sách không thay đổi quy tắc điều chỉnh tồn và không tự kích hoạt hàng. Chi tiết kiểm chứng/giới hạn xem FEATURE_INVENTORY, mục 27/10/2026.

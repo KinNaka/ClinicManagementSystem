@@ -16,7 +16,7 @@ namespace ClinicManagementSystem.Web.Services
             StockOutViewModel model);
 
         Task<List<InventoryTransaction>> GetTransactionsAsync(ListPaging? paging = null, string? sort = null);
-        Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null, string? sort = null);
+        Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null, string? sort = null, bool archived = false);
         Task<int> AdjustStockAsync(ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel model, string? actor);
     }
 }

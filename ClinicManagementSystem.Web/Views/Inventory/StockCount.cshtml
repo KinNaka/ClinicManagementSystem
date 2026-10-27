@@ -1,8 +1,14 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel
 @{ ViewData["Title"] = "Kiểm kho / Cân kho"; }
 <h2>Kiểm kho / Cân kho</h2>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+<nav class="nav nav-tabs mb-3" aria-label="Phạm vi kiểm kho">
+    <a asp-action="StockCount" class="nav-link @((bool?)ViewData["Archived"] != true ? "active" : "")">Đang kinh doanh</a>
+    <a asp-action="StockCount" asp-route-archived="true" class="nav-link @((bool?)ViewData["Archived"] == true ? "active" : "")">Lưu trữ còn tồn</a>
+</nav>
+@if ((bool?)ViewData["Archived"] == true) { <p class="alert alert-info">Đang kiểm hàng ngừng kinh doanh còn tồn. Cân kho không kích hoạt lại sản phẩm.</p> }
 <p class="text-muted">Nhập số lượng thực tế đã đếm. Để trống hàng chưa kiểm; nhập 0 khi thực tế hết hàng. Combo và dịch vụ không kiểm tồn riêng.</p>
-<form asp-action="StockCount" method="get" class="mb-3"><label for="count-search" class="form-label">Tìm mã hoặc tên hàng</label><div class="input-group"><input type="search" id="count-search" name="searchTerm" value="@ViewData["SearchTerm"]" class="form-control" /><button class="btn btn-outline-primary">Tìm kiếm</button></div><partial name="_ListSort" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions())" /></form><p class="text-muted">Lưu số lượng đã nhập trên trang hiện tại trước khi chuyển trang hoặc tìm kiếm.</p><partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" /><form asp-action="StockCount" asp-route-page="@Context.Request.Query["page"]" asp-route-sort="@Context.Request.Query["sort"]" asp-route-searchTerm="@ViewData["SearchTerm"]" method="post" id="stock-count-form">
+<form asp-action="StockCount" method="get" class="mb-3"><input type="hidden" name="archived" value="@(((bool?)ViewData["Archived"] == true).ToString().ToLowerInvariant())" /><label for="count-search" class="form-label">Tìm mã hoặc tên hàng</label><div class="input-group"><input type="search" id="count-search" name="searchTerm" value="@ViewData["SearchTerm"]" class="form-control" /><button class="btn btn-outline-primary">Tìm kiếm</button></div><partial name="_ListSort" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions())" /></form><p class="text-muted">Lưu số lượng đã nhập trên trang hiện tại trước khi chuyển trang hoặc tìm kiếm.</p><partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" /><form asp-action="StockCount" asp-route-archived="@ViewData["Archived"]" asp-route-page="@Context.Request.Query["page"]" asp-route-sort="@Context.Request.Query["sort"]" asp-route-searchTerm="@ViewData["SearchTerm"]" method="post" id="stock-count-form">
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
     <div class="mb-3"><label asp-for="Reason" class="form-label">Lý do kiểm kho</label><input asp-for="Reason" maxlength="500" required class="form-control" /></div>
 

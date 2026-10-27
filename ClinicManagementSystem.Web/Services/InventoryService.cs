@@ -19,7 +19,7 @@ namespace ClinicManagementSystem.Web.Services
         {
             var query = _context.Products
                 .AsNoTracking()
-                .Where(p => !p.IsCombo && !p.IsService);
+                .Where(p => !p.IsCombo && !p.IsService && (p.Status == "Active" || p.Status == "ACTIVE"));
 
             if (lowStockOnly) query = query.Where(p => p.CurrentStock <= p.MinimumStock);
 
@@ -215,9 +215,12 @@ namespace ClinicManagementSystem.Web.Services
                 .ToListAsync();
         }
 
-        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null, string? sort = null)
+        public async Task<ClinicManagementSystem.Web.Models.ViewModels.Inventory.StockAdjustmentViewModel> GetStockCountAsync(ListPaging? paging = null, string? searchTerm = null, string? sort = null, bool archived = false)
         {
             var query = _context.Products.AsNoTracking().Where(p => !p.IsCombo && !p.IsService);
+            query = archived
+                ? query.Where(p => (p.Status == "Inactive" || p.Status == "INACTIVE") && p.CurrentStock > 0)
+                : query.Where(p => p.Status == "Active" || p.Status == "ACTIVE");
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 var term = searchTerm.Trim();

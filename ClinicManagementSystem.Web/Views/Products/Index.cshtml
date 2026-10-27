@@ -47,6 +47,14 @@
     </div>
 }
 
+<nav class="nav nav-tabs mb-3" aria-label="Phạm vi sản phẩm">
+    <a asp-action="Index" class="nav-link @((bool?)ViewBag.Archived != true ? "active" : "")">Đang kinh doanh</a>
+    <a asp-action="Index" asp-route-archived="true" class="nav-link @((bool?)ViewBag.Archived == true ? "active" : "")">Lưu trữ</a>
+</nav>
+@if ((bool?)ViewBag.Archived == true && User.IsInRole("Admin"))
+{
+    <a asp-controller="Inventory" asp-action="StockCount" asp-route-archived="true" class="btn btn-outline-primary mb-3">Kiểm / cân kho hàng lưu trữ còn tồn</a>
+}
 <div class="card shadow-sm">
     <div class="card-body">
 
@@ -73,24 +81,12 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
-                <select name="statusFilter" class="form-select">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="ACTIVE"
-                            selected="@(ViewBag.StatusFilter as string == "ACTIVE")">
-                        Đang hoạt động
-                    </option>
-                    <option value="INACTIVE"
-                            selected="@(ViewBag.StatusFilter as string == "INACTIVE")">
-                        Ngừng hoạt động
-                    </option>
-                </select>
-            </div>
+            <input type="hidden" name="archived" value="@(((bool?)ViewBag.Archived == true).ToString().ToLowerInvariant())" />
 
             <partial name="_ListSort" model="@(new ClinicManagementSystem.Web.Services.ListSortOptions(NameLabel: "Tên"))" />
     <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                <a asp-action="Index" data-filter-reset class="btn btn-outline-secondary">Đặt lại</a>
+                <a asp-action="Index" asp-route-archived="@ViewBag.Archived" data-filter-reset class="btn btn-outline-secondary">Đặt lại</a>
             </div>
         </form>
 
@@ -151,7 +147,7 @@
                                 </td>
 
                                 <td>
-                                    @if (product.Status == "ACTIVE")
+                                    @if ((product.Status is "Active" or "ACTIVE"))
                                     {
                                         <span class="badge bg-success">
                                             Đang hoạt động
@@ -174,16 +170,16 @@
                                         Sửa
                                     </a>
 
-                                    <form asp-action="ToggleStatus"
+                                    <form asp-action="ToggleStatus" asp-route-archived="@ViewBag.Archived"
                                           asp-route-id="@product.Id"
                                           method="post"
                                           class="d-inline">
                                         @Html.AntiForgeryToken()
 
                                         <button type="submit"
-                                                class="btn btn-sm @(product.Status == "ACTIVE" ? "btn-warning" : "btn-success")"
+                                                class="btn btn-sm @((product.Status is "Active" or "ACTIVE") ? "btn-warning" : "btn-success")"
                                                 onclick="return confirm('Bạn có muốn thay đổi trạng thái sản phẩm này?');">
-                                            @(product.Status == "ACTIVE" ? "Ngừng hoạt động" : "Kích hoạt")
+                                            @((product.Status is "Active" or "ACTIVE") ? "Ngừng hoạt động" : "Kích hoạt")
                                         </button>
                                     </form>
 

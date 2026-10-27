@@ -16,5 +16,7 @@ public interface IProductService
 
     Task<bool> UpdateAsync(long id, ProductFormViewModel model, string? actorId = null, string? actorName = null);
 
+    Task<bool> ToggleStatusAsync(long id, string? actorId = null, string? actorName = null);
+
     Task<bool> DeleteAsync(long id);
 }

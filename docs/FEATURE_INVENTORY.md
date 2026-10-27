@@ -2,6 +2,30 @@
 
 Mốc kiểm kê: **24/10/2026, `main@89a068d`**. Danh sách dưới đây phản ánh action và code thực tế, không phải danh sách ý tưởng.
 
+## Bổ sung 27/10/2026 — sản phẩm đang kinh doanh và Lưu trữ
+
+Đối chiếu máy hiện tại: `main@ca02ae6`, working tree sạch trước sửa. Phần dưới cập nhật các hành vi liên quan; các mục kiểm kê cũ vẫn giữ mốc riêng.
+
+| Phạm vi | Source và hợp đồng mới |
+|---|---|
+| Danh sách sản phẩm / Lưu trữ | C: `ProductController.cs` (`ProductsController.Index`, `archived`); S: `ProductService.GetAllAsync`; VM: `Products/ProductListViewModel`; V: `Products/Index`. Mặc định chỉ Active/ACTIVE; tab Lưu trữ chỉ Inactive/INACTIVE, gồm cả tồn 0, combo/dịch vụ. Giữ tìm mã/tên, danh mục, sort, paging và hiển thị tồn. `statusFilter=Inactive/INACTIVE` cũ vẫn mở lưu trữ. Người đăng nhập được xem. |
+| Lưu trữ / kích hoạt lại | `ProductsController.ToggleStatus` POST chỉ Admin, antiforgery; `IProductService`/`ProductService.ToggleStatusAsync` đổi riêng Status/UpdatedAt và ghi `ProductEditHistory` trong Serializable. Actor lấy từ claims. Nhận cả Active/ACTIVE; không ghi lại giá/tồn hoặc sửa thành phần combo. Trở lại tab đã chọn. Không đổi DeleteAsync. |
+| Tồn / Sắp hết hàng | `InventoryService.GetStockAsync` chỉ hàng thường Active/ACTIVE; điều kiện sắp hết vẫn tồn ≤ tối thiểu. `DashboardService.GetDashboardAsync.LowStockProducts` dùng cùng điều kiện và cả hai cách viết trạng thái; link cảnh báo trong `Dashboard/Index` mở `lowStockOnly=true`. Tổng sản phẩm trên dashboard vẫn là tổng danh mục mọi trạng thái. |
+| Kiểm / cân kho | `InventoryController.StockCount` GET/POST vẫn chỉ Admin; `IInventoryService`/`InventoryService.GetStockCountAsync` nhận `archived=false` mặc định. `Inventory/StockCount` có tab Lưu trữ còn tồn và đường vào từ Lưu trữ sản phẩm. Phạm vi này chỉ hàng thường Inactive/INACTIVE có CurrentStock > 0. Giữ search/sort/page/phạm vi qua GET, POST, lỗi và redirect thành công. VM `StockAdjustmentViewModel`/`StockCountRow` không đổi. |
+| Điều chỉnh tồn / lịch sử | `AdjustStockAsync` không đổi: cho Admin xử lý hàng lưu trữ, giữ ExpectedStock, Serializable, update có điều kiện, rollback và phiếu Adjustment. Cân về 0 thì hàng rời danh sách kiểm lưu trữ còn tồn nhưng vẫn có ở tab Lưu trữ sản phẩm. Cân kho không kích hoạt lại hàng. Không thêm global query filter; lịch sử kho/chứng từ không lọc Status. |
+| Chọn hàng cho giao dịch | Đã đối chiếu `InventoryController.LoadProductsAsync`, `ProductsController.LoadCategoriesAsync` (component options), `SaleService.LoadFormDataAsync` và GetProductPriceAsync: lựa chọn mới đã lọc Active/ACTIVE. Không đổi SaleService: giữ selectedIds cho dòng hóa đơn cũ, giá/dòng nguồn, sửa/sao chép và quy tắc xác nhận hiện có. |
+
+Không đổi entity, schema, migration, dữ liệu khách hàng hoặc chứng từ.
+
+Kiểm chứng thực chạy ngày 27/10/2026:
+
+- `dotnet build ClinicManagementSystem.Web -c Release --no-restore`: qua; warning baseline CS8602 ở ProductService.cs (nay dòng 58).
+- Node: `sale-product-search.test.cjs`, `search-picker.test.cjs`, `sale-pricing.test.cjs`: **19/19 qua**.
+- `dotnet run --project tests/PatientImport -c Release --no-restore -- --pricing`: qua sorting/SQL translation, CCCD, paging, pricing; NU1900 vì không tải được vulnerability feed.
+- Mở rộng `tests/PatientImport/StockCountTests.cs`: active/archive hai dạng Status, search/category/paging/tồn, dashboard count, kích hoạt/audit, cân hàng lưu trữ và lịch sử; giữ các ca stale/replay/rollback/blank/zero có sẵn. Đã chạy `--stock-count`, harness biên dịch và các ca không DB phía trước qua, nhưng **không hoàn tất tích hợp**: LocalDB lỗi 50, không tạo được automatic instance; cleanup EnsureDeleted cũng không kết nối được. Không kết luận các assertion DB đã qua.
+- `git diff --check`: qua. Không khởi động web app, update DB, import dữ liệu thật, commit/push hay triển khai.
+- **Chưa xác minh:** kiểm thử browser/HTTP phân quyền, DB integration bao gồm hóa đơn cũ/sửa/sao chép và triển khai thực. Harness chỉ nhắm DB tổng hợp `CodexStockCountTest_<GUID>`, không dùng DB ứng dụng.
+
 ## Cách đọc trạng thái
 
 - **Có code:** đã đối chiếu action/service và các kiểu/view liên quan tại commit trên.

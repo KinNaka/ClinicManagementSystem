@@ -42,11 +42,10 @@ public class ProductService : IProductService
             query = query.Where(x => x.CategoryId == categoryId.Value);
         }
 
-        // Filter by status
-        if (!string.IsNullOrWhiteSpace(statusFilter))
-        {
-            query = query.Where(x => x.Status == statusFilter);
-        }
+        // Operational lists default to active; archive reuses existing status values.
+        query = statusFilter is "Inactive" or "INACTIVE"
+            ? query.Where(x => x.Status == "Inactive" || x.Status == "INACTIVE")
+            : query.Where(x => x.Status == "Active" || x.Status == "ACTIVE");
 
         query = ListSorting.Apply(query, sort, x => x.CreatedAt, x => x.Name, x => x.Id);
         if (paging != null) query = await paging.ApplyAsync(query);
@@ -235,6 +234,25 @@ public class ProductService : IProductService
     private static List<ComboComponent> BuildComponents(ProductFormViewModel model) => model.IsCombo
         ? model.Components.Select(c => new ComboComponent { ComponentProductId = c.ComponentProductId, Quantity = c.Quantity }).ToList()
         : new();
+    public async Task<bool> ToggleStatusAsync(long id, string? actorId = null, string? actorName = null)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        var product = await _context.Products.SingleOrDefaultAsync(p => p.Id == id);
+        if (product == null) return false;
+        var previous = product.Status;
+        product.Status = previous is "Active" or "ACTIVE" ? "INACTIVE" : "ACTIVE";
+        product.UpdatedAt = DateTime.UtcNow;
+        _context.ProductEditHistories.Add(new ProductEditHistory {
+            ProductId = id, ProductCode = product.ProductCode, ProductName = product.Name,
+            ActorId = actorId, ActorName = actorName,
+            ChangedAt = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time"),
+            FieldName = nameof(Product.Status), OldValue = previous, NewValue = product.Status
+        });
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return true;
+    }
+
     public async Task<bool> DeleteAsync(long id)
     {
         var product = await _context.Products

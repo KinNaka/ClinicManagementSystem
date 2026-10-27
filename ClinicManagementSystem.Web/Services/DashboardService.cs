@@ -44,7 +44,7 @@ namespace ClinicManagementSystem.Web.Services
                 LowStockProducts = await _context.Products
                     .AsNoTracking()
                     .CountAsync(p =>
-                        p.Status == "Active" &&
+                        (p.Status == "Active" || p.Status == "ACTIVE") &&
                         !p.IsCombo && !p.IsService && p.CurrentStock <= p.MinimumStock),
 
                 TodaySalesCount = await _context.Sales

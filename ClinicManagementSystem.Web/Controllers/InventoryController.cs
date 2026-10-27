@@ -211,16 +211,16 @@ namespace ClinicManagementSystem.Web.Controllers
             return RedirectToAction(nameof(Receipts), new { payment = "unpaid" });
         }
         [HttpGet, Authorize(Roles = "Admin")]
-        public async Task<IActionResult> StockCount(int page = 1, string? searchTerm = null, string? sort = null)
+        public async Task<IActionResult> StockCount(int page = 1, string? searchTerm = null, string? sort = null, bool archived = false)
         {
             var paging = new ListPaging(page);
             ViewData["Paging"] = paging;
-            ViewData["SearchTerm"] = searchTerm;
-            return View(await _inventoryService.GetStockCountAsync(paging, searchTerm, sort));
+            ViewData["SearchTerm"] = searchTerm; ViewData["Archived"] = archived;
+            return View(await _inventoryService.GetStockCountAsync(paging, searchTerm, sort, archived));
         }
 
         [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin"), RequestFormLimits(ValueCountLimit = 30000)]
-        public async Task<IActionResult> StockCount(StockAdjustmentViewModel model, int page = 1, string? searchTerm = null, string? sort = null)
+        public async Task<IActionResult> StockCount(StockAdjustmentViewModel model, int page = 1, string? searchTerm = null, string? sort = null, bool archived = false)
         {
             if (ModelState.IsValid)
             {
@@ -228,11 +228,11 @@ namespace ClinicManagementSystem.Web.Controllers
                 {
                     var count = await _inventoryService.AdjustStockAsync(model, User.Identity?.Name);
                     TempData["Success"] = count == 0 ? "Tồn thực tế khớp hệ thống, không cần điều chỉnh." : $"Đã cân tồn kho cho {count} sản phẩm và lưu phiếu điều chỉnh.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(StockCount), new { archived, page, searchTerm, sort });
                 }
                 catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
             }
-            var paging = new ListPaging(page); ViewData["Paging"] = paging; ViewData["SearchTerm"] = searchTerm; var current = await _inventoryService.GetStockCountAsync(paging, searchTerm, sort);
+            var paging = new ListPaging(page); ViewData["Paging"] = paging; ViewData["SearchTerm"] = searchTerm; ViewData["Archived"] = archived; var current = await _inventoryService.GetStockCountAsync(paging, searchTerm, sort, archived);
             var entered = model.Details.GroupBy(d => d.ProductId).ToDictionary(g => g.Key, g => g.First());
             current.Reason = model.Reason;
             foreach (var row in current.Details)

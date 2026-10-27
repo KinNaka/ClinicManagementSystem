@@ -104,3 +104,7 @@ Không có căn cứ xác nhận lịch sử Git giải thích đầy đủ mọ
 ## Cập nhật chức năng 27/10/2026
 
 Bổ sung tab Lưu trữ cho sản phẩm ngừng kinh doanh, tìm kiếm/phân trang/tồn và Admin kích hoạt lại; danh sách thao tác sản phẩm/kho và cảnh báo sắp hết mặc định chỉ hàng đang kinh doanh. Admin kiểm/cân hàng lưu trữ còn tồn qua tab riêng. Không đổi schema, lịch sử chứng từ hoặc logic sản phẩm cũ trên hóa đơn. Audit trạng thái nay còn được ghi qua ProductService.ToggleStatusAsync. Chi tiết source và bằng chứng test/LocalDB bị chặn: FEATURE_INVENTORY, mục 27/10/2026. Browser/Production: **Chưa xác minh**.
+
+## Doanh thu ngày tùy chọn (27/10/2026)
+
+Staff/Admin có thể chọn ngày trên Dashboard/Revenue để xem tổng doanh thu, số hóa đơn và danh sách hóa đơn đã xác nhận của cả ngày Việt Nam, phân trang và mở chi tiết. Giữ tổng hôm nay/tuần; chỉ tính Confirmed theo SaleDate và TotalAmount đã lưu. Không thay schema/DB. Build và test không DB --revenue-day đã qua; SQL Server thực/browser/Production **Chưa xác minh**. Xem FEATURE_INVENTORY để biết source và giới hạn kiểm chứng.

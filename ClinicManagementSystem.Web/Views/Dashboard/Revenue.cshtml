@@ -1,6 +1,52 @@
 @model ClinicManagementSystem.Web.Models.ViewModels.Dashboard.StaffRevenueViewModel
-@{ ViewData["Title"] = "Doanh thu ngày / tuần"; }
-<h2 class="mb-4">Doanh thu ngày / tuần</h2>
+@{ ViewData["Title"] = "Doanh thu chi tiết"; var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN"); }
+<h2 class="mb-4">Doanh thu chi tiết</h2>
+<section class="card mb-4" aria-labelledby="daily-revenue-title">
+    <div class="card-body">
+        <h3 id="daily-revenue-title" class="h4">Doanh thu theo ngày</h3>
+        <form asp-action="Revenue" method="get" class="row g-2 align-items-end mb-3">
+            <div class="col-auto">
+                <label for="revenue-date" class="form-label">Chọn ngày</label>
+                <input id="revenue-date" name="date" type="date" required max="9999-12-30"
+                       value="@Model.SelectedDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" class="form-control" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Xem doanh thu</button>
+                <a asp-action="Revenue" class="btn btn-outline-secondary">Hôm nay</a>
+            </div>
+        </form>
+        <p class="text-muted">Ngày @Model.SelectedDate.ToString("dd/MM/yyyy"), từ 00:00 đến hết ngày theo giờ Việt Nam.</p>
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6"><div class="border rounded p-3"><div>Tổng doanh thu cả ngày</div><strong class="fs-3">@Model.SelectedRevenue.ToString("N2", culture) đ</strong></div></div>
+            <div class="col-sm-6"><div class="border rounded p-3"><div>Hóa đơn đã xác nhận</div><strong class="fs-3">@Model.SelectedSalesCount</strong></div></div>
+        </div>
+        <p class="text-muted">Tổng tính trên toàn bộ hóa đơn trong ngày, gồm giảm giá và thu khác đã ghi trên hóa đơn; không tính nháp hoặc hóa đơn nhập lịch sử. Đây là giá trị hóa đơn đã xác nhận, chưa phải tiền thực thu.</p>
+        @if (Model.Sales.Count == 0)
+        {
+            <p class="text-muted py-3">Không có hóa đơn đã xác nhận trong ngày này.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table data-mobile-cards class="table table-hover align-middle">
+                    <thead><tr><th>Mã hóa đơn</th><th>Giờ xác nhận</th><th>Bệnh nhân</th><th class="text-end">Giá trị hóa đơn</th><th>Thao tác</th></tr></thead>
+                    <tbody>
+                    @foreach (var sale in Model.Sales)
+                    {
+                        <tr>
+                            <td>@sale.SaleCode</td><td>@sale.SaleDate.ToString("HH:mm:ss")</td><td>@sale.PatientName</td>
+                            <td class="text-end">@sale.TotalAmount.ToString("N2", culture) đ</td>
+                            <td><a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="btn btn-sm btn-outline-primary" aria-label="Xem hóa đơn @sale.SaleCode">Xem chi tiết</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        <partial name="_ListPaging" model="@((ClinicManagementSystem.Web.Services.ListPaging?)ViewData["Paging"])" />
+    </div>
+</section>
+
 <section class="mb-4" aria-labelledby="staff-quick-title">
     <h3 id="staff-quick-title" class="h5 mb-3">Thao tác nhanh</h3>
     <div class="row g-3">

@@ -14,6 +14,7 @@
     <div><p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p><h1>Tổng quan phòng khám</h1><p class="muted">Các thông tin quan trọng, trong một góc nhìn.</p></div>
     <a class="action primary" asp-controller="Sales" asp-action="Create"><span aria-hidden="true">＋</span> Tạo hóa đơn</a>
 </div>
+<a asp-action="Revenue" class="btn btn-outline-primary mb-3">Xem doanh thu theo ngày</a>
 <section class="welcome-banner" aria-label="Thông tin hôm nay">
     <div><span class="today-label">HÔM NAY · @now.ToString("dd/MM/yyyy")</span><h2>Sẵn sàng cho một ngày làm việc mới</h2><p>Theo dõi hoạt động và chăm sóc bệnh nhân từ đây.</p></div>
     <a class="action banner-action" asp-controller="Patients" asp-action="Create">＋ Thêm bệnh nhân</a>

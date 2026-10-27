@@ -208,3 +208,7 @@ Thiếu thông tin cần chủ dự án cung cấp khi quay lại: máy chủ/c�
 ## Kiểm tra bổ sung 27/10/2026 — Lưu trữ sản phẩm
 
 `StockCountTests` mở rộng kiểm tra mặc định Active/ACTIVE và Lưu trữ Inactive/INACTIVE, tồn dương khi kiểm kho lưu trữ, kích hoạt/audit và lịch sử. Chạy bằng `dotnet run --project tests/PatientImport -c Release --no-restore -- --stock-count` chỉ trên LocalDB thử nghiệm; harness sinh DB CodexStockCountTest_<GUID>, cleanup có kiểm tra tên. Lượt này biên dịch được nhưng tích hợp bị chặn bởi LocalDB lỗi 50/automatic instance; không đổi sang DB ứng dụng để vượt lỗi. Build Release, 19 Node test picker/pricing và nhánh --pricing qua; chi tiết tại FEATURE_INVENTORY. Tính năng không cần migration. Kiểm tra browser/HTTP và hồi quy DB hóa đơn cũ/sửa/sao chép: **Chưa xác minh**.
+
+## Kiểm tra doanh thu theo ngày (27/10/2026)
+
+`dotnet run --project tests/PatientImport -c Release --no-restore -- --revenue-day` là nhánh dừng sớm không DB: test ranh giới ngày/năm nhuận/chuyển năm, trạng thái hóa đơn, decimal, paging, dịch SQL và controller với spy. Lượt bổ sung đã chạy qua cùng web Release build; vẫn có CS8602 baseline/NU1900 feed. Kiểm chứng SQL Server/browser/HTTP: **Chưa xác minh**. Không cần migration. Chi tiết tại FEATURE_INVENTORY.

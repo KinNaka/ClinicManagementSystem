@@ -1,4 +1,4 @@
-﻿
+
 using ClinicManagementSystem.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,9 +27,19 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Revenue()
+        public async Task<IActionResult> Revenue(string? date = null, int page = 1)
         {
-            return View(await _dashboardService.GetStaffRevenueAsync());
+            DateOnly? selectedDate = null;
+            if (!string.IsNullOrWhiteSpace(date))
+            {
+                if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var parsed) || parsed == DateOnly.MaxValue)
+                    return BadRequest("Ngày không hợp lệ. Vui lòng chọn lại ngày theo định dạng yyyy-MM-dd.");
+                selectedDate = parsed;
+            }
+            var paging = new ListPaging(page);
+            ViewData["Paging"] = paging;
+            return View(await _dashboardService.GetStaffRevenueAsync(selectedDate, paging));
         }
     }
 }

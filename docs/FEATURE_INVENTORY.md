@@ -158,3 +158,14 @@ Các điểm cần xử lý khi được giao yêu cầu tiếp theo:
 4. Audit không phải nhật ký toàn hệ thống, không có dữ liệu quá khứ trước lúc bật tính năng.
 5. `Inventory/Details.cshtml` là placeholder không có action; Home/Privacy là template, không ghi là tính năng đã hoàn thiện.
 6. Roadmap nghiệp vụ, mức ưu tiên và người nghiệm thu: **Chưa xác minh**. Các giới hạn trên không tự cho phép AI triển khai thêm tính năng ngoài yêu cầu.
+
+## Bổ sung 27/10/2026 — doanh thu ngày tùy chọn
+
+Đối chiếu trước sửa: `main@77bc676`, working tree sạch. `DashboardController.Revenue(date,page)` (Admin,Staff) mở rộng màn hình hiện có, nhận ngày ISO yyyy-MM-dd; mặc định ngày hiện tại ở Việt Nam. Ngày sai/không tồn tại hoặc 9999-12-31 bị từ chối trước khi query. Admin vào từ nút Xem doanh thu theo ngày tại Dashboard/Index; Staff vẫn vào Revenue khi mở Dashboard.
+
+- S: `IDashboardService`/`DashboardService.GetStaffRevenueAsync(date,paging)` giữ tổng hôm nay/tuần hiện có, bổ sung tổng và số hóa đơn ngày chọn; `RevenueSalesForDay` dùng Confirmed và SaleDate trong [00:00 ngày chọn, 00:00 ngày kế). Không dùng CreatedAt, không lọc trạng thái sản phẩm/bệnh nhân, không cộng Draft/Imported.
+- E: Sale, Patient hiện có, không đổi schema/migration. VM: `Dashboard/StaffRevenueViewModel` thêm SelectedDate/SelectedRevenue/SelectedSalesCount/Sales; `RevenueSaleViewModel` cùng file gồm mã, giờ xác nhận, tên bệnh nhân, tổng tiền và ID.
+- V: `Dashboard/Revenue` có chọn ngày, Hôm nay, tổng cả ngày, số hóa đơn và danh sách phân trang 10 dòng theo SaleDate rồi Id, liên kết Sales/Details. Tổng tiền lấy TotalAmount đã lưu (sau giảm giá/thu khác), không tính lại từ giá sản phẩm hiện tại, không phải tiền thực thu. Ngày chọn được giữ trong query string khi phân trang. View Index thêm lối vào cho Admin. Không thay nghiệp vụ hóa đơn/kho.
+- Có test mới `tests/PatientImport/RevenueDayTests.cs`, nhánh dừng sớm `--revenue-day`: dữ liệu tổng hợp in-memory, translation SQL bằng ToQueryString, spy controller; không mở kết nối, không tạo/xóa DB. `DashboardRoleTests` cập nhật chữ ký spy theo interface, chưa chạy lại toàn nhóm vì có assertion baseline không khớp quyền xóa hóa đơn Admin,Staff hiện tại.
+- Đã chạy: web Release build qua (CS8602 baseline ProductService.cs:58); `dotnet run --project tests/PatientImport -c Release --no-restore -- --revenue-day` qua (biên ngày/năm nhuận/chuyển năm, Confirmed-only/null date, tiền decimal, ngày trống, paging, SQL translation, input ngày và khai báo quyền); NU1900 do không truy cập vulnerability feed. `git diff --check` qua.
+- **Chưa xác minh:** dữ liệu/tổng hợp và phân trang trên SQL Server thực, phân quyền qua HTTP, giao diện browser/mobile. Không chạy app, seed, update DB, import, commit/push hoặc triển khai.

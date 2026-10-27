@@ -10,6 +10,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
+if (args.Contains("--revenue-day")) { await RevenueDayTests.RunAsync(); return; }
 var root = Path.GetFullPath("ClinicManagementSystem.Web");
 if (args.Contains("--product-history-sale-date")) { await ProductHistoryAndSaleDateTests.RunAsync(); return; }
 if (args.Contains("--sale-adjustments")) { await SaleAdjustmentTests.RunAsync(); return; }

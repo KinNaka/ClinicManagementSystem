@@ -35,6 +35,6 @@ static class DashboardRoleTests
     {
         public int FullCalls, StaffCalls;
         public Task<DashboardViewModel> GetDashboardAsync() { FullCalls++; return Task.FromResult(new DashboardViewModel()); }
-        public Task<StaffRevenueViewModel> GetStaffRevenueAsync() { StaffCalls++; return Task.FromResult(new StaffRevenueViewModel()); }
+        public Task<StaffRevenueViewModel> GetStaffRevenueAsync(DateOnly? date = null, ListPaging? paging = null) { StaffCalls++; return Task.FromResult(new StaffRevenueViewModel()); }
     }
 }

@@ -41,8 +41,8 @@ namespace ClinicManagementSystem.Web.Services
             }
 
             var (start, end) = DatePeriod.Bounds(period);
-            if (start.HasValue) query = query.Where(s => s.SaleDate >= start.Value && s.SaleDate < end!.Value);
-            query = ListSorting.Apply(query, sort, s => s.SaleDate, s => s.SaleCode, s => s.Id);
+            if (start.HasValue) query = query.Where(s => (s.Status == "Draft" ? (DateTime?)s.CreatedAt : s.SaleDate) >= start.Value && (s.Status == "Draft" ? (DateTime?)s.CreatedAt : s.SaleDate) < end!.Value);
+            query = ListSorting.Apply(query, sort, s => s.Status == "Draft" ? (DateTime?)s.CreatedAt : s.SaleDate, s => s.SaleCode, s => s.Id);
             var totalCount = await query.CountAsync();
             page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalCount / (double)SaleIndexViewModel.PageSize)));
             var sales = await query
@@ -56,6 +56,7 @@ namespace ClinicManagementSystem.Web.Services
                     PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
                     PatientName = s.SourcePatientName ?? s.Patient.FullName,
                     SaleDate = s.SaleDate,
+                    CreatedAt = s.CreatedAt,
                     TotalAmount = s.TotalAmount,
                     Status = s.Status
                 })
@@ -90,6 +91,7 @@ namespace ClinicManagementSystem.Web.Services
                     PatientCode = s.SourcePatientCode ?? s.Patient.PatientCode,
                     PatientName = s.SourcePatientName ?? s.Patient.FullName,
                     SaleDate = s.SaleDate,
+                    CreatedAt = s.CreatedAt,
                     Status = s.Status,
                     Notes = s.Notes,
                     TotalAmount = s.TotalAmount,
@@ -286,6 +288,7 @@ namespace ClinicManagementSystem.Web.Services
             var total = pricing.Total;
             if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
 
+            var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
             var sale = new Sale
             {
                 SaleCode = "SALE-" +
@@ -300,8 +303,8 @@ namespace ClinicManagementSystem.Web.Services
                 ImportedSurcharge = decimal.Round(model.Surcharge, 2, MidpointRounding.AwayFromZero),
                 SourcePatientName = source?.PatientId == model.PatientId ? source.SourcePatientName : null,
                 SourcePatientCode = source?.PatientId == model.PatientId ? source.SourcePatientCode : null,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
+                CreatedAt = now,
+                UpdatedAt = now,
                 Details = details
             };
 

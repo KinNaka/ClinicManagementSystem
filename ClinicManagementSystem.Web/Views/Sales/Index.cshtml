@@ -74,7 +74,7 @@
         <thead class="table-light">
             <tr>
                 <th>Mã hóa đơn</th>
-                <th>Ngày bán</th>
+                <th>Thời gian hóa đơn</th>
                 <th>Mã bệnh nhân</th>
                 <th>Họ và tên</th>
                 <th class="text-end">Tổng tiền</th>
@@ -100,7 +100,7 @@
                     <tr>
                         <td>@sale.SaleCode</td>
                         <td>
-                            @(sale.SaleDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")
+                            @(sale.DisplayDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")
                         </td>
                         <td>@sale.PatientCode</td>
                         <td>@sale.PatientName</td>

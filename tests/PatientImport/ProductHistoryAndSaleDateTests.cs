@@ -37,15 +37,27 @@ static class ProductHistoryAndSaleDateTests
             Check(await db.ProductEditHistories.AnyAsync(h => h.FieldName == "SellingPrice" && h.ActorId == "admin-2"), "Second admin price history missing.");
             var sales = new SaleService(db);
             var draftForm = new SaleFormViewModel { PatientId = patient.Id, Details = new() { new() { ProductId = product.Id, Quantity = 1 } } };
+            var createdBefore = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
             var id = await sales.CreateAsync(draftForm);
             db.ChangeTracker.Clear();
             var draft = await db.Sales.SingleAsync(s => s.Id == id);
             Check(draft.SaleDate == null && draft.Status == "Draft", "Draft must not have sale date.");
-            draft.CreatedAt = DateTime.Now.AddDays(-2); await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+            Check(draft.CreatedAt >= createdBefore, "New draft creation time must use Vietnam time.");
+            var draftDate = createdBefore.AddDays(-2);
+            draft.CreatedAt = draftDate; await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+            Check((await sales.GetByIdAsync(id))!.DisplayDate == draftDate, "Old draft must display its stored creation time.");
+            Check((await sales.GetAllAsync(null, "Draft")).Sales.Single().DisplayDate == draftDate, "Draft list must display creation time.");
+            Check(!(await sales.GetAllAsync(null, "Draft", period: "today")).Sales.Any(), "Old draft must be excluded from today's filter.");
+            var edit = (await sales.GetDraftAsync(id))!;
+            await sales.UpdateDraftAsync(id, edit); db.ChangeTracker.Clear();
+            Check((await sales.GetByIdAsync(id))!.DisplayDate == draftDate, "Editing must preserve draft creation time.");
             var before = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
             await sales.ConfirmAsync(id); db.ChangeTracker.Clear();
             var confirmed = await db.Sales.SingleAsync(s => s.Id == id);
             Check(confirmed.SaleDate >= before && confirmed.Status == "Confirmed", "Confirmation must set today's sale date.");
+            Check((await sales.GetByIdAsync(id))!.DisplayDate == confirmed.SaleDate, "Confirmed invoice must display confirmation time.");
+            Check((await sales.GetAllAsync(null, "Confirmed", period: "today")).Sales.Single().DisplayDate == confirmed.SaleDate, "Confirmed list/filter must use confirmation time.");
+            Check(confirmed.CreatedAt == draftDate, "Confirmation must preserve original creation time.");
             var movement = await db.InventoryTransactions.SingleAsync();
             Check(movement.TransactionDate == confirmed.SaleDate, "Stock and invoice dates must match.");
             try { await sales.ConfirmAsync(id); throw new Exception("Repeated confirmation accepted."); } catch (InvalidOperationException) { }
@@ -58,6 +70,7 @@ static class ProductHistoryAndSaleDateTests
             try { await sales.ConfirmAsync(failed.Id); throw new Exception("Insufficient stock accepted."); } catch (InvalidOperationException) { }
             var retained = await db.Sales.AsNoTracking().SingleAsync(s => s.Id == failed.Id);
             Check(retained.Status == "Draft" && retained.SaleDate == null, "Failed confirmation persisted sale date.");
+            Check((await sales.GetByIdAsync(failed.Id))!.DisplayDate == retained.CreatedAt, "Failed confirmation must retain draft display time.");
             Console.WriteLine("PASS: admin access, two-admin audit, no-op edit, undated draft, confirmation date, repeat/failed confirmation, current stock labels.");
         }
         finally { await db.Database.EnsureDeletedAsync(); }

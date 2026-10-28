@@ -137,3 +137,7 @@ dotnet ef database update --project ClinicManagementSystem.Web
 
 Lệnh này lấy cấu hình theo môi trường hiện tại; nó không tự biết máy Development/Production bạn định cập nhật. Không chạy ứng dụng để thăm dò schema, vì startup có thể seed roles/Admin.
 
+
+## Cập nhật 28/10/2026 — thời gian nháp
+
+Không đổi schema/migration/snapshot. Draft vẫn SaleDate=null, giao diện lấy CreatedAt hiện có; Confirmed/Imported lấy SaleDate. Nháp mới qua SaleService.CreateAsync lưu CreatedAt/UpdatedAt bằng giờ Việt Nam thay DateTime.Now. Nháp cũ dùng nguyên CreatedAt đã lưu, múi giờ lịch sử **Chưa xác minh**; không chạy backfill. Xác nhận vẫn ghi SaleDate và phiếu xuất cùng transaction.

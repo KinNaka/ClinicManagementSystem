@@ -102,7 +102,7 @@
                             <tr>
                                 <td>@(history.Offset + i + 1)</td>
                                 <td><a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="patient-details-link">@sale.SaleCode</a></td>
-                                <td>@(sale.SaleDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")</td>
+                                <td>@(sale.DisplayDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xác nhận")</td>
                                 <td class="text-end">@sale.TotalAmount.ToString("N0", culture) ₫</td>
                                 <td>
                                     @if (sale.Status == "Confirmed") { <span class="badge bg-success">Đã xác nhận</span> }

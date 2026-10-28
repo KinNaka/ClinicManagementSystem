@@ -92,7 +92,7 @@ namespace ClinicManagementSystem.Web.Services
 
             // Include drafts with their status; fetch only the requested ten invoices.
             var query = _context.Sales.AsNoTracking().Where(s => s.PatientId == id);
-            query = ListSorting.Apply(query, sort, s => s.SaleDate, s => s.SaleCode, s => s.Id);
+            query = ListSorting.Apply(query, sort, s => s.Status == "Draft" ? (DateTime?)s.CreatedAt : s.SaleDate, s => s.SaleCode, s => s.Id);
             var history = new PatientPurchaseHistoryViewModel(await query.CountAsync(), page);
             history.Sales = await query
                 .Skip(history.Offset)
@@ -105,6 +105,7 @@ namespace ClinicManagementSystem.Web.Services
                     PatientCode = patient.PatientCode,
                     PatientName = patient.FullName,
                     SaleDate = s.SaleDate,
+                    CreatedAt = s.CreatedAt,
                     TotalAmount = s.TotalAmount,
                     Status = s.Status
                 })

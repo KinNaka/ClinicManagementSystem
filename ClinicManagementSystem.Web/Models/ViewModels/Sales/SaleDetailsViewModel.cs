@@ -21,6 +21,10 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
 
         public DateTime? SaleDate { get; set; }
 
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime? DisplayDate => Status == "Draft" ? CreatedAt : SaleDate;
+
         public string Status { get; set; } = string.Empty;
 
         public string? Notes { get; set; }

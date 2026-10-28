@@ -212,3 +212,7 @@ Thiếu thông tin cần chủ dự án cung cấp khi quay lại: máy chủ/c�
 ## Kiểm tra doanh thu theo ngày (27/10/2026)
 
 `dotnet run --project tests/PatientImport -c Release --no-restore -- --revenue-day` là nhánh dừng sớm không DB: test ranh giới ngày/năm nhuận/chuyển năm, trạng thái hóa đơn, decimal, paging, dịch SQL và controller với spy. Lượt bổ sung đã chạy qua cùng web Release build; vẫn có CS8602 baseline/NU1900 feed. Kiểm chứng SQL Server/browser/HTTP: **Chưa xác minh**. Không cần migration. Chi tiết tại FEATURE_INVENTORY.
+
+## Kiểm tra thời gian nháp (28/10/2026)
+
+Web Release build --no-restore qua (CS8602 baseline ProductService.cs:58). `dotnet run --project tests/PatientImport -c Release --no-restore -- --product-history-sale-date` đã biên dịch nhưng LocalDB mssqllocaldb chưa chạy, dừng ở ResolveAsync trước EnsureCreated; assertion tích hợp **Chưa xác minh**. Harness chỉ dùng DB tổng hợp CodexHistoryDate_<GUID>. Đã bổ sung ca nháp cũ, ngày tạo Việt Nam, list/filter/edit và ngày hiển thị sau xác nhận/lỗi. Không đổi schema hoặc chạy update DB; khi kiểm tra browser dùng tài khoản/dữ liệu thử được phép. Nháp cũ hiển thị CreatedAt nguyên trạng, không tự chuyển múi giờ lịch sử.

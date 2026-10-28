@@ -151,3 +151,7 @@ StockCount GET/POST chỉ Admin nhận `archived`; true chỉ liệt kê hàng t
 ## Cập nhật 27/10/2026 — doanh thu ngày chọn
 
 Revenue tiếp tục dùng DashboardController/IDashboardService và StaffRevenueViewModel, quyền Admin,Staff. Ngày chọn yyyy-MM-dd được kiểm ở controller; service mặc định ngày Việt Nam. RevenueSalesForDay lọc Confirmed theo SaleDate với cận đầu bao gồm/cận cuối loại trừ của cả ngày. Tổng tiền lấy TotalAmount đã lưu trên toàn bộ query trước phân trang; chi tiết 10 dòng theo SaleDate/Id dùng ListPaging hiện có. Giữ tổng hôm nay/tuần và quy tắc không cộng Draft/Imported; không đổi schema hay ghi dữ liệu. Kiểm chứng và giới hạn xem FEATURE_INVENTORY, mục doanh thu ngày tùy chọn.
+
+## Cập nhật 28/10/2026 — ngày hiển thị nháp
+
+Draft giữ SaleDate=null và ngày tạo riêng. SaleService.CreateAsync ghi CreatedAt/UpdatedAt theo giờ Việt Nam. SaleListViewModel/SaleDetailsViewModel.DisplayDate chọn CreatedAt khi Draft, SaleDate cho trạng thái khác; danh sách/chi tiết/in/lịch sử bệnh nhân dùng ngày này. Lọc ngày Sales và sắp xếp Sales/lịch sử bệnh nhân áp dụng cùng lựa chọn ở SQL trước phân trang. Confirm thành công chuyển ngày hiển thị sang SaleDate; giữ nguyên transaction, chống lặp, kho và doanh thu Confirmed. Không chuẩn hóa lại timestamps cũ.

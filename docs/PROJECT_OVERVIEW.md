@@ -109,6 +109,10 @@ Bổ sung tab Lưu trữ cho sản phẩm ngừng kinh doanh, tìm kiếm/phân 
 
 Staff/Admin có thể chọn ngày trên Dashboard/Revenue để xem tổng doanh thu, số hóa đơn và danh sách hóa đơn đã xác nhận của cả ngày Việt Nam, phân trang và mở chi tiết. Giữ tổng hôm nay/tuần; chỉ tính Confirmed theo SaleDate và TotalAmount đã lưu. Không thay schema/DB. Build và test không DB --revenue-day đã qua; SQL Server thực/browser/Production **Chưa xác minh**. Xem FEATURE_INVENTORY để biết source và giới hạn kiểm chứng.
 
+## Dashboard Admin: top và lịch sử (16/11/2026)
+
+Admin có bộ lọc tùy chọn/theo tháng/theo năm, khoảng ngày và Top 10/20/50/100 khách hàng/sản phẩm. Top tính từ chứng từ Confirmed + Imported đang còn trong Sales/SaleDetails; doanh thu báo cáo vẫn là tổng Confirmed để không cộng lại hóa đơn import. Imported thể hiện tên/chi tiết lịch sử trong các bảng top. Lịch sử chỉnh sửa sản phẩm không phải lịch sử bán. Không đổi schema. Web Release build qua; DB/browser/Production **Chưa xác minh**. Xem FEATURE_INVENTORY.
+
 ## Thời gian hóa đơn nháp (28/10/2026)
 
 Nháp hiển thị ngày giờ tạo ở danh sách, chi tiết, lịch sử bệnh nhân và bản in; lọc/sắp xếp nháp theo ngày tạo. Xác nhận thành công thì hiển thị thời gian xác nhận Việt Nam. Tái sử dụng CreatedAt/SaleDate, không cần migration; doanh thu vẫn chỉ Confirmed. Web Release build qua; test tích hợp ngày hóa đơn bị chặn vì LocalDB chưa chạy. Browser/Production **Chưa xác minh**. Chi tiết tại FEATURE_INVENTORY.

@@ -15,6 +15,22 @@
     <a class="action primary" asp-controller="Sales" asp-action="Create"><span aria-hidden="true">＋</span> Tạo hóa đơn</a>
 </div>
 <a asp-action="Revenue" class="btn btn-outline-primary mb-3">Xem doanh thu theo ngày</a>
+<section class="panel mb-4">
+    <div class="panel-heading"><div><h2>Báo cáo doanh thu và khách hàng, sản phẩm</h2><p class="muted">Thống kê chứng từ đã xác nhận và hóa đơn lịch sử đã nhập.</p></div></div>
+    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-4">
+        <div class="col-auto"><label class="form-label" for="period">Khoảng lọc</label><select class="form-select" id="period" name="period"><option value="custom" selected="@(Model.PeriodMode == "custom")">Tùy chọn</option><option value="month" selected="@(Model.PeriodMode == "month")">Theo tháng</option><option value="year" selected="@(Model.PeriodMode == "year")">Theo năm</option></select></div>
+        <div class="col-auto"><label class="form-label" for="start">Từ ngày</label><input class="form-control" type="date" id="start" name="start" value="@Model.ReportStart.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-auto"><label class="form-label" for="end">Đến ngày</label><input class="form-control" type="date" id="end" name="end" value="@Model.ReportEnd.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-auto"><label class="form-label" for="top">Số lượng hiển thị</label><select class="form-select" id="top" name="top">@foreach (var n in new[] { 10, 20, 50, 100 }) { <option value="@n" selected="@(Model.TopCount == n)">Top @n</option> }</select></div>
+        <div class="col-auto"><button class="btn btn-primary" type="submit">Lọc báo cáo</button></div>
+    </form>
+    <p><strong>Kỳ báo cáo:</strong> @Model.ReportStart.ToString("dd/MM/yyyy") – @Model.ReportEnd.ToString("dd/MM/yyyy")</p>
+    <p><strong>Doanh thu xác nhận:</strong> @Model.ReportRevenue.ToString("N0", culture) ₫ <span class="text-muted">(không bao gồm hóa đơn nhập lịch sử)</span></p>
+    <div class="row g-4">
+        <div class="col-xl-6"><h3 class="h5">Khách hàng theo tổng giá trị hóa đơn</h3><div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>Khách hàng</th><th class="text-end">Hóa đơn</th><th class="text-end">Giá trị gồm lịch sử</th></tr></thead><tbody>@for (var i = 0; i < Model.TopCustomers.Count; i++) { var row = Model.TopCustomers[i]; <tr><td>@(i + 1)</td><td>@row.Name</td><td class="text-end">@row.SaleCount</td><td class="text-end">@row.Amount.ToString("N0", culture) ₫</td></tr> }</tbody></table></div></div>
+        <div class="col-xl-6"><h3 class="h5">Sản phẩm theo doanh thu</h3><div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>Sản phẩm</th><th class="text-end">Số lượng</th><th class="text-end">Thành tiền</th></tr></thead><tbody>@for (var i = 0; i < Model.TopProducts.Count; i++) { var row = Model.TopProducts[i]; <tr><td>@(i + 1)</td><td>@row.Name</td><td class="text-end">@row.Quantity.ToString("N2", culture)</td><td class="text-end">@row.Amount.ToString("N0", culture) ₫</td></tr> }</tbody></table></div></div>
+    </div>
+</section>
 <section class="welcome-banner" aria-label="Thông tin hôm nay">
     <div><span class="today-label">HÔM NAY · @now.ToString("dd/MM/yyyy")</span><h2>Sẵn sàng cho một ngày làm việc mới</h2><p>Theo dõi hoạt động và chăm sóc bệnh nhân từ đây.</p></div>
     <a class="action banner-action" asp-controller="Patients" asp-action="Create">＋ Thêm bệnh nhân</a>

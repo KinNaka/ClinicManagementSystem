@@ -17,13 +17,25 @@ namespace ClinicManagementSystem.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? start, string? end, string? period = "custom", int top = 10)
         {
             if (!User.IsInRole("Admin")) return RedirectToAction(nameof(Revenue));
-            var model = await _dashboardService
-                .GetDashboardAsync();
+            if (!ParseDate(start, out var reportStart) || !ParseDate(end, out var reportEnd) ||
+                (reportStart.HasValue != reportEnd.HasValue) || (reportStart.HasValue && reportEnd < reportStart) ||
+                (reportStart.HasValue && reportEnd!.Value.DayNumber - reportStart.Value.DayNumber > 3660) ||
+                !new[] { 10, 20, 50, 100 }.Contains(top) || !new[] { "custom", "month", "year" }.Contains(period ?? "custom"))
+                return BadRequest("Khoảng thời gian hoặc số lượng top không hợp lệ.");
+            var model = await _dashboardService.GetDashboardAsync(reportStart, reportEnd, period ?? "custom", top);
 
             return View(model);
+        }
+
+        private static bool ParseDate(string? value, out DateOnly? date)
+        {
+            date = null;
+            if (string.IsNullOrWhiteSpace(value)) return true;
+            if (!DateOnly.TryParseExact(value, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed)) return false;
+            date = parsed; return true;
         }
 
         [HttpGet]

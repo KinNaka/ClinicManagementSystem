@@ -14,7 +14,7 @@ namespace ClinicManagementSystem.Web.Services
             _context = context;
         }
 
-        public async Task<DashboardViewModel> GetDashboardAsync()
+        public async Task<DashboardViewModel> GetDashboardAsync(DateOnly? start = null, DateOnly? end = null, string periodMode = "custom", int topCount = 10)
         {
             // Ngày hiện tại theo múi giờ Việt Nam.
             var vietnamTimeZone =
@@ -93,6 +93,26 @@ namespace ClinicManagementSystem.Web.Services
                     })
                     .ToList();
 
+            var reportEnd = end ?? DateOnly.FromDateTime(today);
+            var reportStart = start ?? (periodMode == "month"
+                ? new DateOnly(reportEnd.Year, reportEnd.Month, 1)
+                : periodMode == "year" ? new DateOnly(reportEnd.Year, 1, 1) : reportEnd.AddDays(-29));
+            var from = reportStart.ToDateTime(TimeOnly.MinValue);
+            var until = reportEnd.ToDateTime(TimeOnly.MinValue).AddDays(1);
+            var historic = _context.Sales.AsNoTracking().Where(s =>
+                (s.Status == "Confirmed" || s.Status == "Imported") && s.SaleDate >= from && s.SaleDate < until);
+            model.ReportStart = reportStart; model.ReportEnd = reportEnd; model.PeriodMode = periodMode; model.TopCount = topCount;
+            model.ReportRevenue = await historic.Where(s => s.Status == "Confirmed").SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
+            var customerRows = await historic.GroupBy(s => new { s.PatientId, s.SourcePatientName, PatientName = s.Patient.FullName })
+                .Select(g => new { g.Key.PatientId, Name = g.Key.SourcePatientName ?? g.Key.PatientName, Count = g.Count(), Amount = g.Sum(s => s.TotalAmount) })
+                .OrderByDescending(x => x.Amount).ThenBy(x => x.Name).Take(topCount).ToListAsync();
+            model.TopCustomers = customerRows.Select(x => new DashboardCustomerRow { PatientId = x.PatientId, Name = x.Name, SaleCount = x.Count, Amount = x.Amount }).ToList();
+            var productRows = await _context.SaleDetails.AsNoTracking()
+                .Where(d => (d.Sale.Status == "Confirmed" || d.Sale.Status == "Imported") && d.Sale.SaleDate >= from && d.Sale.SaleDate < until)
+                .GroupBy(d => new { d.ProductId, Name = d.SourceProductName ?? d.Product.Name })
+                .Select(g => new { g.Key.ProductId, g.Key.Name, Quantity = g.Sum(d => d.Quantity), Amount = g.Sum(d => d.LineTotal) })
+                .OrderByDescending(x => x.Amount).ThenBy(x => x.Name).Take(topCount).ToListAsync();
+            model.TopProducts = productRows.Select(x => new DashboardProductRow { ProductId = x.ProductId, Name = x.Name, Quantity = x.Quantity, Amount = x.Amount }).ToList();
             return model;
         }
 

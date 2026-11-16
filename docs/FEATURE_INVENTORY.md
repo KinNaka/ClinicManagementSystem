@@ -1,5 +1,13 @@
 # FEATURE INVENTORY
 
+## Bổ sung 16/11/2026 — báo cáo Dashboard Admin
+
+- C: `DashboardController.Index(start,end,period,top)` chỉ cho Admin xem dashboard (Staff vẫn redirect Revenue), kiểm tra ngày và top ∈ 10/20/50/100; khoảng tối đa 10 năm.
+- S: `IDashboardService.GetDashboardAsync` và `DashboardService` giữ các thẻ/chart hiện tại, thêm tổng doanh thu Confirmed và top khách hàng/sản phẩm cho kỳ chọn. Phạm vi thống kê top bao gồm `Confirmed` và `Imported`, dùng `SaleDate` của chứng từ lịch sử, source name để giữ tên nhập cũ; không dùng nháp, không cộng `LegacyTotalSales`. Sản phẩm xếp theo tổng `LineTotal`, hiển thị tổng Quantity. View có chọn tùy chọn/tháng/năm, ngày bắt đầu/kết thúc, top 10/20/50/100.
+- `ProductEditHistory` chỉ là lịch sử chỉnh sửa thuộc tính sản phẩm; không phải lịch sử bán, không được cộng vào doanh thu. Imported invoice totals không cộng vào ReportRevenue Confirmed; giá trị của chúng thể hiện trong cột top khách/sản phẩm.
+- Không đổi schema, migration hoặc hợp đồng tạo/xác nhận/xóa hóa đơn. Báo cáo dựa vào dữ liệu lịch sử hiện có trong Sales/SaleDetails; các bản ghi đã xóa hoặc thiếu detail không thể khôi phục.
+- Kiểm chứng: `dotnet build ClinicManagementSystem.Web -c Release --no-restore` qua, 0 warning/0 error. Chưa chạy test DB, browser hoặc Production.
+
 Mốc kiểm kê: **24/10/2026, `main@89a068d`**. Danh sách dưới đây phản ánh action và code thực tế, không phải danh sách ý tưởng.
 
 ## Bổ sung 27/10/2026 — sản phẩm đang kinh doanh và Lưu trữ

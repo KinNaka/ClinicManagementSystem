@@ -158,6 +158,7 @@
             const form = document.getElementById("saleForm");
             const error = document.getElementById("productError");
             const priceUrl = '@Url.Action("GetProductPrice", "Sales")';
+            const benefitUrl = '@Url.Action("GetPatientGroupBenefit", "Sales")';
             const formatter = new Intl.NumberFormat("vi-VN", {
                 maximumFractionDigits: 2
             });
@@ -165,6 +166,28 @@
             const discountInput = document.getElementById("Discount");
             const discountType = document.getElementById("DiscountType");
             const surchargeInput = document.getElementById("Surcharge");
+            const patientSelect = document.getElementById("PatientId");
+            const groupBenefit = document.createElement("small");
+            groupBenefit.className = "text-success d-block mt-2";
+            patientSelect.parentElement.appendChild(groupBenefit);
+            async function updateGroupBenefit() {
+                if (!patientSelect.value || patientSelect.value === "0") { groupBenefit.textContent = ""; return; }
+                const selectedPatientId = patientSelect.value;
+                try {
+                    const response = await fetch(`${benefitUrl}?patientId=${encodeURIComponent(selectedPatientId)}`);
+                    if (!response.ok) return;
+                    const benefit = await response.json();
+                    if (patientSelect.value !== selectedPatientId) return;
+                    if (benefit.groupId) {
+                        discountType.value = benefit.discountType; discountInput.value = benefit.discountValue;
+                        discountInput.readOnly = true; groupBenefit.textContent = `Tự áp dụng ưu đãi nhóm ${benefit.groupName}`;
+                    } else {
+                        discountInput.readOnly = false; discountType.value = "Amount"; discountInput.value = "0"; groupBenefit.textContent = "";
+                    }
+                    calculate();
+                } catch { groupBenefit.textContent = "Không tải được ưu đãi nhóm."; }
+            }
+            patientSelect.addEventListener("change", updateGroupBenefit);
             function validQuantity(row, value) {
                 return Number.isFinite(value) && value > 0 && value <= 999999999 &&
                     Number.isInteger(value);
@@ -339,6 +362,7 @@
                 if (row.querySelector(".product-select").value) updateRow(row);
             });
             calculate();
+            updateGroupBenefit();
         })();
     </script>
 }

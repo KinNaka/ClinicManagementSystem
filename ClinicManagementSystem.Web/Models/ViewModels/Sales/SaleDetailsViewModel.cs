@@ -32,6 +32,9 @@ namespace ClinicManagementSystem.Web.Models.ViewModels.Sales
         public decimal TotalAmount { get; set; }
         public decimal ImportedGoodsTotal { get; set; }
         public decimal ImportedDiscount { get; set; }
+        public string DiscountType { get; set; } = "Amount";
+        public decimal DiscountValue { get; set; }
+        public string? PatientGroupName { get; set; }
         public decimal ImportedSurcharge { get; set; }
         public string? ImportedFileName { get; set; }
 

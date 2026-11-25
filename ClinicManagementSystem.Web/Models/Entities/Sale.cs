@@ -22,6 +22,10 @@ namespace ClinicManagementSystem.Web.Models.Entities
         public decimal TotalAmount { get; set; }
         public decimal ImportedGoodsTotal { get; set; }
         public decimal ImportedDiscount { get; set; }
+        [Required, MaxLength(10)] public string DiscountType { get; set; } = "Amount";
+        public decimal DiscountValue { get; set; }
+        public long? PatientGroupId { get; set; }
+        [MaxLength(100)] public string? PatientGroupName { get; set; }
         public decimal ImportedSurcharge { get; set; }
         [MaxLength(200)] public string? SourcePatientName { get; set; }
         [MaxLength(30)] public string? SourcePatientCode { get; set; }

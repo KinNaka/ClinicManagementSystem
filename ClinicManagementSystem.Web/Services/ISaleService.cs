@@ -24,5 +24,6 @@ namespace ClinicManagementSystem.Web.Services
         Task ConfirmAsync(long id);
         Task<bool> DeleteAsync(long id, string? actor = null, bool draftOnly = false);
         Task<decimal?> GetProductPriceAsync(long productId);
+        Task<(long? GroupId, string? GroupName, string? DiscountType, decimal DiscountValue)> GetPatientGroupBenefitAsync(long patientId);
     }
 }

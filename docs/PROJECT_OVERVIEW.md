@@ -116,3 +116,7 @@ Admin có bộ lọc tùy chọn/theo tháng/theo năm, khoảng ngày và Top 1
 ## Thời gian hóa đơn nháp (28/10/2026)
 
 Nháp hiển thị ngày giờ tạo ở danh sách, chi tiết, lịch sử bệnh nhân và bản in; lọc/sắp xếp nháp theo ngày tạo. Xác nhận thành công thì hiển thị thời gian xác nhận Việt Nam. Tái sử dụng CreatedAt/SaleDate, không cần migration; doanh thu vẫn chỉ Confirmed. Web Release build qua; test tích hợp ngày hóa đơn bị chặn vì LocalDB chưa chạy. Browser/Production **Chưa xác minh**. Chi tiết tại FEATURE_INVENTORY.
+
+## Nhóm khách hàng và ưu đãi hóa đơn (25/11/2026)
+
+Admin tạo nhóm, chọn thủ công thành viên, cập nhật membership và thiết lập giảm Amount/Percent. Ưu đãi tự áp dụng ở hóa đơn dựa trên membership được server kiểm tra; snapshot lưu cùng nháp. Có bảng thành viên mới và migration chưa áp dụng. Web Release build qua; nghiệp vụ test, DB, browser và Production **Chưa xác minh**. Xem FEATURE_INVENTORY.

@@ -1,5 +1,14 @@
 # FEATURE INVENTORY
 
+## Bổ sung 25/11/2026 — nhóm khách hàng và ưu đãi hóa đơn
+
+- `PatientGroupsController` (Admin only) và `PatientGroupService`: danh sách, tạo/sửa/xóa nhóm; quản lý thành viên bằng checkbox thủ công. Khách đang hoạt động có thể thuộc tối đa một nhóm; khi được thêm vào nhóm khác thì membership nhóm cũ được chuyển. Không tự động đánh giá/đồng bộ membership.
+- `PatientGroup`/`PatientGroupMember`, ViewModel `Patients/PatientGroup*`, views `PatientGroups/Index` và `Edit`; giao diện chọn thành viên xếp theo tổng doanh thu hóa đơn Confirmed/Imported, đồng thời hiện số hóa đơn Confirmed/Imported có SaleDate trong năm hiện tại để nhân viên Admin chọn thủ công. Không cộng LegacyTotalSales.
+- Nhóm có ưu đãi Amount hoặc Percent. `SalesController.GetPatientGroupBenefit` tra mức nhóm cho biểu hiện trên form; `SaleService.CreateAsync` và `UpdateDraftAsync` tra membership lại phía server và ghi đè giá trị giảm gửi từ trình duyệt. Ưu đãi áp dụng trong nháp và tổng hóa đơn dùng `SalePricing`; nhân viên không thể thay mức nhóm bằng POST giả mạo. Khi không có nhóm, giảm giá thủ công hiện tại vẫn dùng được.
+- Sale lưu DiscountType/DiscountValue/PatientGroupId/PatientGroupName làm snapshot cấu hình lúc lưu. Số tiền giảm thực tế tiếp tục lưu ở ImportedDiscount; sửa nháp áp dụng mức hiện hành của nhóm. Hóa đơn cũ được migration mặc định DiscountType=Amount, mức 0.
+- Schema mới: `PatientGroups`, `PatientGroupMembers`, các cột snapshot trên `Sales`; migration `20261125055544_AddPatientGroupsAndDiscountSnapshots`. Migration được tạo, chưa áp dụng DB. Không đổi logic confirm/kho/doanh thu.
+- Kiểm chứng lượt này: Web Release build thành công (warning CS8602 baseline ở `ProductService.cs:58`); chưa chạy test nghiệp vụ, SQL Server, browser hoặc Production. Việc migration tool thử kết nối để xác định migration đã áp dụng không kết nối được SQL Server; không áp dụng migration.
+
 ## Bổ sung 16/11/2026 — báo cáo Dashboard Admin
 
 - C: `DashboardController.Index(start,end,period,top)` chỉ cho Admin xem dashboard (Staff vẫn redirect Revenue), kiểm tra ngày và top ∈ 10/20/50/100; khoảng tối đa 10 năm.

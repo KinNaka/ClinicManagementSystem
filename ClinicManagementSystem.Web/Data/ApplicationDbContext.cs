@@ -21,6 +21,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<ProductEditHistory>().HasIndex(h => new { h.ProductId, h.ChangedAt, h.Id });
+        modelBuilder.Entity<PatientGroup>().Property(g => g.DiscountValue).HasPrecision(18, 2);
+        modelBuilder.Entity<PatientGroup>().HasIndex(g => g.Name).IsUnique();
+        modelBuilder.Entity<PatientGroupMember>().HasKey(m => new { m.PatientGroupId, m.PatientId });
+        modelBuilder.Entity<PatientGroupMember>().HasOne(m => m.PatientGroup).WithMany(g => g.Members).HasForeignKey(m => m.PatientGroupId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PatientGroupMember>().HasOne(m => m.Patient).WithMany().HasForeignKey(m => m.PatientId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Sale>().Property(s => s.DiscountValue).HasPrecision(18, 2);
+        modelBuilder.Entity<Sale>().HasOne<PatientGroup>().WithMany().HasForeignKey(s => s.PatientGroupId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => a.SaleId).IsUnique().HasFilter("[SaleId] IS NOT NULL");
         modelBuilder.Entity<FollowUpAppointment>().HasIndex(a => new { a.AppointmentDate, a.Status, a.Id });
         modelBuilder.Entity<FollowUpAppointment>().HasOne(a => a.Patient).WithMany().HasForeignKey(a => a.PatientId).OnDelete(DeleteBehavior.Restrict);
@@ -105,7 +112,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         // Sale -> Patient
         modelBuilder.Entity<Sale>()
             .HasOne(s => s.Patient)
-            .WithMany()
+            .WithMany(p => p.Sales)
             .HasForeignKey(s => s.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -157,6 +164,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<InventoryTransactionDetail> InventoryTransactionDetails
         => Set<InventoryTransactionDetail>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientGroup> PatientGroups => Set<PatientGroup>();
+    public DbSet<PatientGroupMember> PatientGroupMembers => Set<PatientGroupMember>();
     public DbSet<FollowUpAppointment> FollowUpAppointments => Set<FollowUpAppointment>();
     public DbSet<Sale> Sales => Set<Sale>();
 

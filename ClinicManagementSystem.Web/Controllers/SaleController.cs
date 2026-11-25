@@ -245,5 +245,12 @@ namespace ClinicManagementSystem.Web.Controllers
                 sellingPrice = price.Value
             });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPatientGroupBenefit(long patientId)
+        {
+            var benefit = await _saleService.GetPatientGroupBenefitAsync(patientId);
+            return Json(new { benefit.GroupId, benefit.GroupName, benefit.DiscountType, benefit.DiscountValue });
+        }
     }
 }

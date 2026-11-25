@@ -96,6 +96,7 @@ namespace ClinicManagementSystem.Web.Services
                     Notes = s.Notes,
                     TotalAmount = s.TotalAmount,
                     ImportedGoodsTotal = s.ImportedGoodsTotal, ImportedDiscount = s.ImportedDiscount, ImportedSurcharge = s.ImportedSurcharge, ImportedFileName = s.ImportedFileName,
+                    DiscountType = s.DiscountType, DiscountValue = s.DiscountValue, PatientGroupName = s.PatientGroupName,
                     Details = s.Details.Select(d =>
                         new SaleDetailDisplayViewModel
                         {
@@ -133,6 +134,7 @@ namespace ClinicManagementSystem.Web.Services
             var source = sourceId.HasValue ? await _context.Sales.AsNoTracking().Include(s => s.Details).ThenInclude(d => d.Product).FirstOrDefaultAsync(s => s.Id == sourceId) : null;
             model.CopyFromCode = model.CopyFromId.HasValue ? source?.SaleCode : null;
             if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = source?.ImportedDiscount ?? 0; model.Surcharge = source?.ImportedSurcharge ?? 0; }
+            await ApplyPatientGroupDiscountAsync(model);
             foreach (var item in model.Details)
             {
                 var original = source?.Details.FirstOrDefault(d => d.Id == item.SourceDetailId && d.ProductId == item.ProductId);
@@ -300,6 +302,8 @@ namespace ClinicManagementSystem.Web.Services
                 TotalAmount = total,
                 ImportedGoodsTotal = details.Sum(d => d.LineTotal),
                 ImportedDiscount = pricing.Discount,
+                DiscountType = model.DiscountType!, DiscountValue = model.Discount,
+                PatientGroupId = model.PatientGroupId, PatientGroupName = model.PatientGroupName,
                 ImportedSurcharge = decimal.Round(model.Surcharge, 2, MidpointRounding.AwayFromZero),
                 SourcePatientName = source?.PatientId == model.PatientId ? source.SourcePatientName : null,
                 SourcePatientCode = source?.PatientId == model.PatientId ? source.SourcePatientCode : null,
@@ -336,6 +340,8 @@ namespace ClinicManagementSystem.Web.Services
                     Notes = sale.Notes,
                     Status = sale.Status,
                     TotalAmount = sale.TotalAmount,
+                    DiscountType = sale.DiscountType, Discount = sale.DiscountValue,
+                    PatientGroupId = sale.PatientGroupId, PatientGroupName = sale.PatientGroupName,
                     Details = sale.Details.Select(d =>
                         new SaleDetailFormViewModel
                         {
@@ -367,6 +373,7 @@ namespace ClinicManagementSystem.Web.Services
             await ValidatePatientAsync(model.PatientId, sale.PatientId == model.PatientId);
             var details = await BuildDetailsAsync(model, sale);
             if (model.DiscountType == null) { model.DiscountType = "Amount"; model.Discount = sale.ImportedDiscount; model.Surcharge = sale.ImportedSurcharge; }
+            await ApplyPatientGroupDiscountAsync(model);
             var pricing = SalePricing.Calculate(details.Sum(d => d.LineTotal), model);
             var total = pricing.Total;
             if (total < 0) throw new InvalidOperationException("Tổng tiền sau giảm giá không được âm.");
@@ -389,12 +396,36 @@ namespace ClinicManagementSystem.Web.Services
             sale.TotalAmount = total;
             sale.ImportedGoodsTotal = details.Sum(d => d.LineTotal);
             sale.ImportedDiscount = pricing.Discount;
+            sale.DiscountType = model.DiscountType!; sale.DiscountValue = model.Discount;
+            sale.PatientGroupId = model.PatientGroupId; sale.PatientGroupName = model.PatientGroupName;
             sale.ImportedSurcharge = decimal.Round(model.Surcharge, 2, MidpointRounding.AwayFromZero);
             sale.UpdatedAt = DateTime.Now;
             sale.Details = details;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+        }
+
+        public async Task<(long? GroupId, string? GroupName, string? DiscountType, decimal DiscountValue)> GetPatientGroupBenefitAsync(long patientId)
+        {
+            var group = await _context.PatientGroupMembers.AsNoTracking().Where(m => m.PatientId == patientId)
+                .OrderBy(m => m.PatientGroupId).Select(m => new { m.PatientGroupId, m.PatientGroup.Name, m.PatientGroup.DiscountType, m.PatientGroup.DiscountValue }).FirstOrDefaultAsync();
+            return group == null ? (null, null, null, 0) : (group.PatientGroupId, group.Name, group.DiscountType, group.DiscountValue);
+        }
+
+        private async Task ApplyPatientGroupDiscountAsync(SaleFormViewModel model)
+        {
+            var benefit = await GetPatientGroupBenefitAsync(model.PatientId);
+            if (benefit.GroupId.HasValue)
+            {
+                model.PatientGroupId = benefit.GroupId; model.PatientGroupName = benefit.GroupName;
+                model.DiscountType = benefit.DiscountType; model.Discount = benefit.DiscountValue;
+            }
+            else
+            {
+                model.PatientGroupId = null; model.PatientGroupName = null;
+                model.DiscountType ??= "Amount";
+            }
         }
 
         private async Task<Dictionary<long, decimal>> ValidateStockAsync(IEnumerable<SaleDetail> details)

@@ -1,0 +1,13 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientGroupEditViewModel
+@{ ViewData["Title"] = Model.Id == 0 ? "Tạo nhóm khách hàng" : "Sửa nhóm khách hàng"; }
+<h2 class="mb-3">@ViewData["Title"]</h2><form asp-action="Save" method="post">@Html.AntiForgeryToken()<input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div>
+<div class="row g-3 mb-3"><div class="col-md-6"><label asp-for="Name" class="form-label">Tên nhóm</label><input asp-for="Name" class="form-control" required maxlength="100"/></div><div class="col-md-3"><label asp-for="DiscountType" class="form-label">Loại ưu đãi</label><select asp-for="DiscountType" class="form-select"><option value="Amount">Số tiền</option><option value="Percent">Phần trăm</option></select></div><div class="col-md-3"><label asp-for="DiscountValue" class="form-label">Mức giảm</label><input asp-for="DiscountValue" class="form-control" type="number" min="0" step="0.01"/></div></div>
+<h5>Chọn thành viên thủ công</h5><p class="text-muted">Chọn khách thủ công. Số hóa đơn là số Confirmed/Imported trong năm @DateTime.Today.Year; doanh thu là tổng hóa đơn Confirmed/Imported có ngày bán.</p><label for="patientSort" class="form-label">Sắp xếp khách hàng</label><select id="patientSort" class="form-select mb-2" style="max-width:320px"><option value="revenue">Doanh thu cao nhất</option><option value="invoices">Nhiều hóa đơn trong năm</option><option value="name">Tên khách hàng</option></select><div class="table-responsive" style="max-height:55vh;overflow:auto"><table class="table table-sm table-hover"><thead><tr><th></th><th>Mã</th><th>Khách hàng</th><th>Điện thoại</th><th>Hóa đơn năm @DateTime.Today.Year</th><th>Doanh thu hóa đơn</th></tr></thead><tbody id="patientRows">
+@foreach (var p in Model.Patients) { <tr data-name="@p.FullName" data-revenue="@p.Revenue" data-invoices="@p.InvoiceCount"><td><input type="checkbox" name="PatientIds" value="@p.Id" checked="@Model.PatientIds.Contains(p.Id)"/></td><td>@p.PatientCode</td><td>@p.FullName</td><td>@p.PhoneNumber</td><td>@p.InvoiceCount</td><td>@p.Revenue.ToString("N0") đ</td></tr> }
+</tbody></table></div><button class="btn btn-primary">Lưu</button> <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a></form>
+<script>
+(() => {
+    const sort = document.getElementById("patientSort"), rows = document.getElementById("patientRows");
+    sort.addEventListener("change", () => [...rows.rows].sort((a, b) => sort.value === "name" ? a.dataset.name.localeCompare(b.dataset.name, "vi") : Number(b.dataset[sort.value]) - Number(a.dataset[sort.value])).forEach(row => rows.appendChild(row)));
+})();
+</script>

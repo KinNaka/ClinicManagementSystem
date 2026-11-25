@@ -159,7 +159,7 @@
                 </tbody>
 
                 <tfoot>
-                @if (Model.Status == "Imported" || Model.ImportedDiscount != 0 || Model.ImportedSurcharge != 0) { <tr><td colspan="6" class="text-end">Tổng tiền hàng</td><td class="text-end">@Model.ImportedGoodsTotal.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Giảm giá hóa đơn</td><td class="text-end">@Model.ImportedDiscount.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Thu khác</td><td class="text-end">@Model.ImportedSurcharge.ToString("N2") đ</td></tr> }
+                @if (Model.Status == "Imported" || Model.ImportedDiscount != 0 || Model.ImportedSurcharge != 0 || Model.PatientGroupName != null) { <tr><td colspan="6" class="text-end">Tổng tiền hàng</td><td class="text-end">@Model.ImportedGoodsTotal.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">@(Model.PatientGroupName == null ? "Giảm giá hóa đơn" : $"Ưu đãi nhóm {Model.PatientGroupName}")</td><td class="text-end">@Model.ImportedDiscount.ToString("N2") đ</td></tr><tr><td colspan="6" class="text-end">Thu khác</td><td class="text-end">@Model.ImportedSurcharge.ToString("N2") đ</td></tr> }
                     <tr class="table-light">
                         <td colspan="6"
                             class="text-end fw-bold">

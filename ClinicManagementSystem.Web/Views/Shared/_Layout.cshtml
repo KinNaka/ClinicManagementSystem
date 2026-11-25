@@ -10,6 +10,7 @@
         (Controller: "Inventory", Label: "Kho hàng", Icon: "▣"),
         (Controller: "Sales", Label: "Hóa đơn", Icon: "▤"),
         (Controller: "Appointments", Label: "Lịch hẹn tái khám", Icon: "▣"),
+        (Controller: "PatientGroups", Label: "Nhóm khách hàng", Icon: "♧"),
         (Controller: "UserManagement", Label: "Tài khoản", Icon: "⚙")
     };
     var sectionName = sections.FirstOrDefault(x => x.Controller == controller).Label ?? "Phòng khám";
@@ -37,7 +38,7 @@
                 <nav class="main-nav" aria-label="Điều hướng chính">
                     @foreach (var navItem in sections)
                     {
-                        if (navItem.Controller == "UserManagement" && !User.IsInRole("Admin")) { continue; }
+                        if ((navItem.Controller is "UserManagement" or "PatientGroups") && !User.IsInRole("Admin")) { continue; }
                         <a class="@(controller == navItem.Controller ? "active" : "")" aria-current="@(controller == navItem.Controller ? "page" : null)" asp-controller="@navItem.Controller" asp-action="Index"><span aria-hidden="true">@navItem.Icon</span>@navItem.Label</a>
                     }
                 </nav>

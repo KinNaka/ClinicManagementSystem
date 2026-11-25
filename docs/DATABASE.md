@@ -141,3 +141,9 @@ Lệnh này lấy cấu hình theo môi trường hiện tại; nó không tự 
 ## Cập nhật 28/10/2026 — thời gian nháp
 
 Không đổi schema/migration/snapshot. Draft vẫn SaleDate=null, giao diện lấy CreatedAt hiện có; Confirmed/Imported lấy SaleDate. Nháp mới qua SaleService.CreateAsync lưu CreatedAt/UpdatedAt bằng giờ Việt Nam thay DateTime.Now. Nháp cũ dùng nguyên CreatedAt đã lưu, múi giờ lịch sử **Chưa xác minh**; không chạy backfill. Xác nhận vẫn ghi SaleDate và phiếu xuất cùng transaction.
+# Schema nhóm khách hàng (migration chưa áp dụng)
+
+- `PatientGroups`: tên duy nhất, DiscountType (`Amount`/`Percent` ở service), DiscountValue decimal(18,2), CreatedAt.
+- `PatientGroupMembers`: khóa ghép (PatientGroupId, PatientId), cascade khi nhóm/khách bị xóa. Service chuyển thành viên đang hoạt động ra khỏi nhóm trước khi thêm vào nhóm mới.
+- `Sales`: DiscountType, DiscountValue, PatientGroupId nullable (xóa nhóm giữ sale nhờ SetNull), PatientGroupName snapshot. `ImportedDiscount` tiếp tục lưu số tiền thực tế đã tính; cột mới không thay thế giá trị tiền lịch sử.
+- Migration mới: `20261125055544_AddPatientGroupsAndDiscountSnapshots`; Up/Down và snapshot nằm trong source. Chưa chạy database update; trạng thái DB đích **Chưa xác minh**.

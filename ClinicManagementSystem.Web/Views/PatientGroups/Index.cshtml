@@ -1,0 +1,7 @@
+@model ClinicManagementSystem.Web.Models.ViewModels.Patients.PatientGroupListViewModel
+@{ ViewData["Title"] = "Nhóm khách hàng"; }
+<div class="d-flex justify-content-between align-items-center mb-3"><h2>Nhóm khách hàng</h2><a asp-action="Create" class="btn btn-primary">Tạo nhóm</a></div>
+@if (TempData["SuccessMessage"] is string message) { <div class="alert alert-success">@message</div> }
+<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Tên nhóm</th><th>Ưu đãi</th><th>Thành viên</th><th></th></tr></thead><tbody>
+@foreach (var group in Model.Groups) { <tr><td>@group.Name</td><td>@(group.DiscountType == "Percent" ? $"{group.DiscountValue:N2}%" : $"{group.DiscountValue:N0} đ")</td><td>@group.MemberCount</td><td class="text-end"><a asp-action="Edit" asp-route-id="@group.Id" class="btn btn-sm btn-outline-primary">Sửa</a> <form asp-action="Delete" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@group.Id"/><button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa nhóm khách hàng này?')">Xóa</button></form></td></tr> }
+</tbody></table></div>

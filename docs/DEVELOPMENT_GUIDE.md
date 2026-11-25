@@ -1,5 +1,9 @@
 # DEVELOPMENT GUIDE
 
+## Cập nhật 25/11/2026 — nhóm khách hàng
+
+Schema mới nằm trong migration `20261125055544_AddPatientGroupsAndDiscountSnapshots`; migration chưa được áp dụng. Trước khi apply theo quy trình mục 4, xác định DB đích, xác minh lịch sử migration và backup/restore; trạng thái DB thật hiện **Chưa xác minh**. Nhóm chỉ Admin quản lý; membership thủ công; sửa draft sử dụng ưu đãi nhóm hiện hành và snapshot được lưu trên Sale.
+
 Ngày kiểm tra: **24/10/2026**, source `main@89a068d`. Đây là hướng dẫn quay lại làm việc với repository hiện tại; các lệnh sửa DB/triển khai bên dưới là quy trình cho lần được giao việc tương ứng, **không được thực hiện trong lượt tạo tài liệu này**.
 
 ## 1. Bắt đầu lại sau 6–12 tháng

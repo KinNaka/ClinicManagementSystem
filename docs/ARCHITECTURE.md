@@ -155,3 +155,9 @@ Revenue tiếp tục dùng DashboardController/IDashboardService và StaffRevenu
 ## Cập nhật 28/10/2026 — ngày hiển thị nháp
 
 Draft giữ SaleDate=null và ngày tạo riêng. SaleService.CreateAsync ghi CreatedAt/UpdatedAt theo giờ Việt Nam. SaleListViewModel/SaleDetailsViewModel.DisplayDate chọn CreatedAt khi Draft, SaleDate cho trạng thái khác; danh sách/chi tiết/in/lịch sử bệnh nhân dùng ngày này. Lọc ngày Sales và sắp xếp Sales/lịch sử bệnh nhân áp dụng cùng lựa chọn ở SQL trước phân trang. Confirm thành công chuyển ngày hiển thị sang SaleDate; giữ nguyên transaction, chống lặp, kho và doanh thu Confirmed. Không chuẩn hóa lại timestamps cũ.
+# Nhóm khách hàng (25/11/2026)
+
+- Nhóm và membership được quản lý thủ công, action Admin-only ở controller và kiểm quyền server-side. Một bệnh nhân hoạt động chỉ thuộc một nhóm tại một thời điểm; chuyển thành viên sẽ gỡ membership nhóm trước.
+- SaleService là nơi quyết định giá: tra ưu đãi membership server-side cho Create/UpdateDraft, dùng SalePricing decimal hiện có. Client chỉ hiển thị ước tính và khóa trường giảm giá khi có ưu đãi nhóm.
+- Snapshot trên Sale lưu kiểu/mức cấu hình và tên/ID nhóm tại thời điểm nháp được lưu; ImportedDiscount vẫn giữ số tiền giảm đã tính. Hóa đơn Confirmed/Imported cũ không bị tính lại.
+- Số hóa đơn năm hiện tại trong màn hình chọn thành viên là số Sale Confirmed/Imported có SaleDate năm đó; nháp bị loại. Doanh thu xếp hạng là tổng TotalAmount các Confirmed/Imported có SaleDate, không cộng LegacyTotalSales. Ý nghĩa “tái khám” riêng theo lịch hẹn Attended chưa được dùng; quy tắc đã chốt ở đây là đếm hóa đơn.
